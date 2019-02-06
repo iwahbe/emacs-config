@@ -29,12 +29,11 @@
 
 (global-company-mode)
 (setq company-idle-delay 0) ; this makes company respond in real time (no delay)
-
+(setq company-dabbrev-downcase 0) ; this makes it so company correctly gives cases
 
 ;;calls the mode-hooks that do most of the heavy lifting
 (add-to-list 'load-path "~/Google Drive/Bin/EmacsInit") ;this is not a permanent solution
-(add-hook 'python-mode-hook
-	  (lambda ()
-	    (load "pythonInit.el")
-	    ))
-
+(add-hook 'python-mode-hook (lambda () (load "pythonInit.el")))    ;python
+(add-hook 'emacs-lisp-mode-hook (lambda () (load "eLispInit.el"))) ;elisp
+(add-hook 'lisp-mode-hook (lambda () (load "lispInit.el")))        ;lsip
+(add-hook 'LaTeX-mode-hook (lambda () (load "latexInit.el")))      ;latex

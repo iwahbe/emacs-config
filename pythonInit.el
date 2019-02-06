@@ -26,5 +26,5 @@
 (py-autopep8-enable-on-save) ;this ensures that autopep8 activates on save
 (setq elpy-rpc-python-command "python3") ;To set python3 as the default
 (add-to-list 'python-shell-completion-native-disabled-interpreters "ipython3") ; because the current version of emacs does not play well with python
-(with-eval-after-load "linum" (set-face-foreground 'linum "green")) ; to change the color of the numbers
+(set-face-foreground 'linum "green") ; to change the color of the numbers
 (flyspell-prog-mode)
