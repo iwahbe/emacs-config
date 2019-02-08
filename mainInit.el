@@ -1,10 +1,6 @@
 ;; This is the main file for emacs to load, and is responsible for calling all other files
 ;; That means that the actual .emacs file should contatin (load "filepath") which will call everythin else
 
-;(setq package-load-list '(
-;			  (package t)
-;			  (company t)
-					;			  ))
 (require 'package)
 (require 'company)
 (package-initialize)
@@ -19,9 +15,10 @@
 
 ;;;As far as I am aware, this does not work - which is bad and annoying
 ;; sets backups to one folder
-(setq backup-directory-alist `((".*" . ,"~/.emacsBackups")))
+(setq backup-directory-alist '((".*" . "~/.emacsBackups/")))
+(setq backup-by-copying t)
 ;; sets autosaves to one folder
-(setq auto-save-file-name-transforms `((".*" ,"~/.emacsAutosaves" t)))
+(setq auto-save-file-name-transforms '((".*" "~/.emacsAutosaves/")))
 
 ;;MELPA is good to start with
 (add-to-list 'package-archives
