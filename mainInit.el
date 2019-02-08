@@ -4,7 +4,7 @@
 (require 'package)
 (require 'company)
 (package-initialize)
-
+;;test
 ;;There is a set of key-bindings that are practically universal for me, and are thus not package dependent
 (global-set-key "\C-r" 'scroll-down)
 (global-set-key "\C-v" 'scroll-up)
