@@ -34,3 +34,4 @@
 (add-hook 'emacs-lisp-mode-hook (lambda () (load "eLispInit.el"))) ;elisp
 (add-hook 'lisp-mode-hook (lambda () (load "lispInit.el")))        ;lsip
 (add-hook 'LaTeX-mode-hook (lambda () (load "latexInit.el")))      ;latex
+(add-hook 'text-mode-hook (lambda () (load "textInit.el")))
