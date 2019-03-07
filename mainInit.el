@@ -1,9 +1,30 @@
 ;; This is the main file for emacs to load, and is responsible for calling all other files
-;; That means that the actual .emacs file should contatin (load "filepath") which will call everythin else
+;; That means that the actual .emacs file should contatin (load "filepath") which will call everything else
 
 (require 'package)
-(require 'company)
+
+;;Install uninstalled packages
+;;A version of this should preface any individual initFile.el
+
+
+(setq package-archives '(("elpa" . "http://tromey.com/elpa/")
+                         ("gnu" . "http://elpa.gnu.org/packages/")
+			 ("melpa-stable" . "https://stable.melpa.org/packages/")
+			 ))
 (package-initialize)
+(when (not package-archive-contents)
+  (package-refresh-contents))
+
+
+(defun ensure-packages (package-list)
+  (dolist (package package-list)
+    (unless (package--user-selected-p package)
+      (package-install package)
+      )))
+
+(ensure-packages '(company))
+
+(require 'company)
 ;;test
 ;;There is a set of key-bindings that are practically universal for me, and are thus not package dependent
 (global-set-key "\C-r" 'scroll-down)
@@ -20,11 +41,9 @@
 ;; sets autosaves to one folder
 (setq auto-save-file-name-transforms '((".*" "~/.emacsAutosaves/")))
 
-;;MELPA is good to start with
-(add-to-list 'package-archives
-             '("melpa-stable" . "https://stable.melpa.org/packages/"))
+             '
 
-(global-company-mode)
+(global-company-mode t)
 (setq company-idle-delay 0) ; this makes company respond in real time (no delay)
 (setq company-dabbrev-downcase 0) ; this makes it so company correctly gives cases
 
@@ -35,3 +54,11 @@
 (add-hook 'lisp-mode-hook (lambda () (load "lispInit.el")))        ;lsip
 (add-hook 'LaTeX-mode-hook (lambda () (load "latexInit.el")))      ;latex
 (add-hook 'text-mode-hook (lambda () (load "textInit.el")))
+
+
+
+;;Add status info
+(setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
+(display-time-mode 1); does not change in real time, so all settings must be assigned before
+(display-battery-mode 1)
+(menu-bar-mode 0)

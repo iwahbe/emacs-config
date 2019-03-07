@@ -20,6 +20,7 @@
 (defun my-startup-layout ()
  (interactive)
  (delete-other-windows)
+ (other-window)
 )
 
 ;; execute the layout

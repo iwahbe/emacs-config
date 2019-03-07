@@ -11,9 +11,13 @@
 ;;LaTeX packages
 (setq TeX-auto-save t)
 (setq TeX-parse-self t)
-(setq-default TeX-master nil)
+;(setq-default TeX-master nil) ;set true for multidocument pages
 (visual-line-mode)
 
+(ispell-minor-mode)
+
+(company-mode t)
+(setq company-minimum-prefix-length 1)
 
 ;;Cosmetic changes
 (load-theme 'solarized-light)

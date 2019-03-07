@@ -1,5 +1,8 @@
 ;;This file handles my lisp code IDE
 ;;To load all of my packages
+
+(ensure-packages '(dracula-theme slime slime-company linum))
+
 (require 'dracula-theme)
 (require 'slime)
 (require 'linum)
@@ -15,3 +18,6 @@
 (slime-setup '(slime-fancy slime-company));(add-to-list 'company-backends 'slime-company)
 (slime-mode)
 
+(defun testIfLoaded ()
+  (message "%s" "eLispInit.el was called")
+  )

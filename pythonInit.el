@@ -1,10 +1,4 @@
-;;ensuring that all my python packages are fully initialized
-;(setq package-load-list '(
-;			  (elpy t)
-;			  (py-autopep8 t)
-;			  (company-jedi t)
-;			  (linum t)
-					;))
+
 (require 'elpy)
 (require 'py-autopep8)
 (require 'company-jedi)
@@ -31,7 +25,8 @@
 (local-set-key "\C-c \C-k" 'elpy-shell-kill) ; allows me to kill the python process with a key-binding
 
 (py-autopep8-enable-on-save) ;this ensures that autopep8 activates on save
-(setq py-autopep8-options '("--max-line-length=100")("--in-place"))
+;(setq py-autopep8-options '("--max-line-length=100")("--in-place"))
+(setq company-minimum-prefix-length 1)
 
 (setq elpy-rpc-python-command "python3") ;To set python3 as the default
 (add-to-list 'python-shell-completion-native-disabled-interpreters "ipython3") ; because the current version of emacs does not play well with python
