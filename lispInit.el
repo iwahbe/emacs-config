@@ -1,12 +1,12 @@
+
+(ensure-packages '(slime linum slime-company))
+
 ;;Loading Packages
-(require 'dracula-theme)
 (require 'slime)
-(require 'linum)
 (package-initialize)
 
 ;;Visual Modification
-(load-theme 'dracula) ; to load the dracula theme
-(linum-mode) ; to enable linum mode
+(load-theme 'tango-dark) ; to load the dracula theme
 (set-face-foreground 'linum "green")
 
 ;;Real Modification
@@ -16,15 +16,19 @@
 (slime-setup '(slime-fancy slime-company));(add-to-list 'company-backends 'slime-company)
 (slime) ; to turn on slime
 
+
+
 ;; layout definition
 (defun my-startup-layout ()
  (interactive)
  (delete-other-windows)
  (other-window)
-)
+ )
+
+;;For debuging purposes
+(defun was-lispInit-called ()
+  (message "%s" "lispInit.el was called")
+  )
 
 ;; execute the layout
-(my-startup-layout )
-
-
-
+(my-startup-layout)
