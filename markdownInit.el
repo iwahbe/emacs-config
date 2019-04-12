@@ -1,6 +1,4 @@
 
-(ensure-packages '(pandoc-mode markdown-mode use-package))
-
 (company-mode 1)
 (wc-mode 1)
 (visual-line-mode 1)
@@ -15,6 +13,10 @@
     )
   )
 
+(use-package pandoc-mode
+  :ensure t
+  )
+
 ;;activate setting for the markdown-mode package
 (use-package markdown-mode
   :ensure t
@@ -22,7 +24,10 @@
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "multimarkdown"))
+  :init
+  (setq markdown-command "multimarkdown")
+  (setq markdown-enable-math t)
+  )
 
 
 (load-theme 'wheatgrass)

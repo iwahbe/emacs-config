@@ -1,29 +1,42 @@
 
-(ensure-packages '(solarized-theme tex-site pandoc-mode company-math))
-
-(require 'solarized-theme) ; this is just the theme
-(require 'tex-site) ; this is auctex proper
-(require 'pandoc-mode)
-(require 'company-math)
-(require 'wc-mode)
-(package-initialize)
+(use-package solarized-theme
+  :ensure t
+  :config
+  (load-theme 'solarized-light)
+  )
 
 ;;LaTeX keybingins
-(local-set-key "\C-j" 'backward-word)
+
 
 ;;LaTeX packages
-(setq TeX-auto-save t)
-(setq TeX-parse-self t)
-;(setq-default TeX-master nil) ;set true for multidocument pages
-(visual-line-mode)
+(use-package auctex
+  :ensure t
+  :defer t
+  :config
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (local-set-key "\C-j" 'backward-word)
+  )
+
+(use-package wc-mode
+  :ensure t
+  :config
+  (wc-mode 1)
+  )
+
+(visual-line-mode) ;this makes the text wrap naturally
 
 (ispell-minor-mode)
 
-(company-mode t)
-(setq company-minimum-prefix-length 1)
+(use-package company-math
+  :ensure t
+  :config
+  (add-to-list 'company-backends 'company-math)
+  (company-mode 1)
+  (setq company-minimum-prefix-length 1)
+  )
 
 ;;Cosmetic changes
-(load-theme 'solarized-light)
 (if (version<= "26.0.50" emacs-version ) 
     (display-line-numbers-mode) ; displays line numbers on the left
   (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
@@ -42,6 +55,7 @@
   "\\usepackage{amsmath}\n"
   "\\usepackage{amsfonts}\n"
   "\\makeatletter\n"
+  "\\newcommand{\\zz}{\\mathbb{Z}}\n"
   "\\newcommand{\\rr}{\\mathbb{R}}\n"
   "\\newcommand{\\cc}{\\mathbb{C}}\n"
   "\\newcommand{\\qq}{\\mathbb{Q}}\n"
