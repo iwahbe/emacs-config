@@ -15,6 +15,9 @@
   :ensure t
   :config
   (cargo-minor-mode 1)
+  (setq cargo-process--enable-rust-backtrace t)
+  (setq cargo-process--command-build "build --verbose")
+  (setq cargo-process--command-run "run --verbose")
   )
 
 (use-package company-racer

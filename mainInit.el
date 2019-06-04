@@ -23,7 +23,11 @@
   )
 (setup-iterm2)
 
-
+(use-package ido
+  :ensure t
+  :config
+  (ido-mode t)
+  )
 
 
 (setq read-file-name-completion-ignore-case nil)
@@ -34,6 +38,14 @@
   (require 'vlf-setup)
   (custom-set-variables
    '(vlf-application 'dont-ask))
+  )
+
+
+
+(use-package org
+  :ensure t
+  :mode "\\.org\\'"
+  :bind ("C-j" . backward-word)
   )
 
 
@@ -69,20 +81,15 @@
   (setq company-dabbrev-downcase 0) ; this makes it so company correctly gives cases
   )
 
-;;calls the mode-hooks that do most of the heavy lifting
-(add-to-list 'load-path "~/Google Drive/Bin/EmacsInit") ;this is not a permanent solution
-(add-hook 'prog-mode-hook (lambda () (load "progInit.el")))           ;General Code changes
-(add-hook 'python-mode-hook (lambda () (load "pythonInit.el")))       ;python
-(add-hook 'emacs-lisp-mode-hook (lambda () (load "eLispInit.el")))    ;elisp
-(add-hook 'lisp-mode-hook (lambda () (load "lispInit.el")))           ;lisp
-(add-hook 'rust-mode-hook (lambda () (load "rustInit.el")))           ;rust
-
-;;This is for text pages
-(add-hook 'text-mode-hook (lambda () (load "textInit.el")))  ;called for everything in the category
-(add-hook 'LaTeX-mode-hook (lambda () (load "latexInit.el")))         ;latex
-(add-hook 'markdown-mode-hook (lambda () (load "markdownInit.el")))   ;markdown
-(add-hook 'org-mode-hook (lambda () (load "orgInit.el")))
-
+(use-package ess
+  :mode ("\\.r\\'" "\\.R\\'")
+  :ensure t
+  :init (require 'ess-site)
+  :config
+  (setq inferior-ess-r-program "/usr/local/bin/R")
+  ;; We assume the ability to generate graphs using a WindowsX(QuartsX) program.
+  (setq ess-dialect "R")
+  )
 
 
 ;;Add status info to the mode line
@@ -105,19 +112,34 @@
   (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
   )
 
-(defun menu-bar-stuff ()
-  ;;My goal is to have the menu bar display information, but not buttons
-  (menu-bar-mode 0) ;disables menu bar
-  (define-key global-map [menu-bar file] nil) ;removes the File button
-  (define-key global-map [menu-bar edit] nil) ;removes the Edit button
-  (define-key global-map [menu-bar options] nil) ;removes the Options button
-  (define-key global-map [menu-bar tools] nil) ;removes the Tools button
-  (defun disp-time ()
-    (interactive)
-    (define-key global-map [menu-bar time]
-      (cons (shell-command-to-string "date")
-	    (make-sparse-keymap "time")))
-    )
-  )
-(menu-bar-stuff)
+(menu-bar-mode 0) ;disables menu bar
 
+
+(defun prog-mode-stuff ()
+  (line-number-mode 0); removes line number from mode line
+
+  (if (version<= "26.0.50" emacs-version ) 
+      (display-line-numbers-mode) ; displays line numbers on the left
+    (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
+    )
+
+  (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
+
+  (setq company-minimum-prefix-length 1) ;we want an active company for programming, as there are many variable names, and memory is hard
+  )
+
+
+
+;;calls the mode-hooks that do most of the heavy lifting
+(add-to-list 'load-path "~/Google Drive/Bin/EmacsInit") ;this is not a permanent solution
+(add-hook 'prog-mode-hook (lambda () (prog-mode-stuff)))           ;General Code changes
+(add-hook 'python-mode-hook (lambda () (load "pythonInit.el")))       ;python
+(add-hook 'emacs-lisp-mode-hook (lambda () (load "eLispInit.el")))    ;elisp
+(add-hook 'lisp-mode-hook (lambda () (load "lispInit.el")))           ;lisp
+(add-hook 'rust-mode-hook (lambda () (load "rustInit.el")))           ;rust
+
+
+;;This is for text pages
+(add-hook 'text-mode-hook (lambda () (load "textInit.el")))  ;called for everything in the category
+(add-hook 'LaTeX-mode-hook (lambda () (load "latexInit.el")))         ;latex
+(add-hook 'markdown-mode-hook (lambda () (load "markdownInit.el")))   ;markdown

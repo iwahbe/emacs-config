@@ -1,11 +1,19 @@
 ;;;;Python mode, this provides a customized IDE for python, tuned for python3 by default
 
-(load-theme 'wombat) ; preferred theme
 (use-package elpy
-  :config
+  :init
   (elpy-enable) ;elpy is my python IDE
   (elpy-mode) ; turns on elpy
+  :config
   (setq elpy-rpc-backend "company")
+  (add-hook 'before-save-hook (lambda () (elpy-format-code)))
+  :bind
+  ("C-c q" . comment-or-uncomment-region)
+  )
+
+(use-package flycheck-mypy
+  :disabled ; support for type suggestions. Not yet developed enough to matter
+  :ensure
   )
 
 (hs-minor-mode t) ; this is hide-show and allows me to fold functions and classes
@@ -62,19 +70,6 @@
   )
 (python-keybindings)
 
-(use-package py-autopep8
-  :ensure t
-  :config
-  (py-autopep8-enable-on-save) ;this ensures that autopep8 activates on save
-  (setq py-autopep8-options '("--in-place"))
-  )
-
-(use-package py-yapf
-  :ensure t
-  :config
-  (py-yapf-enable-on-save)
-  (setq py-yapf-options '("--in-place"))
-  )
 
 (setq elpy-rpc-python-command "python3") ;To set python3 as the default
 (elpy-rpc-restart) ; this ensures that the jedi backend is up

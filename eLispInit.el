@@ -22,7 +22,9 @@
   )
 (eldoc-mode 1)
 
-(flymake-mode 1)
+;;Flymake sucks for emacs
+(flymake-mode 0)
+
 
 ;;reactivates company
 (company-mode 1)
