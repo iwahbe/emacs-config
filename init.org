@@ -1,6 +1,5 @@
 We hold the entire init file in Org mode to allow increased comments, along with better organization.
 
-
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that use-package is installed
 #+NAME: Package install stuff
 #+BEGIN_SRC emacs-lisp
@@ -11,12 +10,11 @@ We ensure that packages are installed by using the use-package package, so we re
 			   ))
   (package-initialize)
   (when (not package-archive-contents)
-    (package-refresh-contents))
-  (eval-when-compile
-    (require 'use-package))
+		(package-refresh-contents))
   (unless (package--user-selected-p 'use-package)
-    (package-install 'use-package)
-    )
+		(package-install 'use-package)
+		)
+  (require 'use-package)
 #+END_SRC 
 
 We apply the dracula theme.
@@ -25,24 +23,27 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
 #+NAME: universal: cosmetics
 #+BEGIN_SRC emacs-lisp
   (use-package dracula-theme
-    :ensure t
-    :config
-    (load-theme 'dracula t) ;the 't' forces a load without asking
-    )
+					:ensure t
+					:config
+					(load-theme 'dracula t) ;the 't' forces a load without asking
+					)
   (setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
   (display-time-mode 1); does not change in real time, so all settings must be assigned before
   (display-battery-mode 1)
 
   (use-package smart-mode-line
-    :ensure t
-    :hook (after-init . sml/setup)
-    :config
-    (setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
-    (defface sml/charging ;this is much easier to see
-      '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
-    (add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
-    (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
-    )
+		:ensure t
+		:defer t
+		;;:hook (after-init . sml/setup)
+		:config
+		(setq sml/no-confirm-load-theme t)
+		(setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
+		(defface sml/charging ;this is much easier to see
+	  '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
+		(add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
+		(add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
+		(sml/setup)
+		)
   (menu-bar-mode 0) ;disables menu bar
 #+END_SRC
 
@@ -55,7 +56,7 @@ Creates a set of universal functions that are called by varios major modes
     (setq display-line-numbers t)
     (line-number-mode 0)
     (if (version<= "26.0.50" emacs-version) 
-	(display-line-numbers-mode 1) ; displays line numbers on the left
+	(global-display-line-numbers-mode 1) ; displays line numbers on the left
       (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
       )
     (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
@@ -163,14 +164,14 @@ It overwrites \C-j, so we reassign that for the millionth time
 #+NAME: Org-mode
 #+BEGIN_SRC emacs-lisp
   (defun my-org-mode()
-    (local-set-key "\C-j" 'backward-word)
-    (my-text-mode)
-    (setq org-src-fontify-natively t)
-    (setq org-src-tab-acts-natively t)
-    (setq org-confirm-babel-evaluate nil)
-    (message "%s" "Org mode called successfully.")
-    )
-
+	(local-set-key "\C-j" 'backward-word)
+	(my-text-mode)
+	(my-prog-mode)
+	(setq org-src-fontify-natively t)
+	(setq org-src-tab-acts-natively t)
+	(setq org-confirm-babel-evaluate nil)
+	(message "%s" "Org mode called successfully.")
+	)
   (add-hook 'org-mode-hook (lambda () (my-org-mode)))
 #+END_SRC
 
@@ -258,7 +259,6 @@ FIXME: there must be a better way to config this than slime for both elisp and l
     (slime)
     (message "%s" "slime package loaded")
     )
-
 #+END_SRC
 
 Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
@@ -423,17 +423,20 @@ We want init.org to have special behavior, specifically we want init.org to tang
 #+NAME: init.org to byte
 #+BEGIN_SRC emacs-lisp
   (defun tangle-init ()
-		"If the current buffer is 'init.org' the code-blocks are
+			"If the current buffer is 'init.org' the code-blocks are
   tangled, and the tangled file is compiled."
-		(when (equal (buffer-file-name)
-					 (expand-file-name (concat ;user-emacs-directory
-				   "~/Google Drive/Bin/EmacsInit/"  "init.org")))
+			(when (equal (buffer-file-name)
+						 (expand-file-name (concat user-emacs-directory "init.org")))
 	  ;; Avoid running hooks when tangling.
 	  (let ((prog-mode-hook nil))
-			(org-babel-tangle)
-			(byte-compile-file (concat; user-emacs-directory
-					"~/Google Drive/Bin/EmacsInit/" "init.el")))))
+	    (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
+				(byte-compile-file (concat user-emacs-directory "init.el")))))
 
   (add-hook 'after-save-hook 'tangle-init)
 #+END_SRC 
+
+#+RESULTS: init.org to byte
+| tangle-init | rmail-after-save-hook |
+  
  
+
