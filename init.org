@@ -1,3 +1,5 @@
+We hold the entire init file in Org mode to allow increased comments, along with better organization.
+
 
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that use-package is installed
 #+NAME: Package install stuff
@@ -415,3 +417,23 @@ sets up latex support along with a collection of skeletons for latex
     (message "%s" "LaTex mode was called successfully.")
     )
 #+END_SRC 
+
+
+We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed
+#+NAME: init.org to byte
+#+BEGIN_SRC emacs-lisp
+  (defun tangle-init ()
+		"If the current buffer is 'init.org' the code-blocks are
+  tangled, and the tangled file is compiled."
+		(when (equal (buffer-file-name)
+					 (expand-file-name (concat ;user-emacs-directory
+				   "~/Google Drive/Bin/EmacsInit/"  "init.org")))
+	  ;; Avoid running hooks when tangling.
+	  (let ((prog-mode-hook nil))
+			(org-babel-tangle)
+			(byte-compile-file (concat; user-emacs-directory
+					"~/Google Drive/Bin/EmacsInit/" "init.el")))))
+
+  (add-hook 'after-save-hook 'tangle-init)
+#+END_SRC 
+ 
