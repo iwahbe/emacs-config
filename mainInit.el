@@ -14,9 +14,50 @@
 (when (not package-archive-contents)
   (package-refresh-contents))
 ;;installs use-package if its not already there
+(eval-when-compile
+  (require 'use-package))
 (unless (package--user-selected-p 'use-package)
   (package-install 'use-package)
   )
+(use-package dracula-theme
+  :ensure t
+  :config
+  (load-theme 'dracula t)
+  )
+
+
+(defun my-prog-mode ()
+  (setq display-line-numbers t)
+  (line-number-mode 0)
+  (if (version<= "26.0.50" emacs-version) 
+      (display-line-numbers-mode 1) ; displays line numbers on the left
+    (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
+    )
+  (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
+  (eldoc-mode 1)
+  (setq company-minimum-prefix-length 1) ;we want an active company for programming, as there are many variable names, and memory is hard
+  (setq font-lock-maximum-decoration t) ;lots of syntax highlighting
+  (subword-mode t)
+  (message "%s" "(my-prog-mode) was called successfully.")
+  )
+
+
+(defun my-text-mode ()
+  (wc-mode 1)               ; provides a word count
+  (flyspell-mode 1)         ; recognizes misspellings
+  (visual-line-mode 1)      ; we want the words to wrap
+  (setq tab-width 4)
+
+  (use-package define-word
+    :ensure t
+    :config
+    (global-set-key (kbd "C-c d") 'define-word-at-point)
+    (global-set-key (kbd "C-c D") 'define-word)
+    )
+  (message "%s" "(my-text-mode) was called successfully.")
+  )
+
+
 
 (defun setup-iterm2 ()
   (define-key input-decode-map "[1;2A" [S-up])
@@ -41,12 +82,16 @@
   )
 
 
-
-(use-package org
-  :ensure t
-  :mode "\\.org\\'"
-  :bind ("C-j" . backward-word)
+(defun my-org-mode()
+  (local-set-key "\C-j" 'backward-word)
+  (visual-line-mode t)
+  (setq org-src-fontify-natively t)
+  (setq org-src-tab-acts-natively t)
+  (setq org-confirm-babel-evaluate nil)
+  (message "%s" "Org mode called successfully.")
   )
+
+(add-hook 'org-mode-hook (lambda () (my-org-mode)))
 
 
 
@@ -82,15 +127,19 @@
   )
 
 (use-package ess
-  :mode ("\\.r\\'" "\\.R\\'")
+  :mode (("\\.r\\'" . ess-r-mode)
+	 ("\\.R\\'" . ess-r-mode))  
   :ensure t
-  :init (require 'ess-site)
+  :init
+  (require 'ess-site)
   :config
   (setq inferior-ess-r-program "/usr/local/bin/R")
   ;; We assume the ability to generate graphs using a WindowsX(QuartsX) program.
   (setq ess-dialect "R")
+  (setq ess-ask-for-ess-directory nil) ; directory defaults to whatever ess-directory-function returns
+  (setq ess-directory-function nil) ; directory defaults to ess-directory
+  (setq ess-directory nil) ; directory defaults to the directory of the opened file
   )
-
 
 ;;Add status info to the mode line
 (defun mode-line-stuff ()
@@ -103,43 +152,230 @@
 ;;smart mode line settings
 (use-package smart-mode-line
   :ensure t
+  :hook (after-init . sml/setup)
   :config
   (setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
   (defface sml/charging ;this is much easier to see
     '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
-  (sml/setup) ;turn on
   (add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
   (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
   )
 
 (menu-bar-mode 0) ;disables menu bar
 
-
-(defun prog-mode-stuff ()
-  (line-number-mode 0); removes line number from mode line
-
-  (if (version<= "26.0.50" emacs-version ) 
-      (display-line-numbers-mode) ; displays line numbers on the left
-    (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
-    )
-
-  (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
-
-  (setq company-minimum-prefix-length 1) ;we want an active company for programming, as there are many variable names, and memory is hard
+(use-package markdown-mode
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init
+  (setq markdown-command "multimarkdown")
+  (setq markdown-enable-math t)
+  :config
+  (wc-mode 1)
+  (visual-line-mode 1)
   )
+
+
+;;main for lisp and elisp
+(use-package slime 
+  :ensure t
+  :mode (("\\.el\\'" . emacs-lisp-mode)
+	 ("\\.lisp\\'" . lisp-mode))
+  :init
+  (my-prog-mode)
+  :bind
+  ("C-c q" . comment-or-uncomment-region)
+  :init
+  (setq inferior-lisp-program "/usr/local/bin/clisp")
+  :config
+  (slime-mode 1)
+  (slime-setup)
+  (use-package slime-company
+    :ensure t
+    :config
+    (slime-setup '(slime-fancy slime-company))
+    )
+  (slime)
+  (message "%s" "slime package loaded")
+  )
+
+;;rust main mode
+(use-package rust-mode
+  :mode ("\\.rs\\'" . rust-mode)
+  :ensure t
+  :bind
+  ("C-c q" . comment-or-uncomment-region)
+  :config
+  (setq rust-format-on-save t)
+  (use-package flymake-rust
+    :ensure t
+    :config
+    (flymake-mode 1)
+    )
+  (use-package cargo
+    :ensure t
+    :config
+    (cargo-minor-mode 1)
+    (setq cargo-process--enable-rust-backtrace t)
+    (setq cargo-process--command-build "build --verbose")
+    (setq cargo-process--command-run "run --verbose")
+    )
+  (use-package company-racer
+    :ensure t
+    :init
+    (company-mode 1)
+    (setq company-racer-executable "racer")
+    (unless (getenv "RUST_SRC_PATH")
+      (setenv "RUST_SRC_PATH" (expand-file-name ; this path must be absolute
+    			       "/Users/ianwahbe/.rustup/toolchains/nightly-x86_64-apple-darwin/lib/rustlib/src/rust/src")))
+    :config
+    (add-to-list 'company-backends 'company-racer)
+    )
+  )
+
+(use-package elpy
+  :mode ("\\.py\\'" . python-mode)
+  :hook (python-mode . elpy-mode)
+  :ensure t
+  :init
+  :bind
+  ("C-c q" . comment-or-uncomment-region)
+  ("M-]" . elpy-nav-indent-shift-right)
+  ("M-[" . elpy-nav-indent-shift-left)
+  :config
+  (elpy-enable)
+  (setq elpy-rpc-backend "company")
+  (add-hook 'before-save-hook (lambda () (elpy-format-code)))
+  (use-package highlight-indent-guides
+    :ensure t
+    :config
+    (highlight-indentation-mode 0)
+    (setq highlight-indent-guides-method 'column); could be "character", "fill", "column"
+    (setq highlight-indent-guides-character ?\|) ;sets character of the highlight, if in character mode
+    (setq highlight-indent-guides-responsive nil); options: 'top, 'stack, this dictates if and how it responds to the cursor position
+    (setq highlight-indent-guides-delay 0); respond immediately to the cursor
+    (setq highlight-indent-guides-auto-enabled nil) ;this means that I can set colors, t means that it will guess based on theme
+    (set-face-background 'highlight-indent-guides-odd-face "darkcyan")
+    (set-face-background 'highlight-indent-guides-even-face "darkcyan")
+    (set-face-foreground 'highlight-indent-guides-character-face "dimgrey")
+    (highlight-indent-guides-mode 1); turn on mode
+    )
+  (setq indent-tabs-mode nil)
+  (setq elpy-rpc-python-command "python3")
+  (elpy-rpc-restart)
+  (defun set-shell-python3 ()
+    (interactive)
+    (setq python-shell-interpreter "python3")
+    (setq python-shell-interpreter-args "-i")
+    (with-eval-after-load 'python
+      ;;This makes readline work in the interpreter
+      (defun python-shell-completion-native-try ()
+	"Return non-nil if can trigger native completion."
+	(let ((python-shell-completion-native-enable t)
+	      (python-shell-completion-native-output-timeout
+	       python-shell-completion-native-try-output-timeout))
+	  (python-shell-completion-native-get-completions
+	   (get-buffer-process (current-buffer))
+	   nil "_"))))
+    )
+  (set-shell-python3)
+  (defun set-shell-ipython ()
+    (interactive)
+    (setq python-shell-interpreter "ipython")
+    (setq python-shell-interpreter-args "--simple-prompt -i")
+    )
+  (use-package pyenv-mode
+    :ensure t
+    :init
+    (setenv "WORKON_HOME" "~/.pyenv/versions/")
+    :config
+    (add-to-list 'exc-path "~/.pyenv/shims")
+    (pyenv-mode)
+    :bind
+    ("C-x p e" . pyenv-activate-current-project)
+    )
+  (message "%s" "Python mode was called successfully.")
+  )
+
+(use-package company-math
+  :ensure t
+  :after (auctex)
+  :config
+  (add-to-list 'company-backends 'company-math)
+  (company-mode 1)
+  (setq company-minimum-prefix-length 1)
+  )
+
+
+(use-package tex
+  :defer t
+  :ensure auctex
+  :config
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (local-set-key "\C-j" 'backward-word)
+  (add-hook 'latex-mode-hook (lambda () (display-line-numbers--turn-on)))
+  (ispell-minor-mode)
+  (visual-line-mode)
+  (define-skeleton skeleton-math-letter
+    "Inserts a latex Letter Outline into the buffer"
+    "Title: "
+    "\\documentclass[11pt, oneside]{article}\n"
+    "\\usepackage{geometry}\n"
+    "\\geometry{letterpaper}\n"
+    "\\usepackage{graphicx}\n"
+    "\\usepackage{amssymb}\n"
+    "\\usepackage{enumitem}\n"
+    "\\usepackage{amsmath}\n"
+    "\\usepackage{amsfonts}\n"
+    "\\makeatletter\n"
+    "\\newcommand{\\zz}{\\mathbb{Z}}\n"
+    "\\newcommand{\\rr}{\\mathbb{R}}\n"
+    "\\newcommand{\\cc}{\\mathbb{C}}\n"
+    "\\newcommand{\\qq}{\\mathbb{Q}}\n"
+    "\\newcommand{\\nsum}{\\sum^n_{i=1}}\n"
+    "\\newcommand{\\exc}[1]{$ $\\\\\\noindent\\textbf{Problem #1}}\n"
+    "\\newcommand{\\inpr}[2]{\\langle #1, #2\\rangle}\n"
+    "\\newcommand{\\floor}[1]{\\lfloor #1 \\rfloor}\n"
+    "\\newcommand{\\bmatrix}[1]{\\begin{bmatrix}#1\\end{bmatrix}}\n"
+    "\\newcommand{\\fl}{{\\mathcal L}}\n"
+    "\\newcommand{\\fu}{{\\mathcal U}}\n"
+    "\\usepackage{tikz}\n"
+    "\\title{" str | "Title " "\n"
+    "\\\\ \\large " (setq v1 (skeleton-read "Class:"))  "}\n"
+    "\\author{Ian Wahbe}\n"
+    "\\date{" (setq v2 (skeleton-read "Date:")) "}\n"
+    "\\begin{document}\n"
+    "\\maketitle\n"
+    "$\n"
+    "$\\\\\n"
+    -
+    "\n\n\n\\end{document}"
+    )
+  (message "%s" "LaTex mode was called successfully.")
+  )
+
+
+(use-package wc-mode
+  :ensure t
+  :hook ((LaTeX-mode ess-mode) . wc-mode)
+  :config
+  (wc-mode 1)
+  )
+
+(use-package electric-operator
+  :ensure t
+  :hook ((ess-mode LaTeX-mode) . electric-operator-mode)
+  :config
+  ;(add-hook 'ess-r-mode-hook #'electric-operator-mode)
+  )
+
 
 
 
 ;;calls the mode-hooks that do most of the heavy lifting
 (add-to-list 'load-path "~/Google Drive/Bin/EmacsInit") ;this is not a permanent solution
-(add-hook 'prog-mode-hook (lambda () (prog-mode-stuff)))           ;General Code changes
-(add-hook 'python-mode-hook (lambda () (load "pythonInit.el")))       ;python
-(add-hook 'emacs-lisp-mode-hook (lambda () (load "eLispInit.el")))    ;elisp
-(add-hook 'lisp-mode-hook (lambda () (load "lispInit.el")))           ;lisp
-(add-hook 'rust-mode-hook (lambda () (load "rustInit.el")))           ;rust
-
-
-;;This is for text pages
-(add-hook 'text-mode-hook (lambda () (load "textInit.el")))  ;called for everything in the category
-(add-hook 'LaTeX-mode-hook (lambda () (load "latexInit.el")))         ;latex
-(add-hook 'markdown-mode-hook (lambda () (load "markdownInit.el")))   ;markdown
+;(add-hook 'text-mode-hook (lambda () (my-text-mode)))
+;(add-hook 'prog-mode-hook (lambda () (my-prog-mode)))
