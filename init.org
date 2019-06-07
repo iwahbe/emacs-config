@@ -1,117 +1,147 @@
 We hold the entire init file in Org mode to allow increased comments, along with better organization.
-
+  
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that use-package is installed
 #+NAME: Package install stuff
 #+BEGIN_SRC emacs-lisp
+  ;;;-*- lexical-binding: t -*-
   (require 'package)
   (setq package-archives '(("elpa" . "http://tromey.com/elpa/")
-			   ("gnu" . "http://elpa.gnu.org/packages/")
-			   ("melpa" . "https://melpa.org/packages/")
-			   ))
+                           ("gnu" . "http://elpa.gnu.org/packages/")
+                           ("melpa" . "https://melpa.org/packages/")
+                           ))
   (package-initialize)
   (when (not package-archive-contents)
-		(package-refresh-contents))
+                        (package-refresh-contents))
   (unless (package--user-selected-p 'use-package)
-		(package-install 'use-package)
-		)
-  (require 'use-package)
+                        (package-install 'use-package)
+                        )
+  (eval-and-compile
+        (require 'use-package))
 #+END_SRC 
+
+We set the custom package to it's own file, instead of polluting our.
+#+NAME: General file manegment
+#+BEGIN_SRC emacs-lisp
+  (setq custom-file (expand-file-name (concat user-emacs-directory "custom.el")))
+  (unless (file-exists-p custom-file)
+	(write-region "" "" custom-file))
+  (load custom-file)
+#+END_SRC
 
 We apply the dracula theme.
 We setup preferences for the mode-line:
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar
 #+NAME: universal: cosmetics
 #+BEGIN_SRC emacs-lisp
+  (eval-when-compile
+	(require 'dracula-theme)
+	(require 'smart-mode-line)
+	)
   (use-package dracula-theme
-					:ensure t
-					:config
-					(load-theme 'dracula t) ;the 't' forces a load without asking
-					)
+	:ensure t
+	:config
+	(load-theme 'dracula t) ;the 't' forces a load without asking
+	)
   (setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
   (display-time-mode 1); does not change in real time, so all settings must be assigned before
   (display-battery-mode 1)
 
   (use-package smart-mode-line
-		:ensure t
-		:defer t
-		;;:hook (after-init . sml/setup)
-		:config
-		(setq sml/no-confirm-load-theme t)
-		(setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
-		(defface sml/charging ;this is much easier to see
+	:ensure t
+	:hook (after-init . sml/setup)
+	:config
+	(setq sml/no-confirm-load-theme t)
+	(setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
+	(defface sml/charging ;this is much easier to see
 	  '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
-		(add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
-		(add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
-		(sml/setup)
-		)
+	(add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
+	(add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
+	)
   (menu-bar-mode 0) ;disables menu bar
 #+END_SRC
 
 
-
+ 
 Creates a set of universal functions that are called by varios major modes
+We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode again
 #+NAME: universal: functions
 #+BEGIN_SRC emacs-lisp
+  (eval-when-compile
+		(require 'define-word)
+		)
+  (setq my-prog-mode-called nil)
   (defun my-prog-mode ()
-    (setq display-line-numbers t)
-    (line-number-mode 0)
-    (if (version<= "26.0.50" emacs-version) 
-	(global-display-line-numbers-mode 1) ; displays line numbers on the left
-      (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
-      )
-    (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
-    (eldoc-mode 1)
-    (setq company-minimum-prefix-length 1) ;we want an active company for programming, as there are many variable names, and memory is hard
-    (setq font-lock-maximum-decoration t) ;lots of syntax highlighting
-    (subword-mode t)
-    (message "%s" "(my-prog-mode) was called successfully.")
-    )
+	(when (equal my-prog-mode-called nil)
+	  (setq display-line-numbers t)
+	  (line-number-mode 0)
+	  (if (version<= "26.0.50" emacs-version) 
+	  (global-display-line-numbers-mode 1) ; displays line numbers on the left
+		(linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
+		)
+	  (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
+	  (eldoc-mode 1)
+	  (setq company-minimum-prefix-length 1) ;we want an active company for programming, as there are many variable names, and memory is hard
+	  (setq font-lock-maximum-decoration t) ;lots of syntax highlighting
+	  (subword-mode t)
+	  (setq my-prog-mode-called t)
+	  (message "%s" "(my-prog-mode) was called successfully.")
+	  ))
+  (defun call-my-prog-mode ()
+	(interactive)
+	(setq my-prog-mode-called nil)
+	(my-prog-mode)
+	)
 
   (defun my-text-mode ()
-    (wc-mode 1)               ; provides a word count
-    (flyspell-mode 1)         ; recognizes misspellings
-    (visual-line-mode 1)      ; we want the words to wrap
-    (setq tab-width 4)
-
-    (use-package define-word
-      :ensure t
-      :config
-      (global-set-key (kbd "C-c d") 'define-word-at-point)
-      (global-set-key (kbd "C-c D") 'define-word)
-      )
-    (message "%s" "(my-text-mode) was called successfully.")
-    )
+	(wc-mode 1)               ; provides a word count
+	(flyspell-mode 1)         ; recognizes misspellings
+	(visual-line-mode 1)      ; we want the words to wrap
+	(setq tab-width 4)
+  
+	(use-package define-word
+	  :ensure t
+	  :config
+	  (global-set-key (kbd "C-c d") 'define-word-at-point)
+	  (global-set-key (kbd "C-c D") 'define-word)
+	  )
+	(message "%s" "(my-text-mode) was called successfully.")
+	)
 #+END_SRC
 
 
 There is a collection of minor modes that trigger after other major modes load.
 #+NAME: universal: minor-modes
 #+BEGIN_SRC emacs-lisp
+  (eval-when-compile
+	(require 'company-math)
+	(require 'wc-mode)
+	(require 'electric-operator)
+	)
+
   ;;;Company-math provides auto-complete for math symbols
   (use-package company-math
-    :ensure t
-    :after (auctex markdown)
-    :config
-    (add-to-list 'company-backends 'company-math)
-    (company-mode 1)
-    (setq company-minimum-prefix-length 1)
-    )
+	:ensure t
+	:after (auctex markdown)
+	:config
+	(add-to-list 'company-backends 'company-math)
+	(company-mode 1)
+	(setq company-minimum-prefix-length 1)
+	)
 
   ;;;Word-count gives a total and diffrenced word count in the mode line
   (use-package wc-mode
-    :ensure t
-    :hook ((LaTeX-mode ess-mode) . wc-mode)
-    :config
-    (wc-mode 1)
-    )
+	:ensure t
+	:hook ((LaTeX-mode ess-mode) . wc-mode)
+	:config
+	(wc-mode 1)
+	)
 
   ;;;electric-operator adds spaces before and after opperator symbols
   (use-package electric-operator
-    :ensure t
-    :hook ((ess-mode LaTeX-mode) . electric-operator-mode)
-    :config
-    ;(add-hook 'ess-r-mode-hook #'electric-operator-mode)
-    )
+	:ensure t
+	:hook ((ess-mode LaTeX-mode) . electric-operator-mode)
+	:config
+	)
 #+END_SRC
 
 
@@ -144,37 +174,46 @@ vlf stands for very large files and assists emacs with handling large files
 FIXME: Im not sure is vlf is configured correctly
 #+NAME: general file and navigation
 #+BEGIN_SRC emacs-lisp
+  (eval-when-compile
+		(require 'ido)
+		(require 'vlf)
+		)
   (use-package ido
-    :ensure t
-    :config
-    (ido-mode t)
-    )
+		:ensure t
+		:config
+		(ido-mode t)
+		)
   (setq read-file-name-completion-ignore-case nil)
   (use-package vlf
-    :ensure t
-    :config
-    (require 'vlf-setup)
-    (custom-set-variables
-     '(vlf-application 'dont-ask))
-    )
+		:ensure t
+		:config
+		(require 'vlf-setup)
+		(custom-set-variables
+		 '(vlf-application 'dont-ask))
+		)
 #+END_SRC
 
 Org mode provides a function text mode, so we give it many text mode type things
 It overwrites \C-j, so we reassign that for the millionth time
 #+NAME: Org-mode
 #+BEGIN_SRC emacs-lisp
+  (eval-when-compile
+	(require 'org)
+	)
   (defun my-org-mode()
+	(when (equal (buffer-file-name)
+			 (expand-file-name (concat user-emacs-directory "init.org")))
+	  (my-prog-mode))
 	(local-set-key "\C-j" 'backward-word)
 	(my-text-mode)
-	(my-prog-mode)
 	(setq org-src-fontify-natively t)
 	(setq org-src-tab-acts-natively t)
 	(setq org-confirm-babel-evaluate nil)
+	(setq org-src-preserve-indentation t)
 	(message "%s" "Org mode called successfully.")
 	)
   (add-hook 'org-mode-hook (lambda () (my-org-mode)))
 #+END_SRC
-
 
 This is know to not work. FIXME
 #+NAME: universal: backups
@@ -188,77 +227,87 @@ This is know to not work. FIXME
 Company is used for auto-completions. In the spirit of emacs, it can be customized for almost any language, but those customizations are module specific. Here, we only call the main version.
 #+NAME: universal: company
 #+BEGIN_SRC emacs-lisp
-(use-package company
-  :ensure t
-  :config
-  (global-company-mode t)
-  (setq company-idle-delay 0) ; this makes company respond in real time (no delay)
-  (setq company-dabbrev-downcase 0) ; this makes it so company correctly gives cases
-  )
+  (eval-when-compile
+	(require 'company)
+	)
+  (use-package company
+	:ensure t
+	:config
+	(global-company-mode t)
+	(setq company-idle-delay 0) ; this makes company respond in real time (no delay)
+	(setq company-dabbrev-downcase 0) ; this makes it so company correctly gives cases
+	)
 #+END_SRC
 
 ESS or Emacs Speaks Statistics is a major mode that I use to handle R. It could be extended to handle other S type stat languages in the future. 
 #+NAME: Emacs Speaks Statistics
 #+BEGIN_SRC emacs-lisp
+  (eval-when-compile
+	(require 'ess)
+	)
   (use-package ess
-    :mode (("\\.r\\'" . ess-r-mode)
+	:mode (("\\.r\\'" . ess-r-mode)
 	   ("\\.R\\'" . ess-r-mode))  
-    :ensure t
-    :init
-    (require 'ess-site)
-    :config
-    (setq inferior-ess-r-program "/usr/local/bin/R")
-    ;; We assume the ability to generate graphs using a WindowsX(QuartsX) program.
-    (setq ess-dialect "R")
-    (setq ess-ask-for-ess-directory nil) ; directory defaults to whatever ess-directory-function returns
-    (setq ess-directory-function nil) ; directory defaults to ess-directory
-    (setq ess-directory nil) ; directory defaults to the directory of the opened file
-    )
-
+	:ensure t
+	:init
+	(require 'ess-site)
+	:config
+	(setq inferior-ess-r-program "/usr/local/bin/R")
+	;; We assume the ability to generate graphs using a WindowsX(QuartsX) program.
+	(setq ess-dialect "R")
+	(setq ess-ask-for-ess-directory nil) ; directory defaults to whatever ess-directory-function returns
+	(setq ess-directory-function nil) ; directory defaults to ess-directory
+	(setq ess-directory nil) ; directory defaults to the directory of the opened file
+	(add-hook 'inferior-ess-mode  'ess-execute-screen-options)
+	)
 #+END_SRC
 
 I assign markdown to the appropriate extensions, and enable math-mode and wc-mode.
 #+NAME: Markdown
 #+BEGIN_SRC emacs-lisp
+  (eval-when-compile
+	(require 'markdown-mode)
+	)
   (use-package markdown-mode
-    :ensure t
-    :commands (markdown-mode gfm-mode)
-    :mode (("README\\.md\\'" . gfm-mode)
+		:ensure t
+		:commands (markdown-mode gfm-mode)
+		:mode (("README\\.md\\'" . gfm-mode)
 	   ("\\.md\\'" . markdown-mode)
 	   ("\\.markdown\\'" . markdown-mode))
-    :init
-    (setq markdown-command "multimarkdown")
-    (setq markdown-enable-math t)
-    :config
-    (visual-line-mode 1)
-    )
+		:init
+		(setq markdown-command "multimarkdown")
+		(setq markdown-enable-math t)
+		:config
+		(visual-line-mode 1)
+		)
 #+END_SRC
 
 I use slime as my lisp and elisp editor
 FIXME: there must be a better way to config this than slime for both elisp and lisp
 #+NAME: elisp and lisp
 #+BEGIN_SRC emacs-lisp
-  (use-package slime 
+(eval-when-compile
+  (require 'slime)
+  (require 'slime-company)
+  )
+(use-package slime
+  :ensure t
+  :mode (;;("\\.el\\'" . emacs-lisp-mode) 
+	 ("\\.lisp\\'" . lisp-mode))
+  :bind
+  ("C-c q" . comment-or-uncomment-region)
+  :init
+  (my-prog-mode)
+  ;;(setq inferior-lisp-program "/usr/local/bin/clisp") 
+  :config
+  (slime-mode 1)
+  (use-package slime-company
     :ensure t
-    :mode (("\\.el\\'" . emacs-lisp-mode)
-	   ("\\.lisp\\'" . lisp-mode))
-    :init
-    (my-prog-mode)
-    :bind
-    ("C-c q" . comment-or-uncomment-region)
-    :init
-    (setq inferior-lisp-program "/usr/local/bin/clisp")
-    :config
-    (slime-mode 1)
-    (slime-setup)
-    (use-package slime-company
-      :ensure t
-      :config
-      (slime-setup '(slime-fancy slime-company))
-      )
-    (slime)
-    (message "%s" "slime package loaded")
     )
+  (slime-setup '(slime-fancy slime-company))
+  (slime)
+  (message "%s" "slime package loaded")
+  )
 #+END_SRC
 
 Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
@@ -301,142 +350,140 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
 Setup elpy to provide auto-complete, highlighting, indent guides, along with an inferior shell
 #+NAME: Python (elpy) configuration
 #+BEGIN_SRC emacs-lisp
-  (use-package elpy
-    :mode ("\\.py\\'" . python-mode)
-    :hook (python-mode . elpy-mode)
+(eval-when-compile
+  (require 'elpy)
+  (require 'highlight-indent-guides)
+  (require 'pyenv-mode)
+  )
+(use-package elpy
+  :mode ("\\.py\\'" . python-mode)
+  :hook (python-mode . elpy-mode)
+  :ensure t
+  :bind
+  ("C-c q" . comment-or-uncomment-region)
+  ("M-]" . elpy-nav-indent-shift-right)
+  ("M-[" . elpy-nav-indent-shift-left)
+  :config
+  (elpy-enable)
+  (setq elpy-rpc-backend "company")
+  (add-hook 'before-save-hook (lambda () (elpy-format-code)))
+  (use-package highlight-indent-guides
+    :ensure t
+    :config
+    (highlight-indentation-mode 0)
+    (setq highlight-indent-guides-method 'column); could be "character", "fill", "column"
+    (setq highlight-indent-guides-character ?\|) ;sets character of the highlight, if in character mode
+    (setq highlight-indent-guides-responsive nil); options: 'top, 'stack, this dictates if and how it responds to the cursor position
+    (setq highlight-indent-guides-delay 0); respond immediately to the cursor
+    (setq highlight-indent-guides-auto-enabled nil) ;this means that I can set colors, t means that it will guess based on theme
+    (set-face-background 'highlight-indent-guides-odd-face "darkcyan")
+    (set-face-background 'highlight-indent-guides-even-face "darkcyan")
+    (set-face-foreground 'highlight-indent-guides-character-face "dimgrey")
+    (highlight-indent-guides-mode 1); turn on mode
+    )
+  (setq indent-tabs-mode nil)
+  (setq elpy-rpc-python-command "python3")
+  (elpy-rpc-restart)
+  (defun set-shell-python3 ()
+    (interactive)
+    (setq python-shell-interpreter "python3")
+    (setq python-shell-interpreter-args "-i")
+    (with-eval-after-load 'python
+      ;;This makes readline work in the interpreter
+      (defun python-shell-completion-native-try ()
+	"Return non-nil if can trigger native completion."
+	(let ((python-shell-completion-native-enable t)
+	      (python-shell-completion-native-output-timeout
+	       python-shell-completion-native-try-output-timeout))
+	  (python-shell-completion-native-get-completions
+	   (get-buffer-process (current-buffer))
+	   nil "_"))))
+    )
+  (set-shell-python3)
+  (defun set-shell-ipython ()
+    (interactive)
+    (setq python-shell-interpreter "ipython")
+    (setq python-shell-interpreter-args "--simple-prompt -i")
+    )
+  (use-package pyenv-mode
     :ensure t
     :init
-    :bind
-    ("C-c q" . comment-or-uncomment-region)
-    ("M-]" . elpy-nav-indent-shift-right)
-    ("M-[" . elpy-nav-indent-shift-left)
+    (setenv "WORKON_HOME" "~/.pyenv/versions/")
     :config
-    (elpy-enable)
-    (setq elpy-rpc-backend "company")
-    (add-hook 'before-save-hook (lambda () (elpy-format-code)))
-    (use-package highlight-indent-guides
-      :ensure t
-      :config
-      (highlight-indentation-mode 0)
-      (setq highlight-indent-guides-method 'column); could be "character", "fill", "column"
-      (setq highlight-indent-guides-character ?\|) ;sets character of the highlight, if in character mode
-      (setq highlight-indent-guides-responsive nil); options: 'top, 'stack, this dictates if and how it responds to the cursor position
-      (setq highlight-indent-guides-delay 0); respond immediately to the cursor
-      (setq highlight-indent-guides-auto-enabled nil) ;this means that I can set colors, t means that it will guess based on theme
-      (set-face-background 'highlight-indent-guides-odd-face "darkcyan")
-      (set-face-background 'highlight-indent-guides-even-face "darkcyan")
-      (set-face-foreground 'highlight-indent-guides-character-face "dimgrey")
-      (highlight-indent-guides-mode 1); turn on mode
-      )
-    (setq indent-tabs-mode nil)
-    (setq elpy-rpc-python-command "python3")
-    (elpy-rpc-restart)
-    (defun set-shell-python3 ()
-      (interactive)
-      (setq python-shell-interpreter "python3")
-      (setq python-shell-interpreter-args "-i")
-      (with-eval-after-load 'python
-	;;This makes readline work in the interpreter
-	(defun python-shell-completion-native-try ()
-	  "Return non-nil if can trigger native completion."
-	  (let ((python-shell-completion-native-enable t)
-		(python-shell-completion-native-output-timeout
-		 python-shell-completion-native-try-output-timeout))
-	    (python-shell-completion-native-get-completions
-	     (get-buffer-process (current-buffer))
-	     nil "_"))))
-      )
-    (set-shell-python3)
-    (defun set-shell-ipython ()
-      (interactive)
-      (setq python-shell-interpreter "ipython")
-      (setq python-shell-interpreter-args "--simple-prompt -i")
-      )
-    (use-package pyenv-mode
-      :ensure t
-      :init
-      (setenv "WORKON_HOME" "~/.pyenv/versions/")
-      :config
-      (add-to-list 'exc-path "~/.pyenv/shims")
-      (pyenv-mode)
-      :bind
-      ("C-x p e" . pyenv-activate-current-project)
-      )
-    (message "%s" "Python mode was called successfully.")
+    (pyenv-mode)
+    :bind
+    ("C-x p e" . pyenv-activate-current-project)
     )
+  (message "%s" "Python mode was called successfully.")
+  )
 #+END_SRC
 
 sets up latex support along with a collection of skeletons for latex
 #+NAME: latex
 #+BEGIN_SRC emacs-lisp
+  (eval-when-compile
+	(require 'tex)
+	)
   (use-package tex
-    :defer t
-    :ensure auctex
-    :config
-    (setq TeX-auto-save t)
-    (setq TeX-parse-self t)
-    (local-set-key "\C-j" 'backward-word)
-    (add-hook 'latex-mode-hook (lambda () (display-line-numbers--turn-on)))
-    (ispell-minor-mode)
-    (visual-line-mode)
-    (define-skeleton skeleton-math-letter
-      "Inserts a latex Letter Outline into the buffer"
-      "Title: "
-      "\\documentclass[11pt, oneside]{article}\n"
-      "\\usepackage{geometry}\n"
-      "\\geometry{letterpaper}\n"
-      "\\usepackage{graphicx}\n"
-      "\\usepackage{amssymb}\n"
-      "\\usepackage{enumitem}\n"
-      "\\usepackage{amsmath}\n"
-      "\\usepackage{amsfonts}\n"
-      "\\makeatletter\n"
-      "\\newcommand{\\zz}{\\mathbb{Z}}\n"
-      "\\newcommand{\\rr}{\\mathbb{R}}\n"
-      "\\newcommand{\\cc}{\\mathbb{C}}\n"
-      "\\newcommand{\\qq}{\\mathbb{Q}}\n"
-      "\\newcommand{\\nsum}{\\sum^n_{i=1}}\n"
-      "\\newcommand{\\exc}[1]{$ $\\\\\\noindent\\textbf{Problem #1}}\n"
-      "\\newcommand{\\inpr}[2]{\\langle #1, #2\\rangle}\n"
-      "\\newcommand{\\floor}[1]{\\lfloor #1 \\rfloor}\n"
-      "\\newcommand{\\bmatrix}[1]{\\begin{bmatrix}#1\\end{bmatrix}}\n"
-      "\\newcommand{\\fl}{{\\mathcal L}}\n"
-      "\\newcommand{\\fu}{{\\mathcal U}}\n"
-      "\\usepackage{tikz}\n"
-      "\\title{" str | "Title " "\n"
-      "\\\\ \\large " (setq v1 (skeleton-read "Class:"))  "}\n"
-      "\\author{Ian Wahbe}\n"
-      "\\date{" (setq v2 (skeleton-read "Date:")) "}\n"
-      "\\begin{document}\n"
-      "\\maketitle\n"
-      "$\n"
-      "$\\\\\n"
-      -
-      "\n\n\n\\end{document}"
-      )
-    (message "%s" "LaTex mode was called successfully.")
-    )
+	:defer t
+	:ensure auctex
+	:config
+	(setq TeX-auto-save t)
+	(setq TeX-parse-self t)
+	(local-set-key "\C-j" 'backward-word)
+	(add-hook 'latex-mode-hook (lambda () (display-line-numbers--turn-on)))
+	(ispell-minor-mode)
+	(visual-line-mode)
+	(define-skeleton skeleton-math-letter
+	  "Inserts a latex Letter Outline into the buffer"
+	  "Title: "
+	  "\\documentclass[11pt, oneside]{article}\n"
+	  "\\usepackage{geometry}\n"
+	  "\\geometry{letterpaper}\n"
+	  "\\usepackage{graphicx}\n"
+	  "\\usepackage{amssymb}\n"
+	  "\\usepackage{enumitem}\n"
+	  "\\usepackage{amsmath}\n"
+	  "\\usepackage{amsfonts}\n"
+	  "\\makeatletter\n"
+	  "\\newcommand{\\zz}{\\mathbb{Z}}\n"
+	  "\\newcommand{\\rr}{\\mathbb{R}}\n"
+	  "\\newcommand{\\cc}{\\mathbb{C}}\n"
+	  "\\newcommand{\\qq}{\\mathbb{Q}}\n"
+	  "\\newcommand{\\nsum}{\\sum^n_{i=1}}\n"
+	  "\\newcommand{\\exc}[1]{$ $\\\\\\noindent\\textbf{Problem #1}}\n"
+	  "\\newcommand{\\inpr}[2]{\\langle #1, #2\\rangle}\n"
+	  "\\newcommand{\\floor}[1]{\\lfloor #1 \\rfloor}\n"
+	  "\\newcommand{\\bmatrix}[1]{\\begin{bmatrix}#1\\end{bmatrix}}\n"
+	  "\\newcommand{\\fl}{{\\mathcal L}}\n"
+	  "\\newcommand{\\fu}{{\\mathcal U}}\n"
+	  "\\usepackage{tikz}\n"
+	  "\\title{" str | "Title " "\n"
+	  "\\\\ \\large " (setq v1 (skeleton-read "Class:"))  "}\n"
+	  "\\author{Ian Wahbe}\n"
+	  "\\date{" (setq v2 (skeleton-read "Date:")) "}\n"
+	  "\\begin{document}\n"
+	  "\\maketitle\n"
+	  "$\n"
+	  "$\\\\\n"
+	  -
+	  "\n\n\n\\end{document}"
+	  )
+	(message "%s" "LaTex mode was called successfully.")
+	)
 #+END_SRC 
-
-
+ 
 We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed
 #+NAME: init.org to byte
 #+BEGIN_SRC emacs-lisp
-  (defun tangle-init ()
-			"If the current buffer is 'init.org' the code-blocks are
-  tangled, and the tangled file is compiled."
-			(when (equal (buffer-file-name)
-						 (expand-file-name (concat user-emacs-directory "init.org")))
+  (defun tangle-init-call ()
+		(when (equal (buffer-file-name)
+				 (expand-file-name (concat user-emacs-directory "init.org")))
 	  ;; Avoid running hooks when tangling.
 	  (let ((prog-mode-hook nil))
-	    (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
-				(byte-compile-file (concat user-emacs-directory "init.el")))))
-
-  (add-hook 'after-save-hook 'tangle-init)
-#+END_SRC 
-
-#+RESULTS: init.org to byte
-| tangle-init | rmail-after-save-hook |
-  
- 
-
+			(org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
+			(byte-compile-file (concat user-emacs-directory "init.el")))
+	  )
+		)
+  (add-hook 'after-save-hook 'tangle-init-call)
+#+END_SRC
