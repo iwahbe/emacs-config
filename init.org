@@ -1,6 +1,6 @@
 We hold the entire init file in Org mode to allow increased comments, along with better organization.
 This is connected to a github page.
-
+  
 First Steps
 #+BEGIN_SRC emacs-lisp
 ;; Turn off mouse interface early in startup to avoid momentary display
@@ -91,7 +91,7 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
     (subword-mode t)
     (setq my-prog-mode-called t)
     (message "%s" (concat
-		   "(my-prog-mode) was called successfully on major mode: "
+		   "my-prog-mode was called successfully on major mode: "
 		   (symbol-name major-mode)))
     ))
 (defun call-my-prog-mode ()
@@ -112,7 +112,7 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
     (global-set-key (kbd "C-c d") 'define-word-at-point)
     (global-set-key (kbd "C-c D") 'define-word)
     )
-  (message "%s" "(my-text-mode) was called successfully.")
+  (message "%s" "my-text-mode was called successfully.")
   )
 #+END_SRC
 
@@ -199,7 +199,8 @@ It overwrites \C-j, so we reassign that for the millionth time
 (defun my-org-mode()
   (when (equal (buffer-file-name)
 	       (expand-file-name (concat user-emacs-directory "init.org")))
-    (my-prog-mode))
+    (my-prog-mode)
+    )
   (local-set-key "\C-j" 'backward-word)
   (my-text-mode)
   (setq org-src-fontify-natively t)
@@ -222,7 +223,7 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
 #+NAME: universal: backups
 #+BEGIN_SRC emacs-lisp
 ;; sets autosaves to one folder
-;FIXME - do what is expected
+(setq auto-save-list-file-prefix (concat user-emacs-directory "autosaves"))
  
 ;; Write backup files to own directory
 (setq backup-directory-alist
@@ -290,21 +291,23 @@ FIXME: there must be a better way to config this than slime for both elisp and l
   :after (slime)
   :ensure t
   )
-
+ 
 (use-package slime
-  :ensure t
+  :defer t
+  :ensure t 
   :mode (;;("\\.el\\'" . emacs-lisp-mode) ;;FIXME
-	 ("\\.lisp\\'" . lisp-mode))
+  	 ("\\.lisp\\'" . lisp-mode))
   :bind
   ("C-c q" . comment-or-uncomment-region)
-  :init
-  (my-prog-mode)
-  ;;(setq inferior-lisp-program "/usr/local/bin/clisp") ;;FIXME
   :config
+  ;; The check prevents setting a new editor at compile time
+  (if (string-suffix-p ".lisp" buffer-file-name)
+      (setq inferior-lisp-program "/usr/local/bin/clisp")) ;;FIXME
+  (my-prog-mode)
   (slime-mode 1)
   (slime-setup '(slime-fancy slime-company))
   (slime)
-  (message (concat "%s" "slime package loaded. " (symbol-name major-mode)))
+  (message "%s"  (concat "slime package loaded on major-mode: " (symbol-name major-mode)))
   )
 #+END_SRC
 
@@ -423,7 +426,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   ("M-]" . elpy-nav-indent-shift-right)
   ("M-[" . elpy-nav-indent-shift-left)
   :config
-  (my-prog-mode)
+  ;;(my-prog-mode)
   (add-hook 'before-save-hook (lambda () (elpy-format-code)))
   (elpy-enable)
   (setq elpy-rpc-backend "company")
@@ -441,13 +444,13 @@ Sets up latex support along with a collection of skeletons for latex
 #+BEGIN_SRC emacs-lisp
 (use-package tex
   :defer t
-  :mode (("\\.tex\\'" . latex-mode))
+  :mode ("\\.tex\\'" . latex-mode)
   :ensure auctex
   :config
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
   (local-set-key "\C-j" 'backward-word)
-  (add-hook 'latex-mode-hook (lambda () (display-line-numbers--turn-on)))
+  (add-hook 'LaTeX-mode-hook (lambda () (display-line-numbers-mode)))
   (ispell-minor-mode)
   (visual-line-mode)
   (define-skeleton skeleton-math-letter
@@ -485,7 +488,7 @@ Sets up latex support along with a collection of skeletons for latex
     -
     "\n\n\n\\end{document}"
     )
-  (message "%s" (concat "LaTex mode was called successfully. major-mode: "
+  (message "%s" (concat "LaTeX mode was called successfully on major-mode: "
 			(symbol-name major-mode)))
   )
 #+END_SRC 
