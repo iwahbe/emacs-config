@@ -334,7 +334,7 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
   (setq company-racer-executable "racer")
   (unless (getenv "RUST_SRC_PATH") ; should construct this path in elisp, then it would be absolute, but also adjustable
     (setenv "RUST_SRC_PATH" (expand-file-name ; this path must be absolute
-			     "/Users/ianwahbe/.rustup/toolchains/nightly-x86_64-apple-darwin/lib/rustlib/src/rust/src")))
+			     "~/.rustup/toolchains/nightly-x86_64-apple-darwin/lib/rustlib/src/rust/src")))
   :config
   (add-to-list 'company-backends 'company-racer)
   )
@@ -347,6 +347,7 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
   ("C-c q" . comment-or-uncomment-region)
   :config
   (setq rust-format-on-save t)
+  (message "%s" "Rust mode was called successfully")
   )
 #+END_SRC
 
@@ -427,11 +428,12 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   )
 #+END_SRC
 
-sets up latex support along with a collection of skeletons for latex
+Sets up latex support along with a collection of skeletons for latex
 #+NAME: latex
 #+BEGIN_SRC emacs-lisp
 (use-package tex
-  :mode (("\\.tex'" . latex-mode))
+  :mode (("\\.tex\\'" . latex-mode))
+  :defer t
   :ensure auctex
   :config
   (setq TeX-auto-save t)
