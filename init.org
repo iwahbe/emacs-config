@@ -46,11 +46,6 @@ We setup preferences for the mode-line:
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar
 #+NAME: universal: cosmetics
 #+BEGIN_SRC emacs-lisp
-(use-package dracula-theme
-  :ensure t
-  :config
-  (load-theme 'dracula t) ;the 't' forces a load without asking
-  )
 (setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
 (display-time-mode 1); does not change in real time, so all settings must be assigned before
 (display-battery-mode 1)
@@ -65,6 +60,12 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
     '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
   (add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
   (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
+  )
+
+(use-package dracula-theme
+  :ensure t
+  :config
+  (load-theme 'dracula t) ;the 't' forces a load without asking
   )
 #+END_SRC
 
@@ -89,7 +90,9 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
     (setq font-lock-maximum-decoration t) ;lots of syntax highlighting
     (subword-mode t)
     (setq my-prog-mode-called t)
-    (message "%s" "(my-prog-mode) was called successfully.")
+    (message "%s" (concat
+		   "(my-prog-mode) was called successfully on major mode: "
+		   (symbol-name major-mode)))
     ))
 (defun call-my-prog-mode ()
   (interactive)
@@ -283,6 +286,11 @@ I use slime as my lisp and elisp editor
 FIXME: there must be a better way to config this than slime for both elisp and lisp
 #+NAME: elisp and lisp
 #+BEGIN_SRC emacs-lisp
+(use-package slime-company
+  :after (slime)
+  :ensure t
+  )
+
 (use-package slime
   :ensure t
   :mode (;;("\\.el\\'" . emacs-lisp-mode) ;;FIXME
@@ -294,12 +302,9 @@ FIXME: there must be a better way to config this than slime for both elisp and l
   ;;(setq inferior-lisp-program "/usr/local/bin/clisp") ;;FIXME
   :config
   (slime-mode 1)
-  (use-package slime-company
-    :ensure t
-    )
   (slime-setup '(slime-fancy slime-company))
   (slime)
-  (message "%s" "slime package loaded")
+  (message (concat "%s" "slime package loaded. " (symbol-name major-mode)))
   )
 #+END_SRC
 
@@ -409,22 +414,25 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 
 ;;; Main Package
 (use-package elpy
+  :defer t
   :mode ("\\.py\\'" . python-mode)
-  :hook ((python-mode . elpy-mode)
-	 (before-save . elpy-format-code))
+  :hook ((python-mode . elpy-mode))
   :ensure t
   :bind
   ("C-c q" . comment-or-uncomment-region)
   ("M-]" . elpy-nav-indent-shift-right)
   ("M-[" . elpy-nav-indent-shift-left)
   :config
+  (my-prog-mode)
+  (add-hook 'before-save-hook (lambda () (elpy-format-code)))
   (elpy-enable)
   (setq elpy-rpc-backend "company")
   (setq indent-tabs-mode nil)
   (setq elpy-rpc-python-command "python3")
   (elpy-rpc-restart)
   (set-shell-python3)
-  (message "%s" "Python mode was called successfully.")
+  (message "%s" (concat "Python mode was called successfully. major-mode: "
+			(symbol-name major-mode)))
   )
 #+END_SRC
 
@@ -432,8 +440,8 @@ Sets up latex support along with a collection of skeletons for latex
 #+NAME: latex
 #+BEGIN_SRC emacs-lisp
 (use-package tex
-  :mode (("\\.tex\\'" . latex-mode))
   :defer t
+  :mode (("\\.tex\\'" . latex-mode))
   :ensure auctex
   :config
   (setq TeX-auto-save t)
@@ -477,7 +485,8 @@ Sets up latex support along with a collection of skeletons for latex
     -
     "\n\n\n\\end{document}"
     )
-  (message "%s" "LaTex mode was called successfully.")
+  (message "%s" (concat "LaTex mode was called successfully. major-mode: "
+			(symbol-name major-mode)))
   )
 #+END_SRC 
  
