@@ -442,16 +442,12 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 Sets up latex support along with a collection of skeletons for latex
 #+NAME: latex
 #+BEGIN_SRC emacs-lisp
-(use-package tex
-  :defer t
-  :mode ("\\.tex\\'" . latex-mode)
-  :ensure auctex
-  :config
+(defun latex-config ()
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
   (local-set-key "\C-j" 'backward-word)
-  (add-hook 'LaTeX-mode-hook (lambda () (display-line-numbers-mode)))
-  (ispell-minor-mode)
+  (display-line-numbers-mode)
+  (visual-line-mode)
   (visual-line-mode)
   (define-skeleton skeleton-math-letter
     "Inserts a latex Letter Outline into the buffer"
@@ -488,8 +484,13 @@ Sets up latex support along with a collection of skeletons for latex
     -
     "\n\n\n\\end{document}"
     )
-  (message "%s" (concat "LaTeX mode was called successfully on major-mode: "
-			(symbol-name major-mode)))
+  (message "%s" "LaTeX-mode has been loaded successfully")
+  )
+(use-package tex
+  :defer t
+  :mode ("\\.tex\\'" . LaTeX-mode)
+  :hook (LaTeX-mode . latex-config)
+  :ensure auctex
   )
 #+END_SRC 
  
@@ -502,7 +503,9 @@ We want init.org to have special behavior, specifically we want init.org to tang
     ;; Avoid running hooks when tangling.
     (let ((prog-mode-hook nil))
       (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
-      (byte-compile-file (concat user-emacs-directory "init.el")))
+      ;; uncomment to byte compile init.el on save
+      ;;(byte-compile-file (concat user-emacs-directory "init.el"))
+      )
     )
   )
 (add-hook 'after-save-hook 'tangle-init-call)
