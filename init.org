@@ -1,4 +1,5 @@
 We hold the entire init file in Org mode to allow increased comments, along with better organization.
+This is connected to a github page.
 
 First Steps
 #+BEGIN_SRC emacs-lisp
