@@ -2,7 +2,7 @@ We hold the entire init file in Org mode to allow increased comments, along with
 This is connected to a github page.
   
 First Steps
-#+BEGIN_SRC emacs-lisp
+    #+BEGIN_SRC emacs-lisp
 ;; Turn off mouse interface early in startup to avoid momentary display
 (if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
@@ -78,6 +78,7 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
 (setq my-prog-mode-called nil)
 (defun my-prog-mode ()
   (when (equal my-prog-mode-called nil)
+    (global-set-key "\C-c\ q" 'comment-or-uncomment-region)
     (setq display-line-numbers t)
     (line-number-mode 0)
     (if (version<= "26.0.50" emacs-version) 
@@ -297,8 +298,6 @@ FIXME: there must be a better way to config this than slime for both elisp and l
   :ensure t 
   :mode (;;("\\.el\\'" . emacs-lisp-mode) ;;FIXME
   	 ("\\.lisp\\'" . lisp-mode))
-  :bind
-  ("C-c q" . comment-or-uncomment-region)
   :config
   ;; The check prevents setting a new editor at compile time
   (if (string-suffix-p ".lisp" buffer-file-name)
@@ -351,9 +350,8 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
 (use-package rust-mode
   :mode ("\\.rs\\'" . rust-mode)
   :ensure t
-  :bind
-  ("C-c q" . comment-or-uncomment-region)
   :config
+  (my-prog-mode)
   (setq rust-format-on-save t)
   (message "%s" "Rust mode was called successfully")
   )
@@ -370,8 +368,6 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   (setenv "WORKON_HOME" "~/.pyenv/versions/")
   :config
   (pyenv-mode)
-  :bind
-  ("C-x p e" . pyenv-activate-current-project)
   )
 
 ;;; Indentation Guide
@@ -415,18 +411,23 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   (setq python-shell-interpreter-args "--simple-prompt -i")
   )
 
+;;; Elpy specific key bingins
+;; As Elpy does not conform to key-maps, we do it this way :bind does not work
+(defun elpy-key-bindings ()
+  (local-set-key "\M-]" 'elpy-nav-indent-shift-right)
+  (local-set-key "\M-[" 'elpy-nav-indent-shift-left)
+  (local-set-key "C-x p e" 'pyenv-activate-current-project)
+  )
+ 
 ;;; Main Package
 (use-package elpy
   :defer t
   :mode ("\\.py\\'" . python-mode)
   :hook ((python-mode . elpy-mode))
   :ensure t
-  :bind
-  ("C-c q" . comment-or-uncomment-region)
-  ("M-]" . elpy-nav-indent-shift-right)
-  ("M-[" . elpy-nav-indent-shift-left)
   :config
-  ;;(my-prog-mode)
+  (my-prog-mode)
+  (elpy-key-bindings)
   (add-hook 'before-save-hook (lambda () (elpy-format-code)))
   (elpy-enable)
   (setq elpy-rpc-backend "company")
