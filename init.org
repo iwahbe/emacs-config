@@ -173,7 +173,7 @@ FIXME: read above
 (setup-iterm2)
 #+END_SRC
 
-ido provides a great navigation experiance with the find-file command. 
+ido provides a great navigation experience with the find-file command. 
 vlf stands for very large files and assists emacs with handling large files
 FIXME: Im not sure is vlf is configured correctly
 #+NAME: general file and navigation
@@ -476,7 +476,7 @@ Sets up latex support along with a collection of skeletons for latex
     "\\usepackage{tikz}\n"
     "\\title{" str | "Title " "\n"
     "\\\\ \\large " (setq v1 (skeleton-read "Class:"))  "}\n"
-    "\\author{Ian Wahbe}\n"
+    "\\author{" (getenv "DISPLAY_NAME") "}\n"
     "\\date{" (setq v2 (skeleton-read "Date:")) "}\n"
     "\\begin{document}\n"
     "\\maketitle\n"
