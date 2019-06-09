@@ -2,7 +2,7 @@ We hold the entire init file in Org mode to allow increased comments, along with
 This is connected to a github page.
   
 First Steps
-    #+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp
 ;; Turn off mouse interface early in startup to avoid momentary display
 (if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
@@ -10,8 +10,6 @@ First Steps
 ;; No splash screen please ... jeez
 (setq inhibit-startup-message t)
 #+END_SRC
-
-
   
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that use-package is installed
 #+NAME: Package install stuff
@@ -122,7 +120,12 @@ There is a collection of minor modes that trigger after other major modes load.
 #+NAME: universal: minor-modes
 #+BEGIN_SRC emacs-lisp
 
-;;;Company-math provides auto-complete for math symbols
+;; Save point position between sessions
+(require 'saveplace)
+(save-place-mode 1)
+(setq save-place-file (expand-file-name ".places" user-emacs-directory))
+
+;;Company-math provides auto-complete for math symbols
 (use-package company-math
   :ensure t
   :after (auctex markdown)
@@ -132,7 +135,7 @@ There is a collection of minor modes that trigger after other major modes load.
   (setq company-minimum-prefix-length 1)
   )
 
-;;;Word-count gives a total and diffrenced word count in the mode line
+;;Word-count gives a total and diffrenced word count in the mode line
 (use-package wc-mode
   :ensure t
   :hook ((LaTeX-mode ess-mode) . wc-mode)
@@ -140,7 +143,7 @@ There is a collection of minor modes that trigger after other major modes load.
   (wc-mode 1)
   )
 
-;;;electric-operator adds spaces before and after opperator symbols
+;;electric-operator adds spaces before and after opperator symbols
 (use-package electric-operator
   :ensure t
   :hook ((ess-mode LaTeX-mode) . electric-operator-mode)
@@ -160,6 +163,14 @@ We maintain a list of common keybindings to activate in all modes
 (global-set-key "\M--" 'undo)
 (global-set-key "\C-s" 'isearch-forward-regexp); this replaces normal isearch
 (global-set-key "\C-\M-s" 'isearch-backward-regexp); replaces isearch-forward-regexp
+(global-set-key "\C-\M-n"
+  		(lambda ()
+		  (interactive)
+		  (ignore-errors (next-line 5))))
+(global-set-key (kbd "C-M-p")
+  		(lambda ()
+  		  (interactive)
+  		  (ignore-errors (previous-line 5))))
 #+END_SRC
 
 
@@ -178,12 +189,16 @@ vlf stands for very large files and assists emacs with handling large files
 FIXME: Im not sure is vlf is configured correctly
 #+NAME: general file and navigation
 #+BEGIN_SRC emacs-lisp
+
+;; Interactively Do Things
 (use-package ido
   :ensure t
   :config
   (ido-mode t)
   )
 (setq read-file-name-completion-ignore-case nil)
+
+;;Very Large Files
 (use-package vlf
   :ensure t
   :config
@@ -197,6 +212,7 @@ Org mode provides a function text mode, so we give it many text mode type things
 It overwrites \C-j, so we reassign that for the millionth time
 #+NAME: Org-mode
 #+BEGIN_SRC emacs-lisp
+
 (defun my-org-mode()
   (when (equal (buffer-file-name)
 	       (expand-file-name (concat user-emacs-directory "init.org")))
@@ -224,7 +240,8 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
 #+NAME: universal: backups
 #+BEGIN_SRC emacs-lisp
 ;; sets autosaves to one folder
-(setq auto-save-list-file-prefix (concat user-emacs-directory "autosaves"))
+(setq auto-save-file-name-transforms
+      `((".*" ,temporary-file-directory t)))
  
 ;; Write backup files to own directory
 (setq backup-directory-alist
@@ -284,45 +301,42 @@ I assign markdown to the appropriate extensions, and enable math-mode and wc-mod
   )
 #+END_SRC
 
-I use slime as my lisp and elisp editor
-FIXME: there must be a better way to config this than slime for both elisp and lisp
+I use sly as my lisp editor
 #+NAME: elisp and lisp
 #+BEGIN_SRC emacs-lisp
-(use-package slime-company
-  :after (slime)
-  :ensure t
-  )
- 
-(use-package slime
+(use-package sly
   :defer t
+  :mode (("\\.lisp\\'" . sly-mode))
   :ensure t 
-  :mode (;;("\\.el\\'" . emacs-lisp-mode) ;;FIXME
-  	 ("\\.lisp\\'" . lisp-mode))
   :config
   ;; The check prevents setting a new editor at compile time
+  (lisp-mode)
   (if (string-suffix-p ".lisp" buffer-file-name)
-      (setq inferior-lisp-program "/usr/local/bin/clisp")) ;;FIXME
+      (setq inferior-lisp-program "/usr/local/bin/clisp"))
+  (define-key sly-prefix-map (kbd "M-h") 'sly-documentation-lookup)
   (my-prog-mode)
-  (slime-mode 1)
-  (slime-setup '(slime-fancy slime-company))
-  (slime)
-  (message "%s"  (concat "slime package loaded on major-mode: " (symbol-name major-mode)))
+  (setq sly-lisp-implementations '(
+	  (clisp ("/usr/local/bin/clisp"))
+	  ))
+  (setq sly-default-lisp 'clisp)
+  (message "%s"  (concat "sly(slime) package loaded on major-mode: " (symbol-name major-mode)))
+  (sly)
   )
 #+END_SRC
 
 Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
 #+NAME: Rust-mode
 #+BEGIN_SRC emacs-lisp
-;;; Associated Minor Modes
+;;; Rust Minor Modes
 
-;;; rust plugin to enable flymake
+;; rust plugin to enable flymake
 (use-package flymake-rust
   :ensure t
   :after (rust-mode)
   :config
   (flymake-mode 1)
   )
-;;; Provides Cargo integration
+;; Provides Cargo integration
 (use-package cargo
   :ensure t
   :after (rust-mode)
@@ -333,7 +347,7 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
   (setq cargo-process--command-run "run --verbose")
   )
 
-;;; Provides Company integration with Racer
+;; Provides Company integration with Racer
 (use-package company-racer
   :ensure t
   :init
@@ -346,7 +360,7 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
   (add-to-list 'company-backends 'company-racer)
   )
 
-;;; Main Mode - Rust
+;;; Rust Major Mode
 (use-package rust-mode
   :mode ("\\.rs\\'" . rust-mode)
   :ensure t
@@ -355,12 +369,16 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
   (setq rust-format-on-save t)
   (message "%s" "Rust mode was called successfully")
   )
+
 #+END_SRC
 
 Setup elpy to provide auto-complete, highlighting, indent guides, along with an inferior shell
 #+NAME: Python (elpy) configuration
 #+BEGIN_SRC emacs-lisp
-;;;pyenv mode - Virtual Enviroment Manager
+
+;;; Python Minor Modes
+
+;;pyenv mode - Virtual Enviroment Manager
 (use-package pyenv-mode ;;FIXME
   :ensure t
   :after (elpy)
@@ -370,7 +388,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   (pyenv-mode)
   )
 
-;;; Indentation Guide
+;; Indentation Guide
 (use-package highlight-indent-guides ;;FIXME
   :ensure t
   :after (elpy)
@@ -387,7 +405,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   (highlight-indent-guides-mode 1); turn on mode
   )
 
-;;; Setup Python3 shell
+;; Setup Python3 shell
 (defun set-shell-python3 ()
   (interactive)
   (setq python-shell-interpreter "python3")
@@ -404,14 +422,14 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 	 nil "_"))))
   )
 
-;;; Setup iPython shell
+;; Setup iPython shell
 (defun set-shell-ipython ()
   (interactive)
   (setq python-shell-interpreter "ipython")
   (setq python-shell-interpreter-args "--simple-prompt -i")
   )
 
-;;; Elpy specific key bingins
+;; Elpy specific key bingins
 ;; As Elpy does not conform to key-maps, we do it this way :bind does not work
 (defun elpy-key-bindings ()
   (local-set-key "\M-]" 'elpy-nav-indent-shift-right)
@@ -419,7 +437,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   (local-set-key "C-x p e" 'pyenv-activate-current-project)
   )
  
-;;; Main Package
+;;; Python Major Mode - Elpy
 (use-package elpy
   :defer t
   :mode ("\\.py\\'" . python-mode)
@@ -443,6 +461,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 Sets up latex support along with a collection of skeletons for latex
 #+NAME: latex
 #+BEGIN_SRC emacs-lisp
+
 (defun latex-config ()
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
