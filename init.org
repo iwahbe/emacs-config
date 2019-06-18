@@ -104,13 +104,6 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
   (flyspell-mode 1)         ; recognizes misspellings
   (visual-line-mode 1)      ; we want the words to wrap
   (setq tab-width 4)
-  
-  (use-package define-word
-    :ensure t
-    :config
-    (global-set-key (kbd "C-c d") 'define-word-at-point)
-    (global-set-key (kbd "C-c D") 'define-word)
-    )
   (message "%s" "my-text-mode was called successfully.")
   )
 #+END_SRC
@@ -138,7 +131,7 @@ There is a collection of minor modes that trigger after other major modes load.
 ;;Word-count gives a total and diffrenced word count in the mode line
 (use-package wc-mode
   :ensure t
-  :hook ((LaTeX-mode ess-mode) . wc-mode)
+  :hook ((LaTeX-mode ess-mode markdown-mode) . wc-mode)
   :config
   (wc-mode 1)
   )
@@ -148,6 +141,13 @@ There is a collection of minor modes that trigger after other major modes load.
   :ensure t
   :hook ((ess-mode LaTeX-mode) . electric-operator-mode)
   :config
+  )
+
+(use-package define-word
+  :ensure t
+  :config
+  (global-set-key (kbd "C-c d") 'define-word-at-point)
+  (global-set-key (kbd "C-c D") 'define-word)
   )
 #+END_SRC
 
@@ -268,6 +268,10 @@ Company is used for auto-completions. In the spirit of emacs, it can be customiz
   (global-company-mode t)
   (setq company-idle-delay 0) ; this makes company respond in real time (no delay)
   (setq company-dabbrev-downcase 0) ; this makes it so company correctly gives cases
+  :bind (:map company-active-map
+  	      ("<return>" . nil)
+	      ("RET" . nil)
+  	      ("C-@" . #'company-complete-selection))
   )
 #+END_SRC
 
@@ -300,11 +304,16 @@ I assign markdown to the appropriate extensions, and enable math-mode and wc-mod
   :mode (("README\\.md\\'" . gfm-mode)
 	 ("\\.md\\'" . markdown-mode)
 	 ("\\.markdown\\'" . markdown-mode))
+  :hook ((markdown-mode . (lambda ()
+			    (display-line-numbers-mode -1)
+			    (visual-line-mode 1))))
   :init
   (setq markdown-command "multimarkdown")
   (setq markdown-enable-math t)
   :config
-  (visual-line-mode 1)
+  (setq tab-width 4)
+  (flyspell-mode +1)
+  (message "%s" "Markdown mode was successfully called")
   )
 #+END_SRC
 
