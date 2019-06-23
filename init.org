@@ -9,6 +9,12 @@ First Steps
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 ;; No splash screen please ... jeez
 (setq inhibit-startup-message t)
+(blink-cursor-mode -1)
+(set-cursor-color "orchid") ;does not work
+;;Start maxim
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
+(add-to-list 'default-frame-alist '(fullscreen . fullheight))
+
 #+END_SRC
   
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that use-package is installed
@@ -271,7 +277,9 @@ Company is used for auto-completions. In the spirit of emacs, it can be customiz
   :bind (:map company-active-map
   	      ("<return>" . nil)
 	      ("RET" . nil)
-  	      ("C-@" . #'company-complete-selection))
+  	      ("C-@" . #'company-complete-selection) ;also means space
+	      ("C-SPC" . #'company-complete-selection)
+	      ("C-<space>" . #'company-complete-selection))
   )
 #+END_SRC
 
