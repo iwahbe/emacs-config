@@ -17,6 +17,8 @@ First Steps
 (setq ring-bell-function 'ignore)
 ;; We want emacs to work like the terminal version for maximum consistancy
 (setq exec-path (append exec-path '("/usr/local/bin")))
+;;Fringes are not space efficiant
+(set-fringe-mode 0)
 #+END_SRC
   
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that use-package is installed
@@ -24,7 +26,8 @@ We ensure that packages are installed by using the use-package package, so we re
 #+BEGIN_SRC emacs-lisp
 ;;;-*- lexical-binding: t -*-
 (require 'package)
-(setq package-archives '(("elpa" . "http://tromey.com/elpa/")
+(setq package-archives '(
+			 ("elpa" . "http://tromey.com/elpa/")
 			 ("gnu" . "http://elpa.gnu.org/packages/")
 			 ("melpa" . "https://melpa.org/packages/")
 			 ))
@@ -75,6 +78,12 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
   )
 #+END_SRC
 
+Sets up universal variables to be used later
+#+NAME: global variables
+#+BEGIN_SRC emacs-lisp
+(setq-default fill-column 80)
+#+END_SRC
+
 
  
 Creates a set of universal functions that are called by varios major modes
@@ -87,6 +96,7 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
     (global-set-key (kbd "C-c q") 'comment-or-uncomment-region)
     (setq display-line-numbers t)
     (line-number-mode 0)
+    (column-number-mode 1)
     (if (version<= "26.0.50" emacs-version) 
 	(global-display-line-numbers-mode 1) ; displays line numbers on the left
       (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
@@ -160,6 +170,8 @@ There is a collection of minor modes that trigger after other major modes load.
 
 (use-package magit
   :ensure t
+  :config
+  (global-set-key (kbd "C-x g") 'magit-status)
   )
 #+END_SRC
 
@@ -183,6 +195,8 @@ We maintain a list of common keybindings to activate in all modes
   		(lambda ()
   		  (interactive)
   		  (ignore-errors (previous-line 5))))
+(global-set-key (kbd "s-t") 'make-frame) ;this allows cmd-t to be consistant
+(global-set-key (kbd "s-w") 'delete-frame)
 #+END_SRC
 
 
@@ -190,10 +204,6 @@ I customize emacs to respond to diffrent terminal setups
 FIXME: read above
 #+NAME: setup terminal functions
 #+BEGIN_SRC emacs-lisp
-(defun setup-iterm2 ()
-  (define-key input-decode-map "[1;2A" [S-up])
-  )
-(setup-iterm2)
 #+END_SRC
 
 ido provides a great navigation experience with the find-file command. 
@@ -230,14 +240,15 @@ It overwrites \C-j, so we reassign that for the millionth time
 	       (expand-file-name (concat user-emacs-directory "init.org")))
     (my-prog-mode)
     )
-  (local-set-key "\C-j" 'backward-word)
+  (local-set-key (kbd "C-j") 'backward-word)
   (my-text-mode)
   (setq org-src-fontify-natively t)
   (setq org-src-tab-acts-natively t)
   (setq org-confirm-babel-evaluate nil)
   (setq org-src-preserve-indentation t)
   (define-skeleton skeleton-src-block
-    "Inserts a latex Letter Outline into the buffer"
+    "Inserts a SRC Block Letter into the buffer"
+    ""
     "#+NAME: " (setq v1 (skeleton-read "Name: ")) "\n"
     "#+BEGIN_SRC " (setq v2 (skeleton-read "Language: ")) "\n"
     "\n"
@@ -245,7 +256,7 @@ It overwrites \C-j, so we reassign that for the millionth time
     )
   (message "%s" "Org mode called successfully.")
   )
-(add-hook 'org-mode-hook (lambda () (my-org-mode)))
+(add-hook 'org-mode-hook #'my-org-mode)
 #+END_SRC
 
 Sets all backups to path to .emacs.d instead of cluttering the folder their in
@@ -320,7 +331,8 @@ I assign markdown to the appropriate extensions, and enable math-mode and wc-mod
 	 ("\\.markdown\\'" . markdown-mode))
   :hook ((markdown-mode . (lambda ()
 			    (display-line-numbers-mode -1)
-			    (visual-line-mode 1))))
+			    (visual-line-mode 1)))
+	 (markdown-mode . auto-fill-mode))
   :init
   (setq markdown-command "multimarkdown")
   (setq markdown-enable-math t)
@@ -362,7 +374,7 @@ I use sly as my lisp editor
   (prettify-symbols-mode +1)
   (my-prog-mode)
   )
-(add-hook 'emacs-lisp-mode-hook (lambda () (my-emacs-lisp-mode)))
+(add-hook 'emacs-lisp-mode-hook #'my-emacs-lisp-mode)
 #+END_SRC
 
 Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
@@ -473,9 +485,9 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 ;; Elpy specific key bingins
 ;; As Elpy does not conform to key-maps, we do it this way :bind does not work
 (defun elpy-key-bindings ()
-  (local-set-key "\M-]" 'elpy-nav-indent-shift-right)
-  (local-set-key "\M-[" 'elpy-nav-indent-shift-left)
-  (local-set-key "C-x p e" 'pyenv-activate-current-project)
+  (local-set-key (kbd "M-]") 'elpy-nav-indent-shift-right)
+  (local-set-key (kbd "M-[") 'elpy-nav-indent-shift-left)
+  (local-set-key (kbd "C-x p e") 'pyenv-activate-current-project)
   )
  
 ;;; Python Major Mode - Elpy
@@ -487,11 +499,12 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   :config
   (my-prog-mode)
   (elpy-key-bindings)
-  (add-hook 'before-save-hook (lambda () (elpy-format-code)))
+  (add-hook 'before-save-hook #'elpy-format-code)
   (elpy-enable)
   (setq elpy-rpc-backend "company")
   (setq indent-tabs-mode nil)
   (setq elpy-rpc-python-command "python3")
+  (setq elpy-syntax-check-command "/usr/local/bin/flake8")
   (elpy-rpc-restart)
   (set-shell-python3)
   (message "%s" (concat "Python mode was called successfully. major-mode: "
