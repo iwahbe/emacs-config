@@ -200,12 +200,6 @@ We maintain a list of common keybindings to activate in all modes
 #+END_SRC
 
 
-I customize emacs to respond to diffrent terminal setups
-FIXME: read above
-#+NAME: setup terminal functions
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
-
 ido provides a great navigation experience with the find-file command. 
 vlf stands for very large files and assists emacs with handling large files
 FIXME: Im not sure is vlf is configured correctly
@@ -389,6 +383,7 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
   :config
   (flymake-mode 1)
   )
+
 ;; Provides Cargo integration
 (use-package cargo
   :ensure t
@@ -400,20 +395,15 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
   (setq cargo-process--command-run "run --verbose")
   )
 
-;; Provides Company integration with Racer
-(use-package company-racer
+;; Compamny integration with racer (rust backend completion client)
+(use-package racer
   :ensure t
-  :init
-  (company-mode 1)
-  (setq company-racer-executable "racer")
-  (unless (getenv "RUST_SRC_PATH") ; should construct this path in elisp, then it would be absolute, but also adjustable
-    (setenv "RUST_SRC_PATH" (expand-file-name ; this path must be absolute
-			     "~/.rustup/toolchains/nightly-x86_64-apple-darwin/lib/rustlib/src/rust/src")))
-  :config
-  (add-to-list 'company-backends 'company-racer)
+  :hook ((rust-mode . racer-mode)
+	 (racer-mode-hook . eldoc-mode)
+	 (racer-mode-hook . company-mode))
   )
 
-;;; Rust Major Mode
+;; Rust Major Mode
 (use-package rust-mode
   :mode ("\\.rs\\'" . rust-mode)
   :ensure t
