@@ -328,7 +328,7 @@ I assign markdown to the appropriate extensions, and enable math-mode and wc-mod
 			    (visual-line-mode 1)))
 	 (markdown-mode . auto-fill-mode))
   :init
-  (setq markdown-command "multimarkdown")
+  (setq markdown-command "/usr/local/bin/multimarkdown")
   (setq markdown-enable-math t)
   :config
   (setq tab-width 4)
