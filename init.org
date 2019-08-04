@@ -10,13 +10,11 @@ First Steps
 ;; No splash screen please ... jeez
 (setq inhibit-startup-message t)
 (blink-cursor-mode -1)
-;; Start with emacs in fullscreen
-(add-to-list 'initial-frame-alist '(fullscreen . fullscreen))
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
 ;; The error bell is really annoying
 (setq ring-bell-function 'ignore)
-;; We want emacs to work like the terminal version for maximum consistancy
-(setq exec-path (append exec-path '("/usr/local/bin")))
+;; We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula
+(setq exec-path (append exec-path '("/usr/local/bin"))) ;for internal functions
+(setenv "PATH" (concat "/usr/local/bin/:" (getenv "PATH"))) ;for shell exicution
 ;;Fringes are not space efficiant
 (set-fringe-mode 0)
 #+END_SRC
@@ -56,7 +54,10 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
 #+NAME: universal: cosmetics
 #+BEGIN_SRC emacs-lisp
 (setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
+(setq display-time-24hr-format t)
+(setq display-time-day-and-date t)
 (display-time-mode 1); does not change in real time, so all settings must be assigned before
+
 (display-battery-mode 1)
 
 (use-package smart-mode-line
@@ -84,7 +85,23 @@ Sets up universal variables to be used later
 (setq-default fill-column 80)
 #+END_SRC
 
+I'm trying out EVIL, because reasons
+#+NAME: Evil
+#+BEGIN_SRC emacs-lisp
+(use-package evil
+  :ensure t
+  :config
+  ;; This should make the insert state effectively the default (emacs) state
+  (setq evil-disable-insert-state-bindings t)
+  (setq evil-default-state 'emacs)
+  (evil-mode 0)
+  )
 
+(use-package undo-tree
+  :config
+  (global-undo-tree-mode 0)
+  )
+#+END_SRC
  
 Creates a set of universal functions that are called by varios major modes
 We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode again
@@ -136,6 +153,23 @@ There is a collection of minor modes that trigger after other major modes load.
 (save-place-mode 1)
 (setq save-place-file (expand-file-name ".places" user-emacs-directory))
 
+(use-package yasnippet
+  :ensure t
+  :config
+  (yas-global-mode 1)
+  )
+
+(use-package ace-window
+  :ensure t
+  :bind (("M-o" . ace-window))
+  )
+
+(use-package zoom
+  :ensure t
+  :config
+  (zoom-mode 1)
+  )
+
 ;;Company-math provides auto-complete for math symbols
 (use-package company-math
   :ensure t
@@ -173,20 +207,38 @@ There is a collection of minor modes that trigger after other major modes load.
   :config
   (global-set-key (kbd "C-x g") 'magit-status)
   )
+
+(use-package helm
+  :ensure t
+  :config
+  (helm-mode 1)
+  (setq helm-default-display-buffer-functions '(display-buffer-in-side-window))
+  (global-set-key (kbd "M-x") 'helm-M-x)
+  (global-set-key (kbd "C-s") 'helm-occur)
+  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  )
+(use-package helm-company
+  :ensure t
+  :after (company helm)
+  :config
+  (define-key company-mode-map (kbd "C-;") 'helm-company)
+  (define-key company-active-map (kbd "C-;") 'helm-company)
+  )
+
 #+END_SRC
 
 
-We maintain a list of common keybindings to activate in all modes
+We maintain a list of common key-bindings to activate in all modes
 #+NAME: universal: keybindings
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-r") 'scroll-down)
 (global-set-key (kbd "C-v") 'scroll-up)
 (global-set-key (kbd "C-l") 'forward-word)
 (global-set-key (kbd "C-j") 'backward-word)
+(global-set-key (kbd "M-f") 'forward-sentence)
+(global-set-key (kbd "M-b") 'backward-sentence)
 (global-set-key (kbd "C-z") 'ispell-word)
 (global-set-key (kbd "M--") 'undo)
-(global-set-key (kbd "C-s") 'isearch-forward-regexp); this replaces normal isearch
-(global-set-key (kbd "C-M-s") 'isearch-backward-regexp); replaces isearch-forward-regexp
 (global-set-key (kbd "C-M-n")
   		(lambda ()
 		  (interactive)
@@ -197,6 +249,12 @@ We maintain a list of common keybindings to activate in all modes
   		  (ignore-errors (previous-line 5))))
 (global-set-key (kbd "s-t") 'make-frame) ;this allows cmd-t to be consistant
 (global-set-key (kbd "s-w") 'delete-frame)
+(global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
+
+(global-set-key (kbd "C-M-v") 'scroll-other-window-down)
+(global-set-key (kbd "C-M-r") 'scroll-other-window)
+
+
 #+END_SRC
 
 
@@ -208,6 +266,7 @@ FIXME: Im not sure is vlf is configured correctly
 
 ;; Interactively Do Things
 (use-package ido
+  :disabled
   :ensure t
   :config
   (ido-mode t)
@@ -230,6 +289,10 @@ It overwrites \C-j, so we reassign that for the millionth time
 #+BEGIN_SRC emacs-lisp
 
 (defun my-org-mode()
+  (setq org-babel-python-command "python3")
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((python . t) (emacs-lisp . t)))
   (when (equal (buffer-file-name)
 	       (expand-file-name (concat user-emacs-directory "init.org")))
     (my-prog-mode)
@@ -240,11 +303,15 @@ It overwrites \C-j, so we reassign that for the millionth time
   (setq org-src-tab-acts-natively t)
   (setq org-confirm-babel-evaluate nil)
   (setq org-src-preserve-indentation t)
+  (defvar  *src-default-language* nil)
+  (defun src-default-language ()
+    (interactive)
+    (setq *src-default-language* (read-string "Language: ")))
   (define-skeleton skeleton-src-block
     "Inserts a SRC Block Letter into the buffer"
     ""
     "#+NAME: " (setq v1 (skeleton-read "Name: ")) "\n"
-    "#+BEGIN_SRC " (setq v2 (skeleton-read "Language: ")) "\n"
+    "#+BEGIN_SRC " (if *src-default-language* *src-default-language* (setq v2 (skeleton-read "Language: "))) "\n"
     "\n"
     "#+END_SRC"
     )
@@ -325,14 +392,12 @@ I assign markdown to the appropriate extensions, and enable math-mode and wc-mod
 	 ("\\.markdown\\'" . markdown-mode))
   :hook ((markdown-mode . (lambda ()
 			    (display-line-numbers-mode -1)
-			    (visual-line-mode 1)))
-	 (markdown-mode . auto-fill-mode))
+			    (visual-line-mode 1))))
   :init
   (setq markdown-command "/usr/local/bin/multimarkdown")
   (setq markdown-enable-math t)
   :config
   (setq tab-width 4)
-  (flyspell-mode +1)
   (message "%s" "Markdown mode was successfully called")
   )
 #+END_SRC
@@ -378,16 +443,20 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
 
 ;; rust plugin to enable flymake
 (use-package flymake-rust
+  :disabled ;;FIXME
   :ensure t
-  :after (rust-mode)
+  :hook ((rust-mode . flymake-rust-load))
   :config
-  (flymake-mode 1)
+  (let ((rust-root-path (string-trim
+			 (shell-command-to-string "rustc --print sysroot"))))
+    (setq flymake-rust-use-cargo nil)
+    (setq flymake-rust-executable (concat rust-root-path "/bin/cargo")))
   )
 
 ;; Provides Cargo integration
 (use-package cargo
   :ensure t
-  :after (rust-mode)
+  :hook (rust-mode . cargo-minor-mode)
   :config
   (cargo-minor-mode 1)
   (setq cargo-process--enable-rust-backtrace t)
@@ -401,12 +470,22 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
   :hook ((rust-mode . racer-mode)
 	 (racer-mode-hook . eldoc-mode)
 	 (racer-mode-hook . company-mode))
+  :init
+  (setq company-racer-executable "racer")
   )
 
 ;; Rust Major Mode
 (use-package rust-mode
   :mode ("\\.rs\\'" . rust-mode)
   :ensure t
+  :init
+  (setenv "PATH" (concat "~/.cargo/bin" ":"
+			 (getenv "PATH")))
+  (let ((rust-root-path (string-trim
+		 (shell-command-to-string "rustc --print sysroot"))))
+  (setq racer-rust-src-path
+	(concat rust-root-path"/lib/rustlib/src/rust/src"))
+  (setq rust-rustfmt-bin (concat rust-root-path "/bin/rustfmt")))
   :config
   (my-prog-mode)
   (setq rust-format-on-save t)
@@ -433,6 +512,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 
 ;; Indentation Guide
 (use-package highlight-indent-guides ;;FIXME
+  :disabled
   :ensure t
   :after (elpy)
   :config
@@ -478,6 +558,8 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   (local-set-key (kbd "M-]") 'elpy-nav-indent-shift-right)
   (local-set-key (kbd "M-[") 'elpy-nav-indent-shift-left)
   (local-set-key (kbd "C-x p e") 'pyenv-activate-current-project)
+  (local-set-key (kbd "M-p") 'elpy-nav-move-line-or-region-up)
+  (local-set-key (kbd "M-n") 'elpy-nav-move-line-or-region-dowb)
   )
  
 ;;; Python Major Mode - Elpy
@@ -486,6 +568,9 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   :mode ("\\.py\\'" . python-mode)
   :hook ((python-mode . elpy-mode))
   :ensure t
+  :init
+  (setq python-indent-guess-indent-offset t)  
+  (setq python-indent-guess-indent-offset-verbose nil)
   :config
   (my-prog-mode)
   (elpy-key-bindings)
@@ -644,4 +729,49 @@ We want init.org to have special behavior, specifically we want init.org to tang
     (add-hook 'text-mode-hook #'fira-code-mode--enable)
     ))
 
+#+END_SRC
+
+#+NAME: JavaScript
+#+BEGIN_SRC emacs-lisp
+(use-package xref-js2
+  :ensure t
+  )
+
+(use-package tern
+  ;; Start with "npm install -g tern" in the terminal
+  :ensure t
+  :hook ((js2-mode . (lambda () (tern-mode 1))))
+  )
+
+(use-package company-tern
+  :ensure t
+  :config
+  (add-to-list 'company-backends 'company-tern)
+  )
+
+(use-package indium
+  :ensure t
+  )
+
+(use-package js2-mode
+  :ensure t
+  :mode (("\\.js\\'" . js2-mode))
+  )
+#+END_SRC
+
+
+#+NAME: Games
+#+BEGIN_SRC emacs-lisp
+
+;; Tetris
+(defun tetris-restart ()
+  (interactive)
+  (when (eql major-mode 'tetris-mode)
+    (tetris-pause-game)
+    (if (y-or-n-p "Restart?: ")
+	(progn
+	  (kill-buffer (buffer-name))
+	  (tetris))
+      (tetris-pause-game))))
+(add-hook 'tetris-mode-hook (lambda () (define-key tetris-mode-map (kbd "r") 'tetris-restart)))
 #+END_SRC
