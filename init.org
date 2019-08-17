@@ -242,7 +242,7 @@ There is a collection of minor modes that trigger after other major modes load.
 
 (use-package smartparens
   :ensure t
-  :hook ((prog-mode . smartparens-mode))
+  :hook ((c-mode . smartparens-mode))
   )
 
 #+END_SRC
@@ -825,15 +825,51 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
 #+END_SRC
 
 C/C++ packages 
-- company-c-
+- irony acts as a handler
+  - To install irony on a fresh computer, you need to have llvm installed. You then need to set the environmental variable "Clang_DIR" to the directory that contains "ClangConfig.cmake"
+  - to find, use `pwd $(sudo find /usr/ ClangConfig.cmake)`
 #+BEGIN_SRC emacs-lisp
 ;; Enable company auto-complete
-(use-package company-c-headers
-  :ensure t
+(use-package irony
+  :ensure irony
+  :hook ((c-mode objc-mode c++-mode) . irony-mode)
   :config
-  (add-to-list 'company-backends 'company-c-headers)
+  (irony-cdb-autosetup-compile-options)
+  (use-package clang-format
+    :ensure t
+    :config
+    (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM8.0.1.xctoolchain/usr/bin/clang-format")
+    (add-hook 'before-save-hook (lambda ()
+				  (when (eql major-mode 'c-mode)
+				    (clang-format-buffer))
+				  )
+	      )
+    )
+  (use-package irony-eldoc
+    :ensure t
+    :config
+    (irony-eldoc +1)
+    )
+  (use-package flycheck-irony
+    :ensure t
+    :after (flycheck)
+    :config
+    (add-hook 'flycheck-mode-hook #'flycheck-irony-setup)
+    (flycheck-irony-setup)
+    (flycheck-mode +1)
+    )
+  (use-package company-irony
+    :after (company irony)
+    :ensure t
+    :config
+    (add-to-list 'company-backends 'company-irony)
+    )
+  (defun c-compile-buffer ()
+    (interactive)
+    (let ((in buffer-file-name) (out (file-name-sans-extension buffer-file-name)))
+      (compile (concat "cc '" in "' -o '" out "'"))))
+  (local-set-key (kbd "C-c C-c") #'c-compile-buffer)
+  (my-prog-mode)
+  (message "%s" "c/objc/c++ has been set up ")
   )
-(add-hook 'c-mode-hook 'my-prog-mode)
-
 #+END_SRC
-
