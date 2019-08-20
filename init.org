@@ -160,12 +160,29 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
 
 
 There is a collection of minor modes that trigger after other major modes load.
+- saveplace has reopened files remember the mark position
+- yasnippet allows snippet expansion
+- ace-window allows a multi-window mode (vim style)
+- zoom changes window layout on crowded screens to show more of the selected window
+- pending-delete-mode gives autodeletion on the region
+- company-math gives a LaTeX style backend for LaTeX and markdown
+- wc-mode provides a word count in the mode line
+- electric operators provide spacing for prog modes that lack a util to prettify code
+- define-word shows a word definition at point or on lookup
+- magit is a git wrapper
+- helm and helm-company provide fuzzy completion on system searches
+- smartparens gives (semi) smart paired symbol insertion
 #+BEGIN_SRC emacs-lisp
 
 ;; Save point position between sessions
 (require 'saveplace)
 (save-place-mode 1)
 (setq save-place-file (expand-file-name ".places" user-emacs-directory))
+
+(use-package expand-region
+  :ensure t
+  :bind (("C-=" . 'er/expand-region))
+  )
 
 (use-package yasnippet
   :ensure t
@@ -183,6 +200,9 @@ There is a collection of minor modes that trigger after other major modes load.
   :config
   (zoom-mode 1)
   )
+
+;; typing replaces the active region
+(pending-delete-mode +1)
 
 ;;Company-math provides auto-complete for math symbols
 (use-package company-math
@@ -712,7 +732,7 @@ I use a font called Fira-Code. This enables the font as well as the font's ligat
     "<$" "<$>" "<!--" "<-" "<--" "<->" "<+" "<+>" "<="
     "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<" "<~"
     "<~~" "</" "</>" "~@" "~-" "~=" "~>" "~~" "~~>" "%%"
-    "x" ":" "+" "+" "*"))
+    "!d!i!s!p!l!a!y!s!t!a!r!" ":" "+" "+" "*"))
 
 (defvar fira-code-mode--old-prettify-alist)
 
@@ -828,6 +848,7 @@ C/C++ packages
 - irony acts as a handler
   - To install irony on a fresh computer, you need to have llvm installed. You then need to set the environmental variable "Clang_DIR" to the directory that contains "ClangConfig.cmake"
   - to find, use `pwd $(sudo find /usr/ ClangConfig.cmake)`
+  - On mac I also tried this: "install_name_tool -change @rpath/libclang.dylib /usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/libclang.dylib ~/.emacs.d/irony/bin/irony-server"
 #+BEGIN_SRC emacs-lisp
 ;; Enable company auto-complete
 (use-package irony
@@ -838,6 +859,7 @@ C/C++ packages
   (use-package clang-format
     :ensure t
     :config
+    (setenv "Clang_DIR" "/usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/cmake/clang/")
     (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM8.0.1.xctoolchain/usr/bin/clang-format")
     (add-hook 'before-save-hook (lambda ()
 				  (when (eql major-mode 'c-mode)
@@ -861,8 +883,14 @@ C/C++ packages
   (use-package company-irony
     :after (company irony)
     :ensure t
+    ;; :config
+    ;; (add-to-list 'company-backends 'company-irony)
+    )
+  (use-package company-irony-c-headers
+    :after (company irony company-irony)
+    :ensure t
     :config
-    (add-to-list 'company-backends 'company-irony)
+    (add-to-list 'company-backends '(company-irony-c-headers company-irony))
     )
   (defun c-compile-buffer ()
     (interactive)
