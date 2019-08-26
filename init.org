@@ -161,7 +161,6 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
 
 There is a collection of minor modes that trigger after other major modes load.
 - saveplace has reopened files remember the mark position
-- yasnippet allows snippet expansion
 - ace-window allows a multi-window mode (vim style)
 - zoom changes window layout on crowded screens to show more of the selected window
 - pending-delete-mode gives autodeletion on the region
@@ -184,11 +183,6 @@ There is a collection of minor modes that trigger after other major modes load.
   :bind (("C-=" . 'er/expand-region))
   )
 
-(use-package yasnippet
-  :ensure t
-  :config
-  (yas-global-mode 1)
-  )
 
 (use-package ace-window
   :ensure t
@@ -203,16 +197,6 @@ There is a collection of minor modes that trigger after other major modes load.
 
 ;; typing replaces the active region
 (pending-delete-mode +1)
-
-;;Company-math provides auto-complete for math symbols
-(use-package company-math
-  :ensure t
-  :after (auctex markdown)
-  :config
-  (add-to-list 'company-backends 'company-math)
-  (company-mode 1)
-  (setq company-minimum-prefix-length 1)
-  )
 
 ;;Word-count gives a total and diffrenced word count in the mode line
 (use-package wc-mode
@@ -242,6 +226,20 @@ There is a collection of minor modes that trigger after other major modes load.
   (global-set-key (kbd "C-x g") 'magit-status)
   )
 
+(use-package smartparens
+  :ensure t
+  :config
+  (sp-pair "(" ")" :unless '(sp-point-before-word-p))
+  (add-hook 'c-mode-hook (lambda () (sp-pair "'" nil :actions :rem)))
+  (add-hook 'emacs-lisp-mode-hook (lambda () (sp-pair "'" nil :actions :rem)))
+  (smartparens-global-mode +1)
+  )
+
+#+END_SRC
+
+I use helm for fuzzy searching among known options
+#+BEGIN_SRC emacs-lisp
+
 (use-package helm
   :ensure t
   :config
@@ -260,12 +258,8 @@ There is a collection of minor modes that trigger after other major modes load.
   (define-key company-active-map (kbd "C-;") 'helm-company)
   )
 
-(use-package smartparens
-  :ensure t
-  :hook ((c-mode . smartparens-mode))
-  )
-
 #+END_SRC
+
 
 
 We maintain a list of common key-bindings to activate in all modes
@@ -380,19 +374,21 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
 
 Company is used for auto-completions. In the spirit of emacs, it can be customized for almost any language, but those customizations are module specific. Here, we only call the main version.
 #+BEGIN_SRC emacs-lisp
-(use-package company-flx
-  :ensure t
-  :after (company)
-  :config
-  (company-flx-mode +1)
-  )
 
 (use-package company
   :ensure t
+  :init
+  ;; mini version of a hook for adding a company backend'
+  (defun add-company-backend (backend)
+    ;; (add-to-list 'company-backends `(,symbol-list . '(:with company-yasnippet)))
+	(add-to-list 'company-backends (append (if (consp backend) backend (list backend))
+		'(:with company-yasnippet)))
+    )
   :config
-  (global-company-mode t)
-  (setq company-idle-delay 0) ; this makes company respond in real time (no delay)
+  (setq company-minimum-prefix-length 1)
+  (setq company-idle-delay 1) ; this makes company respond in real time (no delay)
   (setq company-dabbrev-downcase 0) ; this makes it so company correctly gives cases
+  (global-company-mode t)
   :bind (:map company-active-map
   	      ("<return>" . nil)
 	      ("RET" . nil)
@@ -402,7 +398,51 @@ Company is used for auto-completions. In the spirit of emacs, it can be customiz
 	      ("M-p" . #'company-select-previous-or-abort)
 	      ("M-n" . #'company-select-next-or-abort))
   )
+
+(use-package company-flx
+  :ensure t
+  :after (company)
+  :config
+  (company-flx-mode +1)
+  )
+
+;;Company-math provides auto-complete for math symbols
+(use-package company-math
+  :ensure t
+  :after (company (:any auctex markdown))
+  :config
+  (add-company-backend 'company-math)
+  )
+
 #+END_SRC
+
+
+yasnippet allows snippet expansion
+Snippets are kept in the folder described by "yas-snippet-dirs"
+#+BEGIN_SRC emacs-lisp
+(use-package yasnippet
+  :ensure t
+  :init
+  (defun setup-yas-company () 
+    (defvar company-mode/enable-yas t
+      "Enable yasnippet for all backends.")
+
+    (defun company-mode/backend-with-yas (backend)
+      (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+	  backend
+	(append (if (consp backend) backend (list backend))
+		'(:with company-yasnippet))))
+
+    (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+    )
+  :config
+  (setup-yas-company)
+  (yas-global-mode 1)
+)
+
+#+END_SRC
+
+
 
 ESS or Emacs Speaks Statistics is a major mode that I use to handle R. It could be extended to handle other S type stat languages in the future. 
 #+BEGIN_SRC emacs-lisp
@@ -786,7 +826,7 @@ Setup for my JavaScript IDE.
 (use-package company-tern
   :ensure t
   :config
-  (add-to-list 'company-backends 'company-tern)
+  (add-company-backend 'company-tern)
   )
 
 (use-package indium
@@ -832,7 +872,7 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
   :ensure t
   :after (ghc-mode company-mode)
   :config
-  (add-to-list 'company-backends 'company-ghc)
+  (add-company-backend 'company-ghc)
   (setq company-ghc-show-module t)
   )
 (use-package haskell-mode
@@ -881,22 +921,17 @@ C/C++ packages
     (flycheck-mode +1)
     )
   (use-package company-irony
-    :after (company irony)
     :ensure t
-    ;; :config
-    ;; (add-to-list 'company-backends 'company-irony)
     )
   (use-package company-irony-c-headers
-    :after (company irony company-irony)
     :ensure t
-    :config
-    (add-to-list 'company-backends '(company-irony-c-headers company-irony))
     )
   (defun c-compile-buffer ()
     (interactive)
     (let ((in buffer-file-name) (out (file-name-sans-extension buffer-file-name)))
       (compile (concat "cc '" in "' -o '" out "'"))))
   (local-set-key (kbd "C-c C-c") #'c-compile-buffer)
+  (add-company-backend '(company-irony-c-headers company-irony))
   (my-prog-mode)
   (message "%s" "c/objc/c++ has been set up ")
   )
