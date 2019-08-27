@@ -839,27 +839,6 @@ Setup for my JavaScript IDE.
   )
 #+END_SRC
 
-This makes small improvements to how some emacs games work. So far it's only tetris.
-#+BEGIN_SRC emacs-lisp
-
-;; Tetris
-(defun tetris-restart ()
-  (interactive)
-  (when (eql major-mode 'tetris-mode)
-    (tetris-pause-game)
-    (if (y-or-n-p "Restart?: ")
-	(progn
-	  (kill-buffer (buffer-name))
-	  (when (buffer-live-p "tetris-scores")
-	    (kill-buffer-and-window "tetris-scores")
-	    )
-	  (tetris))
-      (tetris-pause-game))))
-(add-function :before (symbol-function 'tetris-end-game) (lambda () (if (y-or-n-p "Restart?:") (tetris))))
-(add-hook 'tetris-mode-hook (lambda () (define-key tetris-mode-map (kbd "C-r") 'tetris-restart)))
-#+END_SRC
-
-
 Haskell is a functional language
 ghc functions as a backend for Haskell, company-ghc hooks that into company, providing smart and real-time completion. Haskell-mode provides the from of the Haskell IDE. 
 #+BEGIN_SRC emacs-lisp
