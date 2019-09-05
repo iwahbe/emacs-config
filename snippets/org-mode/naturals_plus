@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: naturals_plus
+# key: :N+
+# --
+\mathbb{N}^+

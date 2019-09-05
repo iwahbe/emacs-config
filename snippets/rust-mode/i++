@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: i++
+# key: i++
+# --
+{let temp = ${1:var}; $1+=1; temp}
