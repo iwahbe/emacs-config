@@ -106,6 +106,7 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
 #+BEGIN_SRC emacs-lisp
 (setq my-prog-mode-called nil)
 (defun my-prog-mode ()
+  "Run as part of global prog-mode setup"
   (when (equal my-prog-mode-called nil)
     (global-set-key (kbd "C-c q") 'comment-or-uncomment-region)
     (setq display-line-numbers t)
@@ -126,12 +127,13 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
 		   (symbol-name major-mode)))
     ))
 (defun call-my-prog-mode ()
-  (interactive)
+  "A manual way to call \"my-prog-mode\""
   (setq my-prog-mode-called nil)
   (my-prog-mode)
   )
 
 (defun my-text-mode ()
+  "A hook to call on text-mode init"
   (wc-mode 1)               ; provides a word count
   (flyspell-mode 1)         ; recognizes misspellings
   (visual-line-mode 1)      ; we want the words to wrap
@@ -327,6 +329,7 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
 
 
 (defun my-org-mode()
+  "Run on org-mode initialization"
   (setq org-babel-python-command "python3")
   (org-babel-do-load-languages
    'org-babel-load-languages
@@ -343,6 +346,7 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
   (setq org-src-preserve-indentation t)
   (defvar  *src-default-language* nil)
   (defun src-default-language ()
+    "Used to set a default src language for skeleton-src-blocks"
     (interactive)
     (setq *src-default-language* (read-string "Language: ")))
   (define-skeleton skeleton-src-block
@@ -380,8 +384,8 @@ Company is used for auto-completions. In the spirit of emacs, it can be customiz
 (use-package company
   :ensure t
   :init
-  ;; mini version of a hook for adding a company backend'
   (defun add-company-backend (backend)
+    "Is used to add company backends and include company-yasnippet with each backend"
     ;; (add-to-list 'company-backends `(,symbol-list . '(:with company-yasnippet)))
 	(add-to-list 'company-backends (append (if (consp backend) backend (list backend))
 		'(:with company-yasnippet)))
@@ -430,6 +434,7 @@ Snippets are kept in the folder described by "yas-snippet-dirs"
       "Enable yasnippet for all backends.")
 
     (defun company-mode/backend-with-yas (backend)
+      "addes company-yasnippet to \"backend\""
       (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
 	  backend
 	(append (if (consp backend) backend (list backend))
@@ -513,6 +518,7 @@ I use sly as my lisp editor
 
 #+BEGIN_SRC emacs-lisp
 (defun my-emacs-lisp-mode ()
+  "runs on 'emacs-lisp-mode-hook "
   (prettify-symbols-mode +1)
   (my-prog-mode)
   )
@@ -614,6 +620,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 
 ;; Setup Python3 shell
 (defun set-shell-python3 ()
+  "Sets the shell to python3"
   (interactive)
   (setq python-shell-interpreter "python3")
   (setq python-shell-interpreter-args "-i")
@@ -631,6 +638,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 
 ;; Setup iPython shell
 (defun set-shell-ipython ()
+  "Sets shell to ipython"
   (interactive)
   (setq python-shell-interpreter "ipython")
   (setq python-shell-interpreter-args "--simple-prompt -i")
@@ -639,6 +647,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 ;; Elpy specific key bingins
 ;; As Elpy does not conform to key-maps, we do it this way :bind does not work
 (defun elpy-key-bindings ()
+  "Sets up local keybingins for elpy(python)"
   (local-set-key (kbd "M-]") 'elpy-nav-indent-shift-right)
   (local-set-key (kbd "M-[") 'elpy-nav-indent-shift-left)
   (local-set-key (kbd "C-x p e") 'pyenv-activate-current-project)
@@ -675,6 +684,7 @@ Sets up latex support along with a collection of skeletons for latex. This is al
 #+BEGIN_SRC emacs-lisp
 
 (defun latex-config ()
+  "Sets up LaTeX"
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
   (local-set-key "\C-j" 'backward-word)
@@ -731,6 +741,7 @@ We want init.org to have special behavior, specifically we want init.org to tang
 The part that performed the byte-compile is currently disabled as it caused problems with use-package.
 #+BEGIN_SRC emacs-lisp
 (defun tangle-init-call ()
+  "Tangles this and only this file on save into init.el"
   (when (equal (buffer-file-name)
 	       (expand-file-name (concat user-emacs-directory "init.org")))
     ;; Avoid running hooks when tangling.
@@ -910,6 +921,7 @@ C/C++ packages
     :ensure t
     )
   (defun c-compile-buffer ()
+    "Compiles the current buffer with cc"
     (interactive)
     (let ((in buffer-file-name) (out (file-name-sans-extension buffer-file-name)))
       (compile (concat "cc '" in "' -o '" out "'"))))

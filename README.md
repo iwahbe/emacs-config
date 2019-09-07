@@ -31,6 +31,9 @@ Note: changes to the `init.el` file will be ignored unless you delete the
 `python3 -m pip install rope;`  
 `python3 -m pip install yapf;`  
 
+### C/C++:
+Irony mode installs it's own plugin, but it requires cmake and clang. It's finicky. 
+
 ### Fira-Code-Font:
 [fira font](https://github.com/tonsky/FiraCode/wiki) and 
 [symbolfont](https://github.com/tonsky/FiraCode/issues/211#issuecomment-239058632)
