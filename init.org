@@ -935,7 +935,6 @@ C/C++ packages
 Auto-inserts c headers:
 Binds "C-c C-f" to a function that inserts c function description yassnippet
 #+BEGIN_SRC emacs-lisp
-(defmacro if-else (test &optional else) `(if ,test ,test ,else))
 (defmacro incr (var) `(setq ,var (1+ ,var)))
 
 (cl-defun concat-until-n  (lst &key (n 0) (before "") (after "") (count-from 0 count-from-p) (after-count ""))
@@ -974,27 +973,32 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
       )
     )
   )
-      
+
 (defun c-func-description ()
   "Inserts a c-function description when called at or above a c function"
   (interactive)
-  ;;skipping to the next line with content
-  (while (equal (thing-at-point 'line t) "\n")
-    (forward-line 1)
-    )
-  (beginning-of-line)
-  (let* ((objects (split-string (thing-at-point 'line t) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
-	(field-n 1))
-    (defun field-n () (int-to-string field-n))
-    ;; We assume that the first thing is the function name and everything else is an argument
-    (yas-expand-snippet
-     (concat "// " (car (last type-name)) ": ${" (field-n) ":Describe Function}\n//\n"
-     (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)
-     "//\n"
-     "// return" (concat-until-n type-name :n 1 :before " ") " : ${" (int-to-string (length objects)) ":Describe Return}\n\n")
-     )
-    )
-  (remove-blank-before "//" 1)
+  ;;Note: requires yasnippet to be installed
+  (if (not (fboundp 'yas-expand-snippet))
+      (message "%s" "c-func-description requires yas-expand-snippet")
+    (progn
+      ;;skipping to the next line with content
+      (while (equal (thing-at-point 'line t) "\n")
+	(forward-line 1)
+	)
+      (beginning-of-line)
+      (let* ((objects (split-string (thing-at-point 'line t) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
+	     (field-n 1))
+	(defun field-n () (int-to-string field-n))
+	;; We assume that the first thing is the function name and everything else is an argument
+	(yas-expand-snippet
+	 (concat "// " (car (last type-name)) ": ${" (field-n) ":Describe Function}\n//\n"
+		 (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)
+		 "//\n"
+		 "// return" (concat-until-n type-name :n 1 :before " ") " : ${" (int-to-string (length objects)) ":Describe Return}\n\n")
+	 )
+	)
+      (remove-blank-before "//" 1)
+      ))
   )
 (add-hook 'c-mode-hook (lambda () (local-set-key (kbd "C-c C-f") 'c-func-description)))
 #+END_SRC 
