@@ -728,6 +728,7 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     )
   (message "%s" "LaTeX-mode has been loaded successfully")
   (setq font-latex-fontify-script nil) ;disables inline subscripts and superscripts
+  (add-to-list 'exec-path "/Library/TeX/texbin/" t)
   )
 (use-package tex
   :defer t
