@@ -936,15 +936,16 @@ Auto-inserts c headers:
 Binds "C-c C-f" to a function that inserts c function description yassnippet
 #+BEGIN_SRC emacs-lisp
 (defmacro if-else (test &optional else) `(if ,test ,test ,else))
+(defmacro incr (var) `(setq ,var (1+ ,var)))
 
 (cl-defun concat-until-n  (lst &key (n 0) (before "") (after "") (count-from 0 count-from-p) (after-count ""))
-  "returns a concatonated list of list elements until only n are remaining with an optional count and other fields"
+  "Returns a concatonated list of list elements ignoring the last n with an optional count and surrounding text"
   (if (<= (length lst) n)
       ""   ; recursion base case 
     (concat ;otherwise
-     (if-else before "")
+     before
      (s-trim (car lst))
-     (if-else after "")
+     after
      (if count-from-p (int-to-string count-from) "")
      after-count
      (if count-from-p
@@ -955,26 +956,47 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
     )
   )
 
+(defun remove-blank-before (except num-blank)
+  "Removes lines that start with \"excpet\" and blank lines until there are only \"num-blank\" blank lines above."
+  (let ((blank-found 0) (exit nil))
+    (save-excursion
+      (while (not exit)
+	(if (equal (thing-at-point 'line t) "\n")
+	    (progn
+	      (incr blank-found)
+	      (if (> blank-found num-blank)
+		  (delete-blank-lines))
+	      (forward-line -1))
+	  (if (string-prefix-p except (thing-at-point 'line t))
+	      (progn (forward-line -1) (setq blank-found 0))
+	    (setq exit t)))
+	)	
+      )
+    )
+  )
+      
 (defun c-func-description ()
-  "Inserts a c-function header description when called at or above a c function"
+  "Inserts a c-function description when called at or above a c function"
   (interactive)
+  ;;skipping to the next line with content
   (while (equal (thing-at-point 'line t) "\n")
     (forward-line 1)
     )
-  (let ((objects (split-string (thing-at-point 'line t) "[\(,\)]"))
+  (beginning-of-line)
+  (let* ((objects (split-string (thing-at-point 'line t) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
 	(field-n 1))
     (defun field-n () (int-to-string field-n))
     ;; We assume that the first thing is the function name and everything else is an argument
     (yas-expand-snippet
-     (concat "// " (car objects) ": ${" (field-n) ":Describe Function}\n//\n"
+     (concat "// " (car (last type-name)) ": ${" (field-n) ":Describe Function}\n//\n"
      (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)
      "//\n"
-     "// return: ${" (int-to-string (length objects)) ":Describe Return}\n\n")
+     "// return" (concat-until-n type-name :n 1 :before " ") " : ${" (int-to-string (length objects)) ":Describe Return}\n\n")
      )
     )
+  (remove-blank-before "//" 1)
   )
 (add-hook 'c-mode-hook (lambda () (local-set-key (kbd "C-c C-f") 'c-func-description)))
-
 #+END_SRC 
 
 
