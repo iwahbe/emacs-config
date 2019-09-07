@@ -1,5 +1,7 @@
 We hold the entire init file in Org mode to allow increased comments, along with better organization. This further gives the easy ability to debug by disabling select components of the init.
 This is connected to a github page.
+
+Idea: set a separate file with a set of variable assignments like specific paths, and names and passwords. Then have this file load it to allow a secure posting. 
   
 First Steps
 #+BEGIN_SRC emacs-lisp
@@ -346,12 +348,12 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
   (define-skeleton skeleton-src-block
     "Inserts a SRC Block Letter into the buffer"
     ""
-    "#+NAME: " (setq v1 (skeleton-read "Name: ")) "\n"
-    "#+BEGIN_SRC " (if *src-default-language* *src-default-language* (setq v2 (skeleton-read "Language: "))) "\n"
+    "#+BEGIN_SRC " (if *src-default-language* *src-default-language* (skeleton-read "Language: ")) "\n"
     "\n"
     "#+END_SRC"
     )
   (setenv "PATH" (concat "/Library/TeX/texbin/:" (getenv "PATH"))); to allow LaTeX output from org-mdoe
+  (yas-activate-extra-mode 'text-mode)
   (message "%s" "Org mode called successfully.")
   )
 (add-hook 'org-mode-hook #'my-org-mode)
@@ -386,7 +388,7 @@ Company is used for auto-completions. In the spirit of emacs, it can be customiz
     )
   :config
   (setq company-minimum-prefix-length 1)
-  (setq company-idle-delay 1) ; this makes company respond in real time (no delay)
+  (setq company-idle-delay 0.1) ; this makes company respond in real time (no delay)
   (setq company-dabbrev-downcase 0) ; this makes it so company correctly gives cases
   (global-company-mode t)
   :bind (:map company-active-map
@@ -472,6 +474,7 @@ I assign markdown to the appropriate extensions, and enable math-mode and wc-mod
   	 ("\\.md\\'" . markdown-mode)
   	 ("\\.markdown\\'" . markdown-mode))
   :hook ((markdown-mode . (lambda ()
+			    (yas-activate-extra-mode 'text-mode)
 			    (display-line-numbers-mode -1)
 			    (visual-line-mode 1))))
   :init
@@ -702,10 +705,10 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     "\\newcommand{\\fl}{{\\mathcal L}}\n"
     "\\newcommand{\\fu}{{\\mathcal U}}\n"
     "\\usepackage{tikz}\n"
-    "\\title{" str | "Title " "\n"
-    "\\\\ \\large " (setq v1 (skeleton-read "Class:"))  "}\n"
-    "\\author{" (getenv "DISPLAY_NAME") "}\n"
-    "\\date{" (setq v2 (skeleton-read "Date:")) "}\n"
+    "\\title{" (skeleton-read "Title: ") "\n"
+    "\\\\ \\large " (skeleton-read "Class: ") "}\n"
+    "\\author{" user-full-name "}\n"
+    "\\date{" (skeleton-read "Date: ") "}\n"
     "\\begin{document}\n"
     "\\maketitle\n"
     "$\n"
@@ -714,11 +717,12 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     "\n\n\n\\end{document}"
     )
   (message "%s" "LaTeX-mode has been loaded successfully")
+  (setq font-latex-fontify-script nil) ;disables inline subscripts and superscripts
   )
 (use-package tex
   :defer t
   :mode ("\\.tex\\'" . LaTeX-mode)
-  :hook (LaTeX-mode . latex-config)
+  :hook ((LaTeX-mode . latex-config) (LaTeX-mode . (lambda ()  (yas-activate-extra-mode 'text-mode))))
   :ensure auctex
   )
 #+END_SRC 

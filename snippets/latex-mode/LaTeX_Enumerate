@@ -1,0 +1,6 @@
+# key: \enumerate
+# name: LaTeX enumerate
+# --
+\begin{enumerate}[label=${\arabic*.}]
+	\item $0
+\end{enumerate}

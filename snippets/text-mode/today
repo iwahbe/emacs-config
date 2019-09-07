@@ -1,0 +1,4 @@
+# key: today
+# name: today
+# --
+`(shell-command-to-string "echo -n $(date +%Y-%m-%d)")` $0

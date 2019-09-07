@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: LaTeX_Sum
+# key: \sum
+# --
+\sum^{${2:to}}_{${3:index}=${1:from}}$0
