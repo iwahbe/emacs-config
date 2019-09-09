@@ -924,8 +924,12 @@ C/C++ packages
   (defun c-compile-buffer ()
     "Compiles the current buffer with cc"
     (interactive)
-    (let ((in buffer-file-name) (out (file-name-sans-extension buffer-file-name)))
-      (compile (concat "cc '" in "' -o '" out "'"))))
+    (let (
+	  (in buffer-file-name)
+	  (out (file-name-sans-extension buffer-file-name))
+	  (compiler (if (equal (file-name-extension (buffer-file-name)) "cc") "g++" "cc"))
+	  )
+      (compile (concat compiler " '" in "' -o '" out "'"))))
   (local-set-key (kbd "C-c C-c") #'c-compile-buffer)
   (add-company-backend '(company-irony-c-headers company-irony))
   (my-prog-mode)
