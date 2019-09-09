@@ -356,7 +356,6 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
     "\n"
     "#+END_SRC"
     )
-  (setenv "PATH" (concat "/Library/TeX/texbin/:" (getenv "PATH"))); to allow LaTeX output from org-mdoe
   (yas-activate-extra-mode 'text-mode)
   (message "%s" "Org mode called successfully.")
   )
@@ -726,9 +725,10 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     -
     "\n\n\n\\end{document}"
     )
-  (message "%s" "LaTeX-mode has been loaded successfully")
+  (setenv "PATH" (concat "/Library/TeX/texbin/:" (getenv "PATH"))); to allow LaTeX output from org-mdoe
   (setq font-latex-fontify-script nil) ;disables inline subscripts and superscripts
   (add-to-list 'exec-path "/Library/TeX/texbin/" t)
+  (message "%s" "LaTeX-mode has been loaded successfully")
   )
 (use-package tex
   :defer t
@@ -897,7 +897,7 @@ C/C++ packages
     (setenv "Clang_DIR" "/usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/cmake/clang/")
     (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM8.0.1.xctoolchain/usr/bin/clang-format")
     (add-hook 'before-save-hook (lambda ()
-				  (when (eql major-mode 'c-mode)
+				  (when (or (eql major-mode 'c-mode) (eql major-mode 'c++-mode))
 				    (clang-format-buffer))
 				  )
 	      )
@@ -929,6 +929,7 @@ C/C++ packages
   (local-set-key (kbd "C-c C-c") #'c-compile-buffer)
   (add-company-backend '(company-irony-c-headers company-irony))
   (my-prog-mode)
+
   (message "%s" "c/objc/c++ has been set up ")
   )
 #+END_SRC
@@ -975,33 +976,42 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
     )
   )
 
-(defun c-func-description ()
+(defun c-func-description (has-return-p) 
+  ;;skipping to the next line with content
+  (while (equal (thing-at-point 'line t) "\n")
+    (forward-line 1)
+    )
+  (beginning-of-line)
+  (let* ((objects (split-string (thing-at-point 'line t) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
+	 (field-n 1))
+    (defun field-n () (int-to-string field-n))
+    ;; We assume that the first thing is the function name and everything else is an argument
+    (yas-expand-snippet
+     (concat "// " (car (last type-name)) ": ${" (field-n) ":Describe Function}\n//\n"
+	     (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)
+	     (if has-return-p (concat "//\n" "// return" 
+				      (concat-until-n type-name :n 1 :before " ") ": ${" (int-to-string (length objects)) ":Describe Return}\n\n")
+	       "\n")
+	     )
+     )
+    )
+  (remove-blank-before "//" 1)
+  )
+
+(defun c-insert-func-description (not-return-p)
   "Inserts a c-function description when called at or above a c function"
-  (interactive)
+  (interactive "P")
   ;;Note: requires yasnippet to be installed
   (if (not (fboundp 'yas-expand-snippet))
       (message "%s" "c-func-description requires yas-expand-snippet")
-    (progn
-      ;;skipping to the next line with content
-      (while (equal (thing-at-point 'line t) "\n")
-	(forward-line 1)
-	)
-      (beginning-of-line)
-      (let* ((objects (split-string (thing-at-point 'line t) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
-	     (field-n 1))
-	(defun field-n () (int-to-string field-n))
-	;; We assume that the first thing is the function name and everything else is an argument
-	(yas-expand-snippet
-	 (concat "// " (car (last type-name)) ": ${" (field-n) ":Describe Function}\n//\n"
-		 (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)
-		 "//\n"
-		 "// return" (concat-until-n type-name :n 1 :before " ") " : ${" (int-to-string (length objects)) ":Describe Return}\n\n")
-	 )
-	)
-      (remove-blank-before "//" 1)
-      ))
+    (c-func-description (not not-return-p))
+    )
   )
-(add-hook 'c-mode-hook (lambda () (local-set-key (kbd "C-c C-f") 'c-func-description)))
+
+(add-hook 'c-mode-hook (lambda () (local-set-key (kbd "C-c C-f") 'c-insert-func-description)))
+(add-hook 'c++-mode-hook (lambda ()
+			   (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
+			   (yas-activate-extra-mode 'c-mode)
+			   )
+	  )
 #+END_SRC 
-
-
