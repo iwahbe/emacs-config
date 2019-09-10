@@ -14,11 +14,15 @@ First Steps
 (blink-cursor-mode -1)
 ;; The error bell is really annoying
 (setq ring-bell-function 'ignore)
-;; We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula
-(setq exec-path (append exec-path '("/usr/local/bin"))) ;for internal functions
-(setenv "PATH" (concat "/usr/local/bin/:" (getenv "PATH"))) ;for shell exicution
 ;;Fringes are not space efficiant
 (set-fringe-mode 0)
+#+END_SRC
+
+We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula, which is my most common command line tool location.
+#+BEGIN_SRC emacs-lisp
+(setq exec-path (append exec-path '("/usr/local/bin"))) ;for internal functions 
+(setenv "PATH" (concat "/usr/local/bin/:" (getenv "PATH"))) ;for shell exicution
+
 #+END_SRC
   
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that use-package is installed
@@ -43,12 +47,11 @@ We ensure that packages are installed by using the use-package package, so we re
 We set the custom package to it's own file, instead of polluting our.
 #+BEGIN_SRC emacs-lisp
 (setq custom-file (expand-file-name (concat user-emacs-directory "custom.el")))
-(unless (file-exists-p custom-file)
-  (write-region "" "" custom-file))
+(unless (file-exists-p custom-file) (write-region "" "" custom-file))
 (load custom-file)
 #+END_SRC
 
-We apply the dracula theme.
+We apply the kaolin-galaxy theme.
 We setup preferences for the mode-line:
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
 #+BEGIN_SRC emacs-lisp
@@ -95,14 +98,15 @@ I'm trying out EVIL, because reasons.
   (evil-mode 0)
   )
 
+;;; Evil expects undo-tree
 (use-package undo-tree
   :config
   (global-undo-tree-mode 0)
   )
 #+END_SRC
  
-Creates a set of universal functions that are called by varios major modes
-We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode again
+Used to setup modes derived from prog-mode.
+We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode again. This is necessary because otherwise it gets called repeatedly.
 #+BEGIN_SRC emacs-lisp
 (setq my-prog-mode-called nil)
 (defun my-prog-mode ()
@@ -128,9 +132,15 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
     ))
 (defun call-my-prog-mode ()
   "A manual way to call \"my-prog-mode\""
+  (interactive)
   (setq my-prog-mode-called nil)
   (my-prog-mode)
   )
+
+#+END_SRC
+
+Text-mode function
+#+BEGIN_SRC emacs-lisp
 
 (defun my-text-mode ()
   "A hook to call on text-mode init"
@@ -141,6 +151,10 @@ We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode aga
   (message "%s" "my-text-mode was called successfully.")
   )
 
+#+END_SRC
+
+Function to rename the file in the current buffer. 
+#+BEGIN_SRC emacs-lisp
 (defun rename-current-buffer-file ()
   "Renames current buffer and file it is visiting. From http://whattheemacsd.com/"
   (interactive)
@@ -186,7 +200,6 @@ There is a collection of minor modes that trigger after other major modes load.
   :ensure t
   :bind (("C-=" . 'er/expand-region))
   )
-
 
 (use-package ace-window
   :ensure t
@@ -265,7 +278,6 @@ I use helm for fuzzy searching among known options
 #+END_SRC
 
 
-
 We maintain a list of common key-bindings to activate in all modes
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-r") 'scroll-down)
@@ -276,14 +288,14 @@ We maintain a list of common key-bindings to activate in all modes
 (global-set-key (kbd "M-b") 'backward-sentence)
 (global-set-key (kbd "C-z") 'ispell-word)
 (global-set-key (kbd "M--") 'undo)
-(global-set-key (kbd "C-M-n")
-  		(lambda ()
-		  (interactive)
+(global-set-key (kbd "C-M-n") (lambda () (interactive)
 		  (ignore-errors (next-line 5))))
-(global-set-key (kbd "C-M-p")
-  		(lambda ()
-  		  (interactive)
+(global-set-key (kbd "C-M-p") (lambda () (interactive)
   		  (ignore-errors (previous-line 5))))
+(global-set-key (kbd "C-<backspace>") (lambda () (interactive)
+					(forward-word)
+					(backward-kill-word 1)
+					))
 (global-set-key (kbd "s-t") 'make-frame) ;this allows cmd-t to be consistant
 (global-set-key (kbd "s-w") 'delete-frame)
 (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
@@ -295,9 +307,8 @@ We maintain a list of common key-bindings to activate in all modes
 #+END_SRC
 
 
-ido provides a great navigation experience with the find-file command. 
-vlf stands for very large files and assists emacs with handling large files
-FIXME: Im not sure is vlf is configured correctly
+Ido provides a great navigation experience with the find-file command. 
+Vlf stands for very large files and assists emacs with handling large files
 #+BEGIN_SRC emacs-lisp
 
 ;; Interactively Do Things
@@ -326,7 +337,6 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
 (use-package htmlize
   :ensure t
   )
-
 
 (defun my-org-mode()
   "Run on org-mode initialization"
@@ -379,7 +389,6 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
 
 Company is used for auto-completions. In the spirit of emacs, it can be customized for almost any language, but those customizations are module specific. Here, we only call the main version.
 #+BEGIN_SRC emacs-lisp
-
 (use-package company
   :ensure t
   :init
@@ -418,7 +427,6 @@ Company is used for auto-completions. In the spirit of emacs, it can be customiz
   :config
   (add-company-backend 'company-math)
   )
-
 #+END_SRC
 
 
@@ -445,7 +453,6 @@ Snippets are kept in the folder described by "yas-snippet-dirs"
   (setup-yas-company)
   (yas-global-mode 1)
 )
-
 #+END_SRC
 
 
@@ -515,6 +522,7 @@ I use sly as my lisp editor
   )
 #+END_SRC
 
+Simple setup for emacs-lisp mode. Does very little. 
 #+BEGIN_SRC emacs-lisp
 (defun my-emacs-lisp-mode ()
   "runs on 'emacs-lisp-mode-hook "
@@ -590,7 +598,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 ;;; Python Minor Modes
 
 ;;pyenv mode - Virtual Enviroment Manager
-(use-package pyenv-mode ;;FIXME
+(use-package pyenv-mode
   :ensure t
   :after (elpy)
   :init
@@ -600,7 +608,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   )
 
 ;; Indentation Guide
-(use-package highlight-indent-guides ;;FIXME
+(use-package highlight-indent-guides
   :disabled
   :ensure t
   :after (elpy)
@@ -870,13 +878,13 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
   (add-company-backend 'company-ghc)
   (setq company-ghc-show-module t)
   )
+
 (use-package haskell-mode
   :ensure t
   :config
   (custom-set-variables
    '(haskell-stylish-on-save t))
   )
-
 #+END_SRC
 
 C/C++ packages 
@@ -898,9 +906,7 @@ C/C++ packages
     (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM8.0.1.xctoolchain/usr/bin/clang-format")
     (add-hook 'before-save-hook (lambda ()
 				  (when (or (eql major-mode 'c-mode) (eql major-mode 'c++-mode))
-				    (clang-format-buffer))
-				  )
-	      )
+				    (clang-format-buffer))))
     )
   (use-package irony-eldoc
     :ensure t
@@ -930,14 +936,13 @@ C/C++ packages
 	  (compiler (pcase (file-name-extension (buffer-file-name))
 		      ("cc" "g++")
 		      ("c" "cc")
-		      ;; should handel nil correctly
-		      ))
-	  )
-      (compile (concat compiler " '" in "' -o '" out "'"))))
+		      )))
+      (if compiler (compile (concat compiler " '" in "' -o '" out "'"))
+	(message "%s" (concat "Cannot find compiler for exterion: " (file-name-extension (buffer-file-name))))
+	)))
   (local-set-key (kbd "C-c C-c") #'c-compile-buffer)
   (add-company-backend '(company-irony-c-headers company-irony))
   (my-prog-mode)
-
   (message "%s" "c/objc/c++ has been set up ")
   )
 #+END_SRC
@@ -979,7 +984,7 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 	  (if (string-prefix-p except (thing-at-point 'line t))
 	      (progn (forward-line -1) (setq blank-found 0))
 	    (setq exit t)))
-	)	
+	)
       )
     )
   )
@@ -1016,10 +1021,9 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
     )
   )
 
-(add-hook 'c-mode-hook (lambda () (local-set-key (kbd "C-c C-f") 'c-insert-func-description)))
-(add-hook 'c++-mode-hook (lambda ()
-			   (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
-			   (yas-activate-extra-mode 'c-mode)
-			   )
-	  )
+(add-hook 'irony-mode-hook (lambda () 
+			     (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
+			     (if (not (equal major-mode "c-mode"))
+				 (yas-activate-extra-mode 'c-mode))
+			     ))
 #+END_SRC 
