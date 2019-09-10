@@ -927,7 +927,11 @@ C/C++ packages
     (let (
 	  (in buffer-file-name)
 	  (out (file-name-sans-extension buffer-file-name))
-	  (compiler (if (equal (file-name-extension (buffer-file-name)) "cc") "g++" "cc"))
+	  (compiler (pcase (file-name-extension (buffer-file-name))
+		      ("cc" "g++")
+		      ("c" "cc")
+		      ;; should handel nil correctly
+		      ))
 	  )
       (compile (concat compiler " '" in "' -o '" out "'"))))
   (local-set-key (kbd "C-c C-c") #'c-compile-buffer)
