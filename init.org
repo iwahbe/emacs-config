@@ -45,8 +45,11 @@ We ensure that packages are installed by using the use-package package, so we re
 #+END_SRC 
 
 [[https://github.com/raxod502/straight.el][straight.el]] is a package manager.
+- A benefit is that packages installed are defined entirely by this file.
+- unfortunately, straight.el is normally slower then package.el, because it checks for changes in source material. This can be overcome by setting check-for-modifications to be based on file saves, instead of actual changes.
 #+BEGIN_SRC emacs-lisp
 (defvar bootstrap-version)
+(setq straight-check-for-modifications '(check-on-save find-when-checking))
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
       (bootstrap-version 5))
@@ -503,8 +506,6 @@ ESS or Emacs Speaks Statistics is a major mode that I use to handle R. It could 
   :straight t
   :mode (("\\.r\\'" . ess-r-mode)
 	 ("\\.R\\'" . ess-r-mode))  
-  :init
-  (require 'ess-site)
   :config
   (setq inferior-ess-r-program "/usr/local/bin/R")
   ;; We assume the ability to generate graphs using a WindowsX(QuartsX) program.
@@ -513,6 +514,8 @@ ESS or Emacs Speaks Statistics is a major mode that I use to handle R. It could 
   (setq ess-directory-function nil) ; directory defaults to ess-directory
   (setq ess-directory nil) ; directory defaults to the directory of the opened file
   (add-hook 'inferior-ess-mode  'ess-execute-screen-options)
+  :init
+  (require 'ess-site)
   )
 #+END_SRC
 
