@@ -1030,15 +1030,21 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 	      (forward-line direction))
 	  (if (string-prefix-p except (thing-at-point 'line t))
 	      (progn (forward-line direction) (setq blank-found 0))
-	    (setq exit t)))))))
+	    (setq exit t)))))
+    blank-found))
 
 (defun scroll-down-blank ()
   (while (equal (thing-at-point 'line t) "\n")
     (forward-line 1)))
 
-(defun remove-blank-up (prefix) (interactive "P") (remove-blank-lines "//" 1  nil) (dotimes (a (- prefix 1)) (insert "\n")) (forward-line -1))
-(global-set-key (kbd "C-x M-p") 'remove-blank-up) ; eats whitespace between files
+(defun remove-blank-up (prefix)
+  (interactive "P")
+  (let ((num-deleted (remove-blank-lines "//" 1  nil)))
+    (if prefix
+	(dotimes (a (- prefix 1)) (insert "\n")))
+    (if (< num-deleted 2) nil (forward-line -1))))
 
+(global-set-key (kbd "C-x M-p") 'remove-blank-up) ; eats whitespace between files
 (defun c-func-description (has-return-p) 
   ;;skipping to the next line with content
   (scroll-down-blank)
@@ -1075,3 +1081,4 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 				 (yas-activate-extra-mode 'c-mode))
 			     ))
 #+END_SRC 
+
