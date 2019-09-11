@@ -61,7 +61,7 @@ We ensure that packages are installed by using the use-package package, so we re
 (straight-use-package 'use-package) ;ensures both that use-package is installed and works with straight.el
 #+END_SRC
 
-We set the custom package to it's own file, instead of polluting our.
+We set the custom package to it's own file, instead of polluting our init, and we can't put it in init.el, as it's blown away on tangle.
 #+BEGIN_SRC emacs-lisp
 (setq custom-file (expand-file-name (concat user-emacs-directory "custom.el")))
 (unless (file-exists-p custom-file) (write-region "" "" custom-file))
@@ -112,10 +112,11 @@ I'm trying out EVIL, because reasons.
   ("C-\\" . 'evil-toggle)
   :init
   (setq evil-toggle-key (kbd ""))
+  :bind (("C-\\" . 'evil-toggle))
   :config
   (evil-mode 0)
   (evil-define-key nil evil-insert-state-map (kbd "C-d") 'delete-char)
-  (defun evil-toggle (prefix-p)
+  (defun evil-toggle (&optional prefix-p)
     (interactive "P")
     (if evil-mode
 	(if prefix-p
@@ -797,10 +798,8 @@ The part that performed the byte-compile is currently disabled as it caused prob
       (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
       ;; uncomment to byte compile init.el on save
       ;;(byte-compile-file (concat user-emacs-directory "init.el"))
-      )
-    )
-  )
-(add-hook 'after-save-hook 'tangle-init-call)
+      ))) 
+(add-hook 'after-save-hook 'tangle-init-call) 
 #+END_SRC
 
 I use a font called Fira-Code. This enables the font as well as the font's ligatures. 
@@ -1018,30 +1017,31 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
     )
   )
 
-(defun remove-blank-before (except num-blank)
+(defun remove-blank-lines (except num-blank &optional reverse)
   "Removes lines that start with \"excpet\" and blank lines until there are only \"num-blank\" blank lines above."
-  (let ((blank-found 0) (exit nil))
+  (let ((blank-found 0) (exit nil) (direction (if reverse 1 -1)))
     (save-excursion
-      (while (not exit)
+      (while (and (not exit) (< blank-found 1000))
 	(if (equal (thing-at-point 'line t) "\n")
 	    (progn
 	      (incr blank-found)
 	      (if (> blank-found num-blank)
 		  (delete-blank-lines))
-	      (forward-line -1))
+	      (forward-line direction))
 	  (if (string-prefix-p except (thing-at-point 'line t))
-	      (progn (forward-line -1) (setq blank-found 0))
-	    (setq exit t)))
-	)
-      )
-    )
-  )
+	      (progn (forward-line direction) (setq blank-found 0))
+	    (setq exit t)))))))
+
+(defun scroll-down-blank ()
+  (while (equal (thing-at-point 'line t) "\n")
+    (forward-line 1)))
+
+(defun remove-blank-up (prefix) (interactive "P") (remove-blank-lines "//" 1  nil) (dotimes (a (- prefix 1)) (insert "\n")) (forward-line -1))
+(global-set-key (kbd "C-x M-p") 'remove-blank-up) ; eats whitespace between files
 
 (defun c-func-description (has-return-p) 
   ;;skipping to the next line with content
-  (while (equal (thing-at-point 'line t) "\n")
-    (forward-line 1)
-    )
+  (scroll-down-blank)
   (beginning-of-line)
   (let* ((objects (split-string (thing-at-point 'line t) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
 	 (field-n 1))
@@ -1056,7 +1056,7 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 	     )
      )
     )
-  (remove-blank-before "//" 1)
+  (remove-blank-lines "//" 1)
   )
 
 (defun c-insert-func-description (not-return-p)
