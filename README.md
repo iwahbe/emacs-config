@@ -11,6 +11,9 @@ Note: changes to the `init.el` file will be ignored unless you delete the
 `init.elc` file, and both will be blown away on save by `tangle-init-call`. 
 
 ## Required outside emacs:
+### Git:
+`brew install git;`  
+
 ### Rust:
 `brew install rust;`  
 `rustup toolchain add nightly;`  
