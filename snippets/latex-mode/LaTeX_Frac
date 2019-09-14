@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: LaTeX_Frac
+# key: \frac
+# --
+\frac{${1:over}}{${2:under}}$0

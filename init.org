@@ -1,7 +1,8 @@
-We hold the entire init file in Org mode to allow increased comments, along with better organization. This further gives the easy ability to debug by disabling select components of the init.
-This is connected to a github page.
+We hold the entire init file in Org mode to allow increased comments, along with better organization. This further gives
+the easy ability to debug by disabling select components of the init. This is connected to a github page.
 
-Idea: set a separate file with a set of variable assignments like specific paths, and names and passwords. Then have this file load it to allow a secure posting. 
+Idea: set a separate file with a set of variable assignments like specific paths, and names and passwords. Then have
+this file load it to allow a secure posting.
   
 First Steps
 #+BEGIN_SRC emacs-lisp
@@ -18,14 +19,16 @@ First Steps
 (set-fringe-mode 0)
 #+END_SRC
 
-We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula, which is my most common command line tool location.
+We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula, which is
+my most common command line tool location.
 #+BEGIN_SRC emacs-lisp
 (setq exec-path (append exec-path '("/usr/local/bin"))) ;for internal functions 
 (setenv "PATH" (concat "/usr/local/bin/:" (getenv "PATH"))) ;for shell exicution
 
 #+END_SRC
   
-We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that use-package is installed
+We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that
+use-package is installed
 #+BEGIN_SRC emacs-lisp :tangle no
 ;;;-*- lexical-binding: t -*-
 (require 'package)
@@ -46,7 +49,8 @@ We ensure that packages are installed by using the use-package package, so we re
 
 [[https://github.com/raxod502/straight.el][straight.el]] is a package manager.
 - A benefit is that packages installed are defined entirely by this file.
-- unfortunately, straight.el is normally slower then package.el, because it checks for changes in source material. This can be overcome by setting check-for-modifications to be based on file saves, instead of actual changes.
+- unfortunately, straight.el is normally slower then package.el, because it checks for changes in source material. This
+  can be overcome by setting check-for-modifications to be based on file saves, instead of actual changes.
 #+BEGIN_SRC emacs-lisp
 (defvar bootstrap-version)
 (setq straight-check-for-modifications '(check-on-save find-when-checking))
@@ -64,21 +68,23 @@ We ensure that packages are installed by using the use-package package, so we re
 (straight-use-package 'use-package) ;ensures both that use-package is installed and works with straight.el
 #+END_SRC
 
-We set the custom package to it's own file, instead of polluting our init, and we can't put it in init.el, as it's blown away on tangle.
+We set the custom package to it's own file, instead of polluting our init, and we can't put it in init.el, as it's blown
+away on tangle.
 #+BEGIN_SRC emacs-lisp
 (setq custom-file (expand-file-name (concat user-emacs-directory "custom.el")))
 (unless (file-exists-p custom-file) (write-region "" "" custom-file))
 (load custom-file)
 #+END_SRC
 
-We apply the kaolin-galaxy theme.
-We setup preferences for the mode-line:
+We apply the kaolin-galaxy theme if and only if we are using GUI emacs.
+We setup preferences for the mode-line.
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
 #+BEGIN_SRC emacs-lisp
 (use-package kaolin-themes
   :straight t
   :config
-  (load-theme 'kaolin-galaxy t)
+  (if (display-graphic-p)
+  (load-theme 'kaolin-galaxy t))
   )
 
 (setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
@@ -102,9 +108,10 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
 
 #+END_SRC
 
-Sets up universal variables to be used later
+Sets up helpful universal variables.
 #+BEGIN_SRC emacs-lisp
 (setq-default fill-column 80)
+(setq-default sentence-end "[\\.\\?\\!] +")
 #+END_SRC
 
 I'm trying out EVIL, because reasons.
@@ -115,9 +122,12 @@ I'm trying out EVIL, because reasons.
   ("C-\\" . 'evil-toggle)
   :init
   (setq evil-toggle-key (kbd ""))
-  :bind (("C-\\" . 'evil-toggle))
+  :bind (
+	 ("C-\\" . 'evil-toggle)
+	 :map evil-insert-state-map ("C-:" . 'evil-ex)
+	 )
   :config
-  (evil-mode 0)
+  (evil-mode 1)
   (evil-define-key nil evil-insert-state-map (kbd "C-d") 'delete-char)
   (defun evil-toggle (&optional prefix-p)
     (interactive "P")
@@ -140,37 +150,30 @@ I'm trying out EVIL, because reasons.
   )
 #+END_SRC
  
-Used to setup modes derived from prog-mode.
-We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode again. This is necessary because otherwise it gets called repeatedly.
+Used to setup modes derived from prog-mode. We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode
+again. This is necessary because otherwise it gets called repeatedly.
 #+BEGIN_SRC emacs-lisp
-(setq my-prog-mode-called nil)
 (defun my-prog-mode ()
   "Run as part of global prog-mode setup"
-  (when (equal my-prog-mode-called nil)
-    (global-set-key (kbd "C-c q") 'comment-or-uncomment-region)
+    (local-set-key (kbd "C-c q") 'comment-or-uncomment-region)
     (setq display-line-numbers t)
     (line-number-mode 0)
     (column-number-mode 1)
     (if (version<= "26.0.50" emacs-version) 
-	(global-display-line-numbers-mode 1) ; displays line numbers on the left
+	(display-line-numbers-mode 1) ; displays line numbers on the left
       (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
       )
     (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
     (eldoc-mode 1)
     (setq company-minimum-prefix-length 1) ;we want an active company for programming, as there are many variable names, and memory is hard
     (setq font-lock-maximum-decoration t) ;lots of syntax highlighting
-    (subword-mode t)
+    (subword-mode +1)
     (setq my-prog-mode-called t)
     (message "%s" (concat
 		   "my-prog-mode was called successfully on major mode: "
 		   (symbol-name major-mode)))
-    ))
-(defun call-my-prog-mode ()
-  "A manual way to call \"my-prog-mode\""
-  (interactive)
-  (setq my-prog-mode-called nil)
-  (my-prog-mode)
-  )
+    )
+(add-hook 'prog-mode-hook 'my-prog-mode)
 
 #+END_SRC
 
@@ -179,13 +182,15 @@ Text-mode function
 
 (defun my-text-mode ()
   "A hook to call on text-mode init"
-  (wc-mode 1)               ; provides a word count
-  (flyspell-mode 1)         ; recognizes misspellings
-  (visual-line-mode 1)      ; we want the words to wrap
+  (wc-mode +1)               ; provides a word count
+  (flyspell-mode +1)         ; recognizes misspellings
+  (visual-line-mode +1)      ; we want the words to wrap
   (setq tab-width 4)
+  (superword-mode +1)
+  (auto-fill-mode +1)
   (message "%s" "my-text-mode was called successfully.")
   )
-
+(add-hook 'text-mode-hook 'my-text-mode)
 #+END_SRC
 
 Function to rename the file in the current buffer. 
@@ -321,6 +326,33 @@ I use helm for fuzzy searching among known options
 #+END_SRC
 
 
+yasnippet allows snippet expansion
+Snippets are kept in the folder described by "yas-snippet-dirs"
+#+BEGIN_SRC emacs-lisp
+(use-package yasnippet
+  :straight t
+  :after (company) ;due to company-mode
+  :init
+  (defun setup-yas-company () 
+    (defvar company-mode/enable-yas t
+      "Enable yasnippet for all backends.")
+
+    (defun company-mode/backend-with-yas (backend)
+      "addes company-yasnippet to \"backend\""
+      (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+	  backend
+	(append (if (consp backend) backend (list backend))
+		'(:with company-yasnippet))))
+
+    (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+    )
+  :config
+  (setup-yas-company)
+  (yas-global-mode 1)
+)
+#+END_SRC
+
+
 We maintain a list of common key-bindings to activate in all modes
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-r") 'scroll-down)
@@ -381,8 +413,12 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
   :straight t
   )
 
-(defun my-org-mode()
-  "Run on org-mode initialization"
+(use-package org
+  :straight t
+  :defer t
+  :bind (:map org-mode-map ("C-j" . 'backward-word))
+  :config
+  (set-fill-column 120)
   (setq org-babel-python-command "python3")
   (org-babel-do-load-languages
    'org-babel-load-languages
@@ -391,8 +427,6 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
 	       (expand-file-name (concat user-emacs-directory "init.org")))
     (my-prog-mode)
     )
-  (local-set-key (kbd "C-j") 'backward-word)
-  (my-text-mode)
   (setq org-src-fontify-natively t)
   (setq org-src-tab-acts-natively t)
   (setq org-confirm-babel-evaluate nil)
@@ -412,7 +446,6 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
   (yas-activate-extra-mode 'text-mode)
   (message "%s" "Org mode called successfully.")
   )
-(add-hook 'org-mode-hook #'my-org-mode)
 #+END_SRC
 
 Sets all backups to path to .emacs.d instead of cluttering the folder their in
@@ -430,7 +463,8 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
 (setq vc-make-backup-files t)
 #+END_SRC
 
-Company is used for auto-completions. In the spirit of emacs, it can be customized for almost any language, but those customizations are module specific. Here, we only call the main version.
+Company is used for auto-completions. In the spirit of emacs, it can be customized for almost any language, but those
+customizations are module specific. Here, we only call the main version.
 #+BEGIN_SRC emacs-lisp
 (use-package company
   :straight t
@@ -473,34 +507,8 @@ Company is used for auto-completions. In the spirit of emacs, it can be customiz
 #+END_SRC
 
 
-yasnippet allows snippet expansion
-Snippets are kept in the folder described by "yas-snippet-dirs"
-#+BEGIN_SRC emacs-lisp
-(use-package yasnippet
-  :straight t
-  :init
-  (defun setup-yas-company () 
-    (defvar company-mode/enable-yas t
-      "Enable yasnippet for all backends.")
-
-    (defun company-mode/backend-with-yas (backend)
-      "addes company-yasnippet to \"backend\""
-      (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
-	  backend
-	(append (if (consp backend) backend (list backend))
-		'(:with company-yasnippet))))
-
-    (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
-    )
-  :config
-  (setup-yas-company)
-  (yas-global-mode 1)
-)
-#+END_SRC
-
-
-
-ESS or Emacs Speaks Statistics is a major mode that I use to handle R. It could be extended to handle other S type stat languages in the future. 
+ESS (Emacs Speaks Statistics) is a major mode that I use to handle R. It could be extended to handle other S type
+statistics languages in the future.
 #+BEGIN_SRC emacs-lisp
 (use-package ess
   :straight t
@@ -515,11 +523,14 @@ ESS or Emacs Speaks Statistics is a major mode that I use to handle R. It could 
   (setq ess-directory nil) ; directory defaults to the directory of the opened file
   (add-hook 'inferior-ess-mode  'ess-execute-screen-options)
   :init
-  (require 'ess-site)
+  (load "ess-autoloads")
+  ; (require 'ess-site)
   )
 #+END_SRC
 
-I assign markdown to the appropriate extensions, and enable math-mode and wc-mode. I honestly don't use this much as org-mode does most of what markdown does.
+
+I assign markdown to the appropriate extensions, and enable math-mode and wc-mode. I honestly don't use this much as
+org-mode does most of what markdown does.
 #+BEGIN_SRC emacs-lisp
 (use-package markdown-mode
   :straight t
@@ -541,6 +552,7 @@ I assign markdown to the appropriate extensions, and enable math-mode and wc-mod
   )
 #+END_SRC
 
+
 I use sly as my lisp editor
 #+BEGIN_SRC emacs-lisp
 (use-package sly
@@ -551,11 +563,11 @@ I use sly as my lisp editor
   :config
   ;; The check prevents setting a new editor at compile time
   (prettify-symbols-mode +1)
+  (modify-syntax-entry ?- "w" lisp-mode-syntax-table)
   (lisp-mode)
   (if (string-suffix-p ".lisp" buffer-file-name)
       (setq inferior-lisp-program "/usr/local/bin/clisp"))
   (define-key sly-prefix-map (kbd "M-h") 'sly-documentation-lookup)
-  (my-prog-mode)
   (setq sly-lisp-implementations '(
 	  (clisp ("/usr/local/bin/clisp"))
 	  ))
@@ -570,7 +582,7 @@ Simple setup for emacs-lisp mode. Does very little.
 (defun my-emacs-lisp-mode ()
   "runs on 'emacs-lisp-mode-hook "
   (prettify-symbols-mode +1)
-  (my-prog-mode)
+  (modify-syntax-entry ?- "w" emacs-lisp-mode-syntax-table)
   )
 (add-hook 'emacs-lisp-mode-hook #'my-emacs-lisp-mode)
 #+END_SRC
@@ -629,7 +641,6 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
 	(concat rust-root-path"/lib/rustlib/src/rust/src"))
   (setq rust-rustfmt-bin (concat rust-root-path "/bin/rustfmt")))
   :config
-  (my-prog-mode)
   (setq rust-format-on-save t)
   (message "%s" "Rust mode was called successfully")
   )
@@ -647,7 +658,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   :init
   (setenv "WORKON_HOME" "~/.pyenv/versions/")
   :config
-  (pyenv-mode)
+  (pyenv-mode +1)
   )
 
 ;; Indentation Guide
@@ -694,29 +705,21 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   (setq python-shell-interpreter-args "--simple-prompt -i")
   )
 
-;; Elpy specific key bingins
-;; As Elpy does not conform to key-maps, we do it this way :bind does not work
-(defun elpy-key-bindings ()
-  "Sets up local keybingins for elpy(python)"
-  (local-set-key (kbd "M-]") 'elpy-nav-indent-shift-right)
-  (local-set-key (kbd "M-[") 'elpy-nav-indent-shift-left)
-  (local-set-key (kbd "C-x p e") 'pyenv-activate-current-project)
-  (local-set-key (kbd "M-p") 'elpy-nav-move-line-or-region-up)
-  (local-set-key (kbd "M-n") 'elpy-nav-move-line-or-region-dowb)
-  )
- 
 ;;; Python Major Mode - Elpy
 (use-package elpy
-  :defer t
   :straight t
+  :defer t
   :mode ("\\.py\\'" . python-mode)
   :hook ((python-mode . elpy-mode))
+  :bind (:map elpy-mode-map
+	      ("M-]" . 'elpy-nav-indent-shift-right)
+	      ("M-[" . 'elpy-nav-indent-shift-left)
+	      ("M-p" . 'elpy-nav-move-line-or-region-up)
+	      ("M-n" . 'elpy-nav-move-line-or-region-down))
   :init
   (setq python-indent-guess-indent-offset t)  
   (setq python-indent-guess-indent-offset-verbose nil)
   :config
-  (my-prog-mode)
-  (elpy-key-bindings)
   (add-hook 'before-save-hook #'elpy-format-code)
   (elpy-enable)
   (setq elpy-rpc-backend "company")
@@ -756,8 +759,9 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     "\\newcommand{\\zz}{\\mathbb{Z}}\n"
     "\\newcommand{\\rr}{\\mathbb{R}}\n"
     "\\newcommand{\\cc}{\\mathbb{C}}\n"
-    "\\newcommand{\\qq}{\\mathbb{Q}}\n"
     "\\newcommand{\\nsum}{\\sum^n_{i=1}}\n"
+    "\\newcommand{\\qq}{\\mathbb{Q}}\n"
+    "\\newcommand{\\nn}{\\mathbb{N}}\n"
     "\\newcommand{\\exc}[1]{$ $\\\\\\noindent\\textbf{Problem #1}}\n"
     "\\newcommand{\\inpr}[2]{\\langle #1, #2\\rangle}\n"
     "\\newcommand{\\floor}[1]{\\lfloor #1 \\rfloor}\n"
@@ -778,6 +782,7 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     )
   (setenv "PATH" (concat "/Library/TeX/texbin/:" (getenv "PATH"))); to allow LaTeX output from org-mdoe
   (setq font-latex-fontify-script nil) ;disables inline subscripts and superscripts
+  (prettify-symbols-mode -1)
   (add-to-list 'exec-path "/Library/TeX/texbin/" t)
   (message "%s" "LaTeX-mode has been loaded successfully")
   )
@@ -930,9 +935,12 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
 
 C/C++ packages 
 - irony acts as a handler
-  - To install irony on a fresh computer, you need to have llvm installed. You then need to set the environmental variable "Clang_DIR" to the directory that contains "ClangConfig.cmake"
+  - To install irony on a fresh computer, you need to have llvm installed. You then need to set the environmental
+    variable "Clang_DIR" to the directory that contains "ClangConfig.cmake"
   - to find, use `pwd $(sudo find /usr/ ClangConfig.cmake)`
-  - On mac I also tried this: "install_name_tool -change @rpath/libclang.dylib /usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/libclang.dylib ~/.emacs.d/irony/bin/irony-server"
+  - On mac I also tried this: "install_name_tool -change @rpath/libclang.dylib
+    /usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/libclang.dylib
+    ~/.emacs.d/irony/bin/irony-server"
 #+BEGIN_SRC emacs-lisp
 ;; Enable company auto-complete
 (use-package clang-format
@@ -992,7 +1000,6 @@ C/C++ packages
 	)))
   (local-set-key (kbd "C-c C-c") #'c-compile-buffer)
   (add-company-backend '(company-irony-c-headers company-irony))
-  (my-prog-mode)
   (message "%s" "c/objc/c++ has been set up ")
   )
 #+END_SRC
@@ -1084,4 +1091,17 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 				 (yas-activate-extra-mode 'c-mode))
 			     ))
 #+END_SRC 
+
+Multiple cursors should be self-explanatory.
+#+BEGIN_SRC emacs-lisp
+(use-package multiple-cursors
+  :straight t
+  :bind
+  (("C->" . mc/mark-next-like-this)
+   ("C-<" . mc/mark-previous-like-this)
+   ("C-c ," . mc/mark-all-like-this)
+   (:map mc/keymap 
+	 ("<return>" . nil))) ;allows entry of <return> with multiple cursors
+  )
+#+END_SRC
 
