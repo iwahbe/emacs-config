@@ -3,7 +3,7 @@ the easy ability to debug by disabling select components of the init. This is co
 
 Idea: set a separate file with a set of variable assignments like specific paths, and names and passwords. Then have
 this file load it to allow a secure posting.
-  
+
 First Steps
 #+BEGIN_SRC emacs-lisp
 ;; Turn off mouse interface early in startup to avoid momentary display
@@ -108,6 +108,16 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
 
 #+END_SRC
 
+For setting up lisp-interaction-mode: the scratch buffer
+#+BEGIN_SRC emacs-lisp
+(add-hook 'lisp-interaction-mode-hook (lambda ()
+					(local-set-key (kbd "C-j") 'backward-word)
+					(local-set-key (kbd "C-S-j") 'eval-print-last-sexp)
+					))
+#+END_SRC
+
+
+
 Sets up helpful universal variables.
 #+BEGIN_SRC emacs-lisp
 (setq-default fill-column 80)
@@ -127,7 +137,7 @@ I'm trying out EVIL, because reasons.
 	 :map evil-insert-state-map ("C-:" . 'evil-ex)
 	 )
   :config
-  (evil-mode 1)
+  (evil-mode -1)
   (evil-define-key nil evil-insert-state-map (kbd "C-d") 'delete-char)
   (defun evil-toggle (&optional prefix-p)
     (interactive "P")
@@ -266,7 +276,7 @@ There is a collection of minor modes that trigger after other major modes load.
 ;;electric-operator adds spaces before and after opperator symbols
 (use-package electric-operator
   :straight t
-  :hook ((ess-mode LaTeX-mode) . electric-operator-mode)
+  :hook ((ess-mode) . electric-operator-mode)
   :config
   )
 
@@ -405,47 +415,47 @@ Vlf stands for very large files and assists emacs with handling large files
   )
 #+END_SRC
 
+
 Org mode provides a function text mode, so we give it many text mode type things.
 Note: htmlize allows org-mode to publish to html more complex stuff like src blocks. 
 #+BEGIN_SRC emacs-lisp
 
-(use-package htmlize
-  :straight t
-  )
+  (use-package htmlize
+	:straight t
+	)
 
-(use-package org
-  :straight t
-  :defer t
-  :bind (:map org-mode-map ("C-j" . 'backward-word))
-  :config
-  (set-fill-column 120)
-  (setq org-babel-python-command "python3")
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((python . t) (emacs-lisp . t)))
-  (when (equal (buffer-file-name)
-	       (expand-file-name (concat user-emacs-directory "init.org")))
-    (my-prog-mode)
-    )
-  (setq org-src-fontify-natively t)
-  (setq org-src-tab-acts-natively t)
-  (setq org-confirm-babel-evaluate nil)
-  (setq org-src-preserve-indentation t)
-  (defvar  *src-default-language* nil)
-  (defun src-default-language ()
-    "Used to set a default src language for skeleton-src-blocks"
-    (interactive)
-    (setq *src-default-language* (read-string "Language: ")))
-  (define-skeleton skeleton-src-block
-    "Inserts a SRC Block Letter into the buffer"
-    ""
-    "#+BEGIN_SRC " (if *src-default-language* *src-default-language* (skeleton-read "Language: ")) "\n"
-    "\n"
-    "#+END_SRC"
-    )
-  (yas-activate-extra-mode 'text-mode)
-  (message "%s" "Org mode called successfully.")
-  )
+  (use-package org
+	:straight t
+	:defer t
+	:bind (:map org-mode-map ("C-j" . 'backward-word))
+	:config
+	(set-fill-column 120)
+	(setq org-babel-python-command "python3")
+	(org-babel-do-load-languages 'org-babel-load-languages
+	 '((python . t) (emacs-lisp . t) (C . t)))
+	(when (equal (buffer-file-name)
+			 (expand-file-name (concat user-emacs-directory "init.org")))
+	  (my-prog-mode)
+	  )
+	(setq org-src-fontify-natively t)
+	(setq org-src-tab-acts-natively t)
+	(setq org-confirm-babel-evaluate nil)
+	(setq org-src-preserve-indentation t)
+	(defvar  *src-default-language* nil)
+	(defun src-default-language ()
+	  "Used to set a default src language for skeleton-src-blocks"
+	  (interactive)
+	  (setq *src-default-language* (read-string "Language: ")))
+	(define-skeleton skeleton-src-block
+	  "Inserts a SRC Block Letter into the buffer"
+	  ""
+	  "#+BEGIN_SRC " (if *src-default-language* *src-default-language* (skeleton-read "Language: ")) "\n"
+	  "\n"
+	  "#+END_SRC"
+	  )
+	(yas-activate-extra-mode 'text-mode)
+	(message "%s" "Org mode called successfully.")
+	)
 #+END_SRC
 
 Sets all backups to path to .emacs.d instead of cluttering the folder their in
@@ -736,14 +746,16 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 Sets up latex support along with a collection of skeletons for latex. This is also mostly replaced by org-mode
 #+BEGIN_SRC emacs-lisp
 
-(defun latex-config ()
-  "Sets up LaTeX"
+(use-package tex
+  :straight auctex
+  :defer t
+  :mode ("\\.tex\\'" . LaTeX-mode)
+  :hook ((LaTeX-mode . (lambda ()  (yas-activate-extra-mode 'text-mode))))
+  :config
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
   (local-set-key "\C-j" 'backward-word)
-  (display-line-numbers-mode)
-  (visual-line-mode)
-  (visual-line-mode)
+  (visual-line-mode +1)
   (define-skeleton skeleton-math-letter
     "Inserts a latex Letter Outline into the buffer"
     "Title: "
@@ -782,15 +794,11 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     )
   (setenv "PATH" (concat "/Library/TeX/texbin/:" (getenv "PATH"))); to allow LaTeX output from org-mdoe
   (setq font-latex-fontify-script nil) ;disables inline subscripts and superscripts
-  (prettify-symbols-mode -1)
   (add-to-list 'exec-path "/Library/TeX/texbin/" t)
+  (setq tex--prettify-symbols-alist nil)
+  (set-fill-column 100)
+
   (message "%s" "LaTeX-mode has been loaded successfully")
-  )
-(use-package tex
-  :straight auctex
-  :defer t
-  :mode ("\\.tex\\'" . LaTeX-mode)
-  :hook ((LaTeX-mode . latex-config) (LaTeX-mode . (lambda ()  (yas-activate-extra-mode 'text-mode))))
   )
 #+END_SRC 
  
@@ -1104,4 +1112,3 @@ Multiple cursors should be self-explanatory.
 	 ("<return>" . nil))) ;allows entry of <return> with multiple cursors
   )
 #+END_SRC
-
