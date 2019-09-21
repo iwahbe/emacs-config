@@ -387,7 +387,7 @@ We maintain a list of common key-bindings to activate in all modes
 
 (global-set-key (kbd "C-M-v") 'scroll-other-window-down)
 (global-set-key (kbd "C-M-r") 'scroll-other-window)
-
+(global-set-key (kbd "s-p") nil) ;used to be print
 
 #+END_SRC
 
@@ -429,11 +429,12 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
 	:defer t
 	:bind (:map org-mode-map ("C-j" . 'backward-word))
 	:config
+	(setq org-src-window-setup 'current-window)
 	(set-fill-column 120)
 	(setq org-babel-python-command "python3")
 	(org-babel-do-load-languages 'org-babel-load-languages
 	 '((python . t) (emacs-lisp . t) (C . t)))
-	(when (equal (buffer-file-name)
+	(when (equal (buffer-file-name) ;the init.org file is special
 			 (expand-file-name (concat user-emacs-directory "init.org")))
 	  (my-prog-mode)
 	  )
@@ -745,16 +746,19 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 
 Sets up latex support along with a collection of skeletons for latex. This is also mostly replaced by org-mode
 #+BEGIN_SRC emacs-lisp
+(straight-use-package '(format-latex-mode :host github :repo "iwahbe/format-latex"))
+(add-hook 'LaTeX-mode-hook 'format-latex-mode)
+
 
 (use-package tex
   :straight auctex
   :defer t
   :mode ("\\.tex\\'" . LaTeX-mode)
   :hook ((LaTeX-mode . (lambda ()  (yas-activate-extra-mode 'text-mode))))
+  :bind (:map tex-mode-map ("C-j" . 'backward-word))
   :config
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
-  (local-set-key "\C-j" 'backward-word)
   (visual-line-mode +1)
   (define-skeleton skeleton-math-letter
     "Inserts a latex Letter Outline into the buffer"
@@ -1029,11 +1033,7 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
      after-count
      (if count-from-p
 	 (concat-until-n (cdr lst) :n n :before before :after after :count-from (1+ count-from) :after-count after-count)
-       (concat-until-n (cdr lst) :n n :before before :after after :after-count after-count)
-       )
-     )
-    )
-  )
+       (concat-until-n (cdr lst) :n n :before before :after after :after-count after-count)))))
 
 (defun remove-blank-lines (except num-blank &optional reverse)
   "Removes lines that start with \"excpet\" and blank lines until there are only \"num-blank\" blank lines above."
