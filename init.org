@@ -103,8 +103,29 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
   (defface sml/charging ;this is much easier to see
     '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
   (add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
-  (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
+  (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox  
   )
+
+(defun frame-align-left ()
+  "Aligns the frame to the left side of the window"
+  ;; Note: does not work well with monitors
+  (interactive)
+  (when (display-graphic-p)
+    (set-frame-width (selected-frame) (/ (display-pixel-width) 2) nil t)
+    (set-frame-height (selected-frame) (display-pixel-height) nil t)
+    (set-frame-position (selected-frame) 0 0)))
+
+(defun frame-align-right ()
+  "Aligns the frame to the right side of the window"
+  ;; Note: does not work well with monitors
+  (interactive)
+  (when (display-graphic-p)
+    (set-frame-width (selected-frame) (/ (display-pixel-width) 2) nil t)
+    (set-frame-height (selected-frame) (display-pixel-height) nil t)
+    (set-frame-position (selected-frame) (- (display-pixel-width) (frame-pixel-width (selected-frame))) 0)))
+
+(global-set-key (kbd "M-s-<left>") 'frame-align-left)
+(global-set-key (kbd "M-s-<right>") 'frame-align-right)
 
 #+END_SRC
 
@@ -754,8 +775,8 @@ Sets up latex support along with a collection of skeletons for latex. This is al
   :straight auctex
   :defer t
   :mode ("\\.tex\\'" . LaTeX-mode)
-  :hook ((LaTeX-mode . (lambda ()  (yas-activate-extra-mode 'text-mode))))
-  :bind (:map tex-mode-map ("C-j" . 'backward-word))
+  :hook ((LaTeX-mode . (lambda ()  (yas-activate-extra-mode 'text-mode)
+			 (define-key LaTeX-mode-map (kbd "C-j")  'backward-word))))
   :config
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
