@@ -1051,19 +1051,27 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 #+BEGIN_SRC emacs-lisp
 (defmacro incr (var) `(setq ,var (1+ ,var)))
 
-(cl-defun concat-until-n  (lst &key (n 0) (before "") (after "") (count-from 0 count-from-p) (after-count ""))
+(defun check-against-list (list-to-check bool-function)
+  (if (funcall bool-function (car list-to-check))
+      t
+    (if (cdr list-to-check)
+	(check-against-list (cdr list-to-check) bool-function)
+      nil)))
+
+(cl-defun concat-until-n  (lst &key (n 0) (before "") (after "") (count-from 0 count-from-p) (after-count "") (add-before-last ""))
   "Returns a concatonated list of list elements ignoring the last n with an optional count and surrounding text"
   (if (<= (length lst) n)
       ""   ; recursion base case 
     (concat ;otherwise
      before
      (s-trim (car lst))
+     (if (= (1- (length lst)) n) add-before-last nil)
      after
      (if count-from-p (int-to-string count-from) "")
      after-count
      (if count-from-p
-	 (concat-until-n (cdr lst) :n n :before before :after after :count-from (1+ count-from) :after-count after-count)
-       (concat-until-n (cdr lst) :n n :before before :after after :after-count after-count)))))
+	 (concat-until-n (cdr lst) :n n :before before :after after :count-from (1+ count-from) :after-count after-count :add-before-last add-before-last)
+       (concat-until-n (cdr lst) :n n :before before :after after :after-count after-count :add-before-last add-before-last)))))
 
 (defun remove-blank-lines (except num-blank &optional reverse)
   "Removes lines that start with \"excpet\" and blank lines until there are only \"num-blank\" blank lines above."
@@ -1100,20 +1108,23 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
   (scroll-down-blank)
   (beginning-of-line)
   (let* ((objects (split-string (thing-at-point 'line t) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
-	 (field-n 1))
+	 (field-n 1)
+	 (func-decorations (car (split-string (car (last type-name)) "[a-zA-Z]" t)))
+	 (func-undecorated (car (split-string (car (last type-name)) "[^a-zA-Z]" t)))
+	 )
+    (princ "func-undecorated: ")
+    (princ (type-of func-undecorated))
     (defun field-n () (int-to-string field-n))
     ;; We assume that the first thing is the function name and everything else is an argument
     (yas-expand-snippet
-     (concat "// " (car (last type-name)) ": ${" (field-n) ":Describe Function}\n//\n"
-	     (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)
+     (concat "// " func-undecorated ": ${" (field-n) ":Describe Function}\n"
+	     (if (check-against-list (cdr objects) (lambda (x) (string-match-p "[a-zA-Z]" x)))
+		 (concat "//\n"
+			 (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)))
 	     (if has-return-p (concat "//\n" "// return" 
-				      (concat-until-n type-name :n 1 :before " ") ": ${" (int-to-string (length objects)) ":Describe Return}\n\n")
-	       "\n")
-	     )
-     )
-    )
-  (remove-blank-lines "//" 1)
-  )
+				      (concat-until-n type-name :n 1 :before " " :add-before-last func-decorations) ": ${" (int-to-string (length objects)) ":Describe Return}\n\n")
+	       "\n"))))
+  (remove-blank-lines "//" 1))
 
 (defun c-insert-func-description (not-return-p)
   "Inserts a c-function description when called at or above a c function"
