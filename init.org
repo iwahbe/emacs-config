@@ -1103,17 +1103,16 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
     (if (< num-deleted 2) nil (forward-line -1))))
 
 (global-set-key (kbd "C-x M-p") 'remove-blank-up) ; eats whitespace between files
-(defun c-func-description (has-return-p) 
+
+(defun c-func-description () 
   ;;skipping to the next line with content
   (scroll-down-blank)
   (beginning-of-line)
   (let* ((objects (split-string (thing-at-point 'line t) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
 	 (field-n 1)
-	 (func-decorations (car (split-string (car (last type-name)) "[a-zA-Z]" t)))
-	 (func-undecorated (car (split-string (car (last type-name)) "[^a-zA-Z]" t)))
+	 (func-decorations (car (split-string (car (last type-name)) "[a-zA-Z-_:]" t)))
+	 (func-undecorated (car (split-string (car (last type-name)) "[^a-zA-Z-_:]" t)))
 	 )
-    (princ "func-undecorated: ")
-    (princ (type-of func-undecorated))
     (defun field-n () (int-to-string field-n))
     ;; We assume that the first thing is the function name and everything else is an argument
     (yas-expand-snippet
@@ -1121,26 +1120,25 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 	     (if (check-against-list (cdr objects) (lambda (x) (string-match-p "[a-zA-Z]" x)))
 		 (concat "//\n"
 			 (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)))
-	     (if has-return-p (concat "//\n" "// return" 
-				      (concat-until-n type-name :n 1 :before " " :add-before-last func-decorations) ": ${" (int-to-string (length objects)) ":Describe Return}\n\n")
+	     (if (or func-decorations (not (string-equal "void" (car type-name))))
+		 (concat "//\n" "// return" 
+			 (concat-until-n type-name :n 1 :before " " :add-before-last func-decorations)
+			 ": ${" (int-to-string (length objects)) ":Describe Return}\n\n")
 	       "\n"))))
   (remove-blank-lines "//" 1))
 
-(defun c-insert-func-description (not-return-p)
+(defun c-insert-func-description ()
   "Inserts a c-function description when called at or above a c function"
-  (interactive "P")
+  (interactive)
   ;;Note: requires yasnippet to be installed
   (if (not (fboundp 'yas-expand-snippet))
       (message "%s" "c-func-description requires yas-expand-snippet")
-    (c-func-description (not not-return-p))
-    )
-  )
+    (c-func-description)))
 
 (add-hook 'irony-mode-hook (lambda () 
 			     (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
 			     (if (not (equal major-mode "c-mode"))
-				 (yas-activate-extra-mode 'c-mode))
-			     ))
+				 (yas-activate-extra-mode 'c-mode))))
 #+END_SRC 
 
 Multiple cursors should be self-explanatory.
