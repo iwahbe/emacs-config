@@ -1,0 +1,18 @@
+*.elc
+*~
+init.el
+*#
+
+# removes yas snippets
+.yas-compiled-snippets.el
+
+# holds tempory preffrences
+custom.el
+
+# game scores
+games
+
+#places and sessions
+.places
+.session
+test.*
