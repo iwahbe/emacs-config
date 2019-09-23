@@ -120,12 +120,20 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
   ;; Note: does not work well with monitors
   (interactive)
   (when (display-graphic-p)
-    (set-frame-width (selected-frame) (/ (display-pixel-width) 2) nil t)
-    (set-frame-height (selected-frame) (display-pixel-height) nil t)
-    (set-frame-position (selected-frame) (- (display-pixel-width) (frame-pixel-width (selected-frame))) 0)))
+      (set-frame-width (selected-frame) (/ (display-pixel-width) 2) nil t)
+      (set-frame-height (selected-frame) (display-pixel-height) nil t)
+      (set-frame-position (selected-frame) (- (display-pixel-width) (frame-pixel-width (selected-frame))) 0)))
+
+(defun frame-reset-size ()
+  "Sets the frame size back to the default"
+  (interactive)
+  (when (display-graphic-p)
+    (set-frame-size (selected-frame) 80 36)))
 
 (global-set-key (kbd "M-s-<left>") 'frame-align-left)
 (global-set-key (kbd "M-s-<right>") 'frame-align-right)
+(global-set-key (kbd "M-s-<up>") 'toggle-frame-maximized)
+(global-set-key (kbd "M-s-<down>") 'frame-reset-size)
 
 #+END_SRC
 
@@ -1025,10 +1033,11 @@ C/C++ packages
 	  (in buffer-file-name)
 	  (out (file-name-sans-extension buffer-file-name))
 	  (compiler (pcase (file-name-extension (buffer-file-name))
-		      ("cc" "g++")
+		      ("cc" "g++ -std=c++17")
+		      ("cpp" "g++ -std=c++17")
 		      ("c" "cc")
 		      )))
-      (if compiler (compile (concat compiler " '" in "' -o '" out "'"))
+      (if compiler (compile (concat compiler " '" in "' -o '" out ".out'"))
 	(message "%s" (concat "Cannot find compiler for exterion: " (file-name-extension (buffer-file-name))))
 	)))
   (local-set-key (kbd "C-c C-c") #'c-compile-buffer)
@@ -1073,10 +1082,12 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
     blank-found))
 
 (defun scroll-down-blank ()
+  "Scrolls the point down until encountering a non-blank line"
   (while (equal (thing-at-point 'line t) "\n")
     (forward-line 1)))
 
 (defun remove-blank-up (prefix)
+  "Deletes blank lines until there are 'prefix' left"
   (interactive "P")
   (let ((num-deleted (remove-blank-lines "//" 1  nil)))
     (if prefix
