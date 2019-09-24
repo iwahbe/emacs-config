@@ -417,6 +417,7 @@ We maintain a list of common key-bindings to activate in all modes
 (global-set-key (kbd "C-M-v") 'scroll-other-window-down)
 (global-set-key (kbd "C-M-r") 'scroll-other-window)
 (global-set-key (kbd "s-p") nil) ;used to be print
+(global-set-key (kbd "s-o") nil) ;used to be ns-open-file-using-panel
 
 #+END_SRC
 
