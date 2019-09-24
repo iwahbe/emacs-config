@@ -1117,7 +1117,7 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
     ;; We assume that the first thing is the function name and everything else is an argument
     (yas-expand-snippet
      (concat "// " func-undecorated ": ${" (field-n) ":Describe Function}\n"
-	     (if (check-against-list (cdr objects) (lambda (x) (string-match-p "[a-zA-Z]" x)))
+	     (if (and (check-against-list (cdr objects) (lambda (x) (string-match-p "[a-zA-Z]" x))) (not (equal (cadr objects) "void")))
 		 (concat "//\n"
 			 (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)))
 	     (if (or func-decorations (not (string-equal "void" (car type-name))))
