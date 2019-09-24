@@ -991,9 +991,11 @@ C/C++ packages
   :config
   (setenv "Clang_DIR" "/usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/cmake/clang/")
   (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM8.0.1.xctoolchain/usr/bin/clang-format")
-  (add-hook 'before-save-hook (lambda ()
+  (defun clang-format-safe-buffer ()
+    (interactive)
 				(when (or (eql major-mode 'c-mode) (eql major-mode 'c++-mode))
-				  (clang-format-buffer))))
+				  (clang-format-buffer)))
+  (add-hook 'before-save-hook 'clang-format-safe-buffer)
   )
 
 (use-package company-irony-c-headers
