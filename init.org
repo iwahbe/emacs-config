@@ -1111,7 +1111,8 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
   ;;skipping to the next line with content
   (scroll-down-blank)
   (beginning-of-line)
-  (let* ((objects (split-string (thing-at-point 'line t) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
+  (let* ((func-body-pair (split-string (thing-at-point 'line t) "{"))
+	 (objects (split-string (car func-body-pair) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
 	 (field-n 1)
 	 (func-decorations (car (split-string (car (last type-name)) "[a-zA-Z-_:]" t)))
 	 (func-undecorated (car (split-string (car (last type-name)) "[^a-zA-Z-_:]" t)))
