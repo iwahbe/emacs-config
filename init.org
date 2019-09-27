@@ -352,10 +352,14 @@ I use helm for fuzzy searching among known options
 (use-package helm-ag
   :straight t
   :config
-  (defun helm-occur-or-ag (do-ag)
+  (define-key isearch-mode-map (kbd "C-g") 'keyboard-quit)
+  (defun search-selector (do-ag)
     (interactive "P")
-    (if do-ag (helm-do-ag-project-root) (helm-occur)))
-  (global-set-key (kbd "C-s") 'helm-occur-or-ag)
+    (if (equal do-ag 1) (helm-do-ag-this-file)
+      (if (equal do-ag 2) (helm-do-ag-buffers)
+	  (if do-ag (helm-do-ag-project-root)
+	    (isearch-forward)))))
+  (global-set-key (kbd "C-s") 'search-selector)
   )
 
 (use-package helm-company
