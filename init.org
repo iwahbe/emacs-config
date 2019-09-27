@@ -22,11 +22,11 @@ First Steps
 We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula, which is
 my most common command line tool location.
 #+BEGIN_SRC emacs-lisp
-(setq exec-path (append exec-path '("/usr/local/bin"))) ;for internal functions 
+(setq exec-path (append exec-path '("/usr/local/bin"))) ;for internal functions
 (setenv "PATH" (concat "/usr/local/bin/:" (getenv "PATH"))) ;for shell exicution
 
 #+END_SRC
-  
+
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that
 use-package is installed
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -45,7 +45,7 @@ use-package is installed
   )
 (eval-and-compile
   (require 'use-package))
-#+END_SRC 
+#+END_SRC
 
 [[https://github.com/raxod502/straight.el][straight.el]] is a package manager.
 - A benefit is that packages installed are defined entirely by this file.
@@ -103,7 +103,7 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
   (defface sml/charging ;this is much easier to see
     '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
   (add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
-  (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox  
+  (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
   )
 
 (defun frame-align-left ()
@@ -188,7 +188,7 @@ I'm trying out EVIL, because reasons.
   (global-undo-tree-mode 0)
   )
 #+END_SRC
- 
+
 Used to setup modes derived from prog-mode. We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode
 again. This is necessary because otherwise it gets called repeatedly.
 #+BEGIN_SRC emacs-lisp
@@ -198,7 +198,7 @@ again. This is necessary because otherwise it gets called repeatedly.
     (setq display-line-numbers t)
     (line-number-mode 0)
     (column-number-mode 1)
-    (if (version<= "26.0.50" emacs-version) 
+    (if (version<= "26.0.50" emacs-version)
 	(display-line-numbers-mode 1) ; displays line numbers on the left
       (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
       )
@@ -232,7 +232,7 @@ Text-mode function
 (add-hook 'text-mode-hook 'my-text-mode)
 #+END_SRC
 
-Function to rename the file in the current buffer. 
+Function to rename the file in the current buffer.
 #+BEGIN_SRC emacs-lisp
 (defun rename-current-buffer-file ()
   "Renames current buffer and file it is visiting. From http://whattheemacsd.com/"
@@ -342,7 +342,6 @@ I use helm for fuzzy searching among known options
   (helm-mode 1)
   (setq helm-default-display-buffer-functions '(display-buffer-in-side-window))
   (global-set-key (kbd "M-x") 'helm-M-x)
-  (global-set-key (kbd "C-s") 'helm-occur)
   (global-set-key (kbd "C-x C-f") 'helm-find-files)
   :bind (:map helm-occur-map
 	      ("C-h c" . #'describe-key-briefly)
@@ -352,6 +351,11 @@ I use helm for fuzzy searching among known options
 ;; for fast multi-file searches
 (use-package helm-ag
   :straight t
+  :config
+  (defun helm-occur-or-ag (do-ag)
+    (interactive "P")
+    (if do-ag (helm-do-ag-project-root) (helm-occur)))
+  (global-set-key (kbd "C-s") 'helm-occur-or-ag)
   )
 
 (use-package helm-company
@@ -372,7 +376,7 @@ Snippets are kept in the folder described by "yas-snippet-dirs"
   :straight t
   :after (company) ;due to company-mode
   :init
-  (defun setup-yas-company () 
+  (defun setup-yas-company ()
     (defvar company-mode/enable-yas t
       "Enable yasnippet for all backends.")
 
@@ -422,7 +426,7 @@ We maintain a list of common key-bindings to activate in all modes
 #+END_SRC
 
 
-Ido provides a great navigation experience with the find-file command. 
+Ido provides a great navigation experience with the find-file command.
 Vlf stands for very large files and assists emacs with handling large files
 #+BEGIN_SRC emacs-lisp
 
@@ -447,7 +451,7 @@ Vlf stands for very large files and assists emacs with handling large files
 
 
 Org mode provides a function text mode, so we give it many text mode type things.
-Note: htmlize allows org-mode to publish to html more complex stuff like src blocks. 
+Note: htmlize allows org-mode to publish to html more complex stuff like src blocks.
 #+BEGIN_SRC emacs-lisp
 
   (use-package htmlize
@@ -494,7 +498,7 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
 ;; sets autosaves to one folder
 (setq auto-save-file-name-transforms
       `((".*" ,temporary-file-directory t)))
- 
+
 ;; Write backup files to own directory
 (setq backup-directory-alist
       `(("." . ,(expand-file-name
@@ -554,7 +558,7 @@ statistics languages in the future.
 (use-package ess
   :straight t
   :mode (("\\.r\\'" . ess-r-mode)
-	 ("\\.R\\'" . ess-r-mode))  
+	 ("\\.R\\'" . ess-r-mode))
   :config
   (setq inferior-ess-r-program "/usr/local/bin/R")
   ;; We assume the ability to generate graphs using a WindowsX(QuartsX) program.
@@ -597,7 +601,7 @@ org-mode does most of what markdown does.
 I use sly as my lisp editor
 #+BEGIN_SRC emacs-lisp
 (use-package sly
-  :straight t 
+  :straight t
   :defer t
   :mode (("\\.lisp\\'" . sly-mode))
   :hook ((sly-mode . (lambda () (prettify-symbols-mode +1)))) ;lambda is necessary to call with arguments
@@ -618,7 +622,7 @@ I use sly as my lisp editor
   )
 #+END_SRC
 
-Simple setup for emacs-lisp mode. Does very little. 
+Simple setup for emacs-lisp mode. Does very little.
 #+BEGIN_SRC emacs-lisp
 (defun my-emacs-lisp-mode ()
   "runs on 'emacs-lisp-mode-hook "
@@ -758,10 +762,10 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 	      ("M-p" . 'elpy-nav-move-line-or-region-up)
 	      ("M-n" . 'elpy-nav-move-line-or-region-down))
   :init
-  (setq python-indent-guess-indent-offset t)  
+  (setq python-indent-guess-indent-offset t)
   (setq python-indent-guess-indent-offset-verbose nil)
   :config
-  (add-hook 'before-save-hook #'elpy-format-code)
+  (add-hook 'before-save-hook #'elpy-format-code nil t)
   (elpy-enable)
   (setq elpy-rpc-backend "company")
   (setq indent-tabs-mode nil)
@@ -834,9 +838,9 @@ Sets up latex support along with a collection of skeletons for latex. This is al
 
   (message "%s" "LaTeX-mode has been loaded successfully")
   )
-#+END_SRC 
- 
-We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed. 
+#+END_SRC
+
+We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed.
 The part that performed the byte-compile is currently disabled as it caused problems with use-package.
 #+BEGIN_SRC emacs-lisp
 (defun tangle-init-call ()
@@ -848,11 +852,11 @@ The part that performed the byte-compile is currently disabled as it caused prob
       (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
       ;; uncomment to byte compile init.el on save
       ;;(byte-compile-file (concat user-emacs-directory "init.el"))
-      ))) 
-(add-hook 'after-save-hook 'tangle-init-call) 
+      )))
+(add-hook 'after-save-hook 'tangle-init-call)
 #+END_SRC
 
-I use a font called Fira-Code. This enables the font as well as the font's ligatures. 
+I use a font called Fira-Code. This enables the font as well as the font's ligatures.
 #+BEGIN_SRC emacs-lisp
 (defun fira-code-mode--make-alist (list)
   "Generate prettify-symbols alist from LIST."
@@ -952,7 +956,7 @@ Setup for my JavaScript IDE.
 #+END_SRC
 
 Haskell is a functional language
-ghc functions as a backend for Haskell, company-ghc hooks that into company, providing smart and real-time completion. Haskell-mode provides the from of the Haskell IDE. 
+ghc functions as a backend for Haskell, company-ghc hooks that into company, providing smart and real-time completion. Haskell-mode provides the from of the Haskell IDE.
 #+BEGIN_SRC emacs-lisp
 (use-package ghc
   :straight t
@@ -975,7 +979,7 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
   )
 #+END_SRC
 
-C/C++ packages 
+C/C++ packages
 - irony acts as a handler
   - To install irony on a fresh computer, you need to have llvm installed. You then need to set the environmental
     variable "Clang_DIR" to the directory that contains "ClangConfig.cmake"
@@ -1064,7 +1068,7 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 (cl-defun concat-until-n  (lst &key (n 0) (before "") (after "") (count-from 0 count-from-p) (after-count "") (add-before-last ""))
   "Returns a concatonated list of list elements ignoring the last n with an optional count and surrounding text"
   (if (<= (length lst) n)
-      ""   ; recursion base case 
+      ""   ; recursion base case
     (concat ;otherwise
      before
      (s-trim (car lst))
@@ -1107,7 +1111,7 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 
 (global-set-key (kbd "C-x M-p") 'remove-blank-up) ; eats whitespace between files
 
-(defun c-func-description () 
+(defun c-func-description ()
   ;;skipping to the next line with content
   (scroll-down-blank)
   (beginning-of-line)
@@ -1125,7 +1129,7 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 		 (concat "//\n"
 			 (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)))
 	     (if (or func-decorations (not (string-equal "void" (car type-name))))
-		 (concat "//\n" "// return" 
+		 (concat "//\n" "// return"
 			 (concat-until-n type-name :n 1 :before " " :add-before-last func-decorations)
 			 ": ${" (int-to-string (length objects)) ":Describe Return}\n\n")
 	       "\n"))))
@@ -1139,11 +1143,11 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
       (message "%s" "c-func-description requires yas-expand-snippet")
     (c-func-description)))
 
-(add-hook 'irony-mode-hook (lambda () 
+(add-hook 'irony-mode-hook (lambda ()
 			     (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
 			     (if (not (equal major-mode "c-mode"))
 				 (yas-activate-extra-mode 'c-mode))))
-#+END_SRC 
+#+END_SRC
 
 Multiple cursors should be self-explanatory.
 #+BEGIN_SRC emacs-lisp
@@ -1153,7 +1157,7 @@ Multiple cursors should be self-explanatory.
   (("C->" . mc/mark-next-like-this)
    ("C-<" . mc/mark-previous-like-this)
    ("C-c ," . mc/mark-all-like-this)
-   (:map mc/keymap 
+   (:map mc/keymap
 	 ("<return>" . nil))) ;allows entry of <return> with multiple cursors
   )
 #+END_SRC
