@@ -80,60 +80,51 @@ We apply the kaolin-galaxy theme if and only if we are using GUI emacs.
 We setup preferences for the mode-line.
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
 #+BEGIN_SRC emacs-lisp
-(use-package kaolin-themes
-  :straight t
-  :config
-  (if (display-graphic-p)
-  (load-theme 'kaolin-galaxy t))
+(defun my-setup-graphics ()
+      (use-package kaolin-themes
+      :straight t
+      :config
+      (load-theme 'kaolin-galaxy t)
+      )
+  (setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
+  (setq display-time-24hr-format t)
+  (setq display-time-day-and-date t)
+  (display-time-mode 1); does not change in real time, so all settings must be assigned before
+
+  (display-battery-mode 1)
+
+  (use-package smart-mode-line
+    :straight t
+    :hook (after-init . sml/setup)
+    :config
+    (setq sml/no-confirm-load-theme t)
+    (setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
+    (defface sml/charging ;this is much easier to see
+      '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
+    (add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
+    (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
+    )
+
+  (defun frame-reset-size ()
+    "Sets the frame size back to the default"
+    (interactive)
+    (when (display-graphic-p)
+      (set-frame-size (selected-frame) 80 36)))
+
+  (global-set-key (kbd "s-t") 'make-frame) ;this allows cmd-t to be consistant
+  (global-set-key (kbd "s-w") 'delete-frame)
+  (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
+  (global-set-key (kbd "M-s-<up>") 'toggle-frame-maximized)
+  (global-set-key (kbd "M-s-<down>") 'frame-reset-size)
   )
 
-(setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
-(setq display-time-24hr-format t)
-(setq display-time-day-and-date t)
-(display-time-mode 1); does not change in real time, so all settings must be assigned before
-
-(display-battery-mode 1)
-
-(use-package smart-mode-line
-  :straight t
-  :hook (after-init . sml/setup)
-  :config
-  (setq sml/no-confirm-load-theme t)
-  (setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
-  (defface sml/charging ;this is much easier to see
-    '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
-  (add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
-  (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
-  )
-
-(defun frame-align-left ()
-  "Aligns the frame to the left side of the window"
-  ;; Note: does not work well with monitors
-  (interactive)
-  (when (display-graphic-p)
-    (set-frame-width (selected-frame) (/ (display-pixel-width) 2) nil t)
-    (set-frame-height (selected-frame) (display-pixel-height) nil t)
-    (set-frame-position (selected-frame) 0 0)))
-
-(defun frame-align-right ()
-  "Aligns the frame to the right side of the window"
-  ;; Note: does not work well with monitors
-  (interactive)
-  (when (display-graphic-p)
-      (set-frame-width (selected-frame) (/ (display-pixel-width) 2) nil t)
-      (set-frame-height (selected-frame) (display-pixel-height) nil t)
-      (set-frame-position (selected-frame) (- (display-pixel-width) (frame-pixel-width (selected-frame))) 0)))
-
-(defun frame-reset-size ()
-  "Sets the frame size back to the default"
-  (interactive)
-  (when (display-graphic-p)
-    (set-frame-size (selected-frame) 80 36)))
-
-(global-set-key (kbd "M-s-<left>") 'frame-align-left)
-(global-set-key (kbd "M-s-<right>") 'frame-align-right)
-(global-set-key (kbd "M-s-<up>") 'toggle-frame-maximized)
-(global-set-key (kbd "M-s-<down>") 'frame-reset-size)
+(add-hook 'after-make-frame-functions
+	  (lambda ()
+	    (when window-system
+	      (my-setup-graphics))))
+(add-hook 'after-init-hook
+	  (lambda () (when window-system
+		  (my-setup-graphics))))
 
 #+END_SRC
 
@@ -352,7 +343,6 @@ I use helm for fuzzy searching among known options
 (use-package helm-ag
   :straight t
   :config
-  (define-key isearch-mode-map (kbd "C-g") 'keyboard-quit)
   (defun search-selector (do-ag)
     (interactive "P")
     (if (equal do-ag 1) (helm-do-ag-this-file)
@@ -418,9 +408,7 @@ We maintain a list of common key-bindings to activate in all modes
 					(forward-word)
 					(backward-kill-word 1)
 					))
-(global-set-key (kbd "s-t") 'make-frame) ;this allows cmd-t to be consistant
-(global-set-key (kbd "s-w") 'delete-frame)
-(global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
+(global-set-key (kbd "M-c") 'capitalize-region)
 
 (global-set-key (kbd "C-M-v") 'scroll-other-window-down)
 (global-set-key (kbd "C-M-r") 'scroll-other-window)
@@ -562,6 +550,7 @@ statistics languages in the future.
 (use-package ess
   :straight t
   :mode (("\\.r\\'" . ess-r-mode)
+	 ("\\.Rmd\\'" . ess-r-mode)
 	 ("\\.R\\'" . ess-r-mode))
   :config
   (setq inferior-ess-r-program "/usr/local/bin/R")
@@ -824,7 +813,7 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     "\\newcommand{\\fu}{{\\mathcal U}}\n"
     "\\usepackage{tikz}\n"
     "\\title{" (skeleton-read "Title: ") "\n"
-    "\\\\ \\large " (skeleton-read "Class: ") "}\n"
+    "  \\\\ \\large " (skeleton-read "Class: ") "}\n"
     "\\author{" user-full-name "}\n"
     "\\date{" (skeleton-read "Date: ") "}\n"
     "\\begin{document}\n"
@@ -997,8 +986,9 @@ C/C++ packages
   :straight t
   :after (irony)
   :config
-  (setenv "Clang_DIR" "/usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/cmake/clang/")
-  (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM8.0.1.xctoolchain/usr/bin/clang-format")
+  (setenv "Clang_DIR" "/usr/local/Cellar/llvm/9.0.0/Toolchains/LLVM9.0.0.xctoolchain/usr/lib/cmake/clang/")
+  (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM9.0.0.xctoolchain/usr/bin/clang-format")
+  (setq clang-format-style "file")
   (defun clang-format-safe-buffer ()
     (interactive)
 				(when (or (eql major-mode 'c-mode) (eql major-mode 'c++-mode))
@@ -1165,3 +1155,36 @@ Multiple cursors should be self-explanatory.
 	 ("<return>" . nil))) ;allows entry of <return> with multiple cursors
   )
 #+END_SRC
+
+CMake files suck, there should be a major mode for them:
+#+BEGIN_SRC emacs-lisp
+(use-package cmake-mode
+  :straight t
+  )
+#+END_SRC
+
+For writing assembly
+#+BEGIN_SRC emacs-lisp
+(defun my-asm-setup-mode-f ()
+  (define-key asm-mode-map (kbd "C-j") 'backward-word)
+  (defun asm-set-comment-char-internal (new-comment-char)
+    "sets the new comment char to be c"
+    ;;binds to asm-comment to c
+    ;;unbinds the old asm-comment-char
+    ;;update comment-char
+    (let (old-comment-char asm-comment-char)
+      (setq asm-comment-char new-comment-char)
+      (define-key asm-mode-map (char-to-string new-comment-char) 'asm-comment)
+      (if old-comment-char
+      (define-key asm-mode-map (char-to-string old-comment-char) nil))
+      (char-to-string new-comment-char)
+      )
+    )
+)
+
+
+(add-hook 'asm-mode-hook 'my-asm-setup-mode)
+
+#+END_SRC
+
+

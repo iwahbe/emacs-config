@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: continuous
+# key: cnts
+# --
+continuous $0
