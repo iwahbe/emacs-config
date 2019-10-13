@@ -95,7 +95,8 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
 
   (use-package smart-mode-line
     :straight t
-    :hook (after-init . sml/setup)
+    :init
+    (sml/setup)
     :config
     (setq sml/no-confirm-load-theme t)
     (setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
@@ -506,11 +507,12 @@ customizations are module specific. Here, we only call the main version.
 (use-package company
   :straight t
   :init
-  (defun add-company-backend (backend)
+  (defun add-company-backend (backend &optional add-to-back)
     "Is used to add company backends and include company-yasnippet with each backend"
     ;; (add-to-list 'company-backends `(,symbol-list . '(:with company-yasnippet)))
 	(add-to-list 'company-backends (append (if (consp backend) backend (list backend))
-		'(:with company-yasnippet)))
+					       '(:with company-yasnippet))
+		     add-to-back)
     )
   :config
   (setq company-minimum-prefix-length 1)
@@ -973,13 +975,8 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
 #+END_SRC
 
 C/C++ packages
-- irony acts as a handler
-  - To install irony on a fresh computer, you need to have llvm installed. You then need to set the environmental
-    variable "Clang_DIR" to the directory that contains "ClangConfig.cmake"
-  - to find, use `pwd $(sudo find /usr/ ClangConfig.cmake)`
-  - On mac I also tried this: "install_name_tool -change @rpath/libclang.dylib
-    /usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/libclang.dylib
-    ~/.emacs.d/irony/bin/irony-server"
+
+#+TITLE: C/C++ standards
 #+BEGIN_SRC emacs-lisp
 ;; Enable company auto-complete
 (use-package clang-format
@@ -991,14 +988,94 @@ C/C++ packages
   (setq clang-format-style "file")
   (defun clang-format-safe-buffer ()
     (interactive)
-				(when (or (eql major-mode 'c-mode) (eql major-mode 'c++-mode))
-				  (clang-format-buffer)))
+    (when (or (eql major-mode 'c-mode) (eql major-mode 'c++-mode))
+      (clang-format-buffer)))
   (add-hook 'before-save-hook 'clang-format-safe-buffer)
   )
 
+(defun c-compile-buffer ()
+  "Compiles the current buffer with cc"
+  (interactive)
+  (let (
+	(in buffer-file-name)
+	(out (file-name-sans-extension buffer-file-name))
+	(compiler (pcase (file-name-extension (buffer-file-name))
+		    ("cc" "g++ -std=c++17")
+		    ("cpp" "g++ -std=c++17")
+		    ("c" "cc")
+		    )))
+    (if compiler (compile (concat compiler " '" in "' -o '" out ".out'"))
+      (message "%s" (concat "Cannot find compiler for exterion: " (file-name-extension (buffer-file-name))))
+      )))
+;(local-set-key (kbd "C-c C-c") #'c-compile-buffer)
+
+
+#+END_SRC
+
+CQuery is the a completion and indexing framework for C/C++ programs. 
+
+#+TITLE: cquery
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-mode
+  :straight t
+  :commands (lsp lsp-deferred)
+  )
+
+(use-package company-lsp
+  :straight t
+  :config
+  (push 'company-lsp company-backends)
+  )
+
+(use-package cquery
+  :straight t
+  :config
+  (setq cquery-executable "/usr/local/bin/cquery")
+  (setq cquery-sem-highlight-method 'font-lock)
+  (lsp)
+)
+#+END_SRC
+
+rtags
+- Is a complicated process, that requires a running a cpp program in a
+  separate deamon. It also requires building upon install.
+- The separate process is spun up by cmake-ide on setup.
+- We assume that rtags was build in it's default straight repo
+#+TITLE: rtags
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package rtags
+  :straight t
+  )
+
+(use-package company-rtags
+  :straight t
+  :config
+  (setq rtags-path (concat user-emacs-directory "straight/repos/rtags/bin/"))
+  )
+
+
+(use-package cmake-ide
+  :straight t
+  :config
+  (cmake-ide-setup)
+)
+
+#+END_SRC
+
+- To install irony on a fresh computer, you need to have llvm installed. You then need to set the environmental
+  variable "Clang_DIR" to the directory that contains "ClangConfig.cmake"
+- to find, use `pwd $(sudo find /usr/ ClangConfig.cmake)`
+- On mac I also tried this: "install_name_tool -change @rpath/libclang.dylib
+  /usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/libclang.dylib
+  ~/.emacs.d/irony/bin/irony-server"
+
+#+TITLE: Irony-mode
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package company-irony-c-headers
   :straight t
   :after (irony)
+  :config
+  (add-company-backend '(company-irony-c-headers))
   )
 
 (use-package irony-eldoc
@@ -1011,14 +1088,16 @@ C/C++ packages
 (use-package company-irony
   :straight t
   :after (:all irony company)
+  :config
+  (setq company-irony-ignore-case 'smart)
+  (add-company-backend '(company-irony))
   )
 
 (use-package flycheck-irony
   :straight t
-  :after (:all flycheck irony)
+  :after (:all irony)
+  :hook ((irony-mode-hook . flycheck-irony-setup))
   :config
-  (add-hook 'flycheck-mode-hook #'flycheck-irony-setup)
-  (flycheck-irony-setup)
   (flycheck-mode +1)
   )
 
@@ -1026,23 +1105,6 @@ C/C++ packages
   :straight irony
   :hook ((c-mode objc-mode c++-mode) . irony-mode)
   :config
-  (irony-cdb-autosetup-compile-options)
-  (defun c-compile-buffer ()
-    "Compiles the current buffer with cc"
-    (interactive)
-    (let (
-	  (in buffer-file-name)
-	  (out (file-name-sans-extension buffer-file-name))
-	  (compiler (pcase (file-name-extension (buffer-file-name))
-		      ("cc" "g++ -std=c++17")
-		      ("cpp" "g++ -std=c++17")
-		      ("c" "cc")
-		      )))
-      (if compiler (compile (concat compiler " '" in "' -o '" out ".out'"))
-	(message "%s" (concat "Cannot find compiler for exterion: " (file-name-extension (buffer-file-name))))
-	)))
-  (local-set-key (kbd "C-c C-c") #'c-compile-buffer)
-  (add-company-backend '(company-irony-c-headers company-irony))
   (message "%s" "c/objc/c++ has been set up ")
   )
 #+END_SRC
@@ -1165,26 +1227,11 @@ CMake files suck, there should be a major mode for them:
 
 For writing assembly
 #+BEGIN_SRC emacs-lisp
-(defun my-asm-setup-mode-f ()
+(defun my-asm-setup-mode ()
   (define-key asm-mode-map (kbd "C-j") 'backward-word)
-  (defun asm-set-comment-char-internal (new-comment-char)
-    "sets the new comment char to be c"
-    ;;binds to asm-comment to c
-    ;;unbinds the old asm-comment-char
-    ;;update comment-char
-    (let (old-comment-char asm-comment-char)
-      (setq asm-comment-char new-comment-char)
-      (define-key asm-mode-map (char-to-string new-comment-char) 'asm-comment)
-      (if old-comment-char
-      (define-key asm-mode-map (char-to-string old-comment-char) nil))
-      (char-to-string new-comment-char)
-      )
-    )
-)
-
+  )
 
 (add-hook 'asm-mode-hook 'my-asm-setup-mode)
-
 #+END_SRC
 
 
