@@ -195,6 +195,7 @@ again. This is necessary because otherwise it gets called repeatedly.
       (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
       )
     (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
+
     (eldoc-mode 1)
     (setq company-minimum-prefix-length 1) ;we want an active company for programming, as there are many variable names, and memory is hard
     (setq font-lock-maximum-decoration t) ;lots of syntax highlighting
@@ -583,6 +584,7 @@ org-mode does most of what markdown does.
 			    (display-line-numbers-mode -1)
 			    (visual-line-mode 1))))
   :init
+  (add-to-list 'exec-path "/Library/TeX/texbin/" t)
   (setq markdown-command "/usr/local/bin/multimarkdown")
   (setq markdown-enable-math t)
   :config
@@ -792,7 +794,7 @@ Sets up latex support along with a collection of skeletons for latex. This is al
   (define-skeleton skeleton-math-letter
     "Inserts a latex Letter Outline into the buffer"
     "Title: "
-    "\\documentclass[11pt, oneside]{article}\n"
+    "\\documentclass[11pt, oneside, fullpage]{article}\n"
     "\\usepackage{geometry}\n"
     "\\geometry{letterpaper}\n"
     "\\usepackage{graphicx}\n"
@@ -979,9 +981,17 @@ C/C++ packages
 #+TITLE: C/C++ standards
 #+BEGIN_SRC emacs-lisp
 ;; Enable company auto-complete
+
+(use-package cmake-ide
+  :straight t
+  :bind (:map c++-mode-map ("C-c C-c" . 'cmake-ide-compile))
+  :config
+  (cmake-ide-setup)
+  )
+
 (use-package clang-format
   :straight t
-  :after (irony)
+  :after cmake-ide
   :config
   (setenv "Clang_DIR" "/usr/local/Cellar/llvm/9.0.0/Toolchains/LLVM9.0.0.xctoolchain/usr/lib/cmake/clang/")
   (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM9.0.0.xctoolchain/usr/bin/clang-format")
@@ -993,42 +1003,39 @@ C/C++ packages
   (add-hook 'before-save-hook 'clang-format-safe-buffer)
   )
 
-(defun c-compile-buffer ()
-  "Compiles the current buffer with cc"
-  (interactive)
-  (let (
-	(in buffer-file-name)
-	(out (file-name-sans-extension buffer-file-name))
-	(compiler (pcase (file-name-extension (buffer-file-name))
-		    ("cc" "g++ -std=c++17")
-		    ("cpp" "g++ -std=c++17")
-		    ("c" "cc")
-		    )))
-    (if compiler (compile (concat compiler " '" in "' -o '" out ".out'"))
-      (message "%s" (concat "Cannot find compiler for exterion: " (file-name-extension (buffer-file-name))))
-      )))
-;(local-set-key (kbd "C-c C-c") #'c-compile-buffer)
-
 
 #+END_SRC
 
 CQuery is the a completion and indexing framework for C/C++ programs. 
+- it provides company-completion through company-lsp
+- It provides syntax highlighting through 
 
 #+TITLE: cquery
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-mode
   :straight t
+  :hook ((c-mode c++-mode objc-mode) . lsp-mode)
   :commands (lsp lsp-deferred)
+   )
+
+(use-package lsp-ui
+  :straight t
+  :hook ((lsp-mode-hook . lsp-ui-mode)
+	 (prog-mode-hook . flycheck-mode))
+  :config
+  (lsp-ui-doc-mode -1)
   )
 
 (use-package company-lsp
   :straight t
+  :after (lsp-mode company-mode)
   :config
   (push 'company-lsp company-backends)
   )
 
 (use-package cquery
   :straight t
+  :after (lsp-mode)
   :config
   (setq cquery-executable "/usr/local/bin/cquery")
   (setq cquery-sem-highlight-method 'font-lock)
@@ -1043,23 +1050,20 @@ rtags
 - We assume that rtags was build in it's default straight repo
 #+TITLE: rtags
 #+BEGIN_SRC emacs-lisp :tangle no
-(use-package rtags
-  :straight t
-  )
-
 (use-package company-rtags
   :straight t
+  :after (:all rtags company)
   :config
   (setq rtags-path (concat user-emacs-directory "straight/repos/rtags/bin/"))
+  (add-company-backend 'company-rtags)
   )
 
-
-(use-package cmake-ide
+(use-package rtags
+  :after (cmake-ide)
   :straight t
-  :config
-  (cmake-ide-setup)
-)
-
+  :config 
+  (cmake-ide-maybe-start-rdm)
+  )
 #+END_SRC
 
 - To install irony on a fresh computer, you need to have llvm installed. You then need to set the environmental
