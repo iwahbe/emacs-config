@@ -22,9 +22,19 @@ First Steps
 We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula, which is
 my most common command line tool location.
 #+BEGIN_SRC emacs-lisp
-(setq exec-path (append exec-path '("/usr/local/bin"))) ;for internal functions
-(setenv "PATH" (concat "/usr/local/bin/:" (getenv "PATH"))) ;for shell exicution
+(defun add-to-path (path-string &optional appendp)
+  "Takes a path string, expands it, and adds it to exec path and PATH"
+  (let* ((new-path (expand-file-name path-string))
+	 (env-path (getenv "PATH")))
 
+    (add-to-list 'exec-path new-path appendp)
+    
+    (if (not (member new-path (split-string env-path ":")))
+	(if appendp
+	    (setenv "PATH" (concat env-path ":" new-path))
+	  (setenv "PATH" (concat new-path ":" env-path))))))
+
+(add-to-path "/usr/local/bin")
 #+END_SRC
 
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that
@@ -311,8 +321,7 @@ There is a collection of minor modes that trigger after other major modes load.
 
 (use-package magit
   :straight t
-  :config
-  (global-set-key (kbd "C-x g") 'magit-status)
+  :bind (("C-x g" . magit-status))
   )
 
 (use-package smartparens
@@ -584,10 +593,10 @@ org-mode does most of what markdown does.
 			    (display-line-numbers-mode -1)
 			    (visual-line-mode 1))))
   :init
-  (add-to-list 'exec-path "/Library/TeX/texbin/" t)
   (setq markdown-command "/usr/local/bin/multimarkdown")
   (setq markdown-enable-math t)
   :config
+  (add-to-path "/Library/TeX/texbin/" t)
   (setq tab-width 4)
   (flyspell-mode +1)
   (message "%s" "Markdown mode was successfully called")
@@ -675,8 +684,7 @@ Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
   :straight t
   :mode ("\\.rs\\'" . rust-mode)
   :init
-  (setenv "PATH" (concat "~/.cargo/bin" ":"
-			 (getenv "PATH")))
+  (add-to-path "~/.cargo/bin")
   (let ((rust-root-path (string-trim
 		 (shell-command-to-string "rustc --print sysroot"))))
   (setq racer-rust-src-path
@@ -827,9 +835,9 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     -
     "\n\n\n\\end{document}"
     )
-  (setenv "PATH" (concat "/Library/TeX/texbin/:" (getenv "PATH"))); to allow LaTeX output from org-mdoe
+
   (setq font-latex-fontify-script nil) ;disables inline subscripts and superscripts
-  (add-to-list 'exec-path "/Library/TeX/texbin/" t)
+  (add-to-path "/Library/TeX/texbin/" t)
   (setq tex--prettify-symbols-alist nil)
   (set-fill-column 100)
 
