@@ -99,31 +99,32 @@ We apply the kaolin-galaxy theme if and only if we are using GUI emacs.
 We setup preferences for the mode-line.
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
 #+BEGIN_SRC emacs-lisp
+(use-package kaolin-themes
+  :straight t
+  :when window-system
+  :config
+  (load-theme 'kaolin-galaxy t)
+  )
+(use-package smart-mode-line
+  :straight t
+  :when window-system
+  :init
+  (sml/setup)
+  :config
+  (setq sml/no-confirm-load-theme t)
+  (setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
+  (defface sml/charging ;this is much easier to see
+    '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
+  (add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
+  (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
+  )
+
 (defun my-setup-graphics ()
-      (use-package kaolin-themes
-      :straight t
-      :config
-      (load-theme 'kaolin-galaxy t)
-      )
   (setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
   (setq display-time-24hr-format t)
   (setq display-time-day-and-date t)
   (display-time-mode 1); does not change in real time, so all settings must be assigned before
-
-  (display-battery-mode 1)
-
-  (use-package smart-mode-line
-    :straight t
-    :init
-    (sml/setup)
-    :config
-    (setq sml/no-confirm-load-theme t)
-    (setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
-    (defface sml/charging ;this is much easier to see
-      '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
-    (add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
-    (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
-    )
+  (display-battery-mode 1) ;display the battery in mode-line
 
   (defun frame-reset-size ()
     "Sets the frame size back to the default"
@@ -131,7 +132,8 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
     (when (display-graphic-p)
       (set-frame-size (selected-frame) 80 36)))
 
-  (global-set-key (kbd "s-t") 'make-frame) ;this allows cmd-t to be consistant
+  ;; Frame manipulation bindings
+  (global-set-key (kbd "s-t") 'make-frame)
   (global-set-key (kbd "s-w") 'delete-frame)
   (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
   (global-set-key (kbd "M-s-<up>") 'toggle-frame-maximized)
@@ -867,23 +869,6 @@ Sets up latex support along with a collection of skeletons for latex. This is al
   )
 #+END_SRC
 
-* Special to init.org (tangle)
-We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed.
-The part that performed the byte-compile is currently disabled as it caused problems with use-package.
-#+BEGIN_SRC emacs-lisp
-(defun tangle-init-call ()
-  "Tangles this and only this file on save into init.el"
-  (when (equal (buffer-file-name)
-	       (expand-file-name (concat user-emacs-directory "init.org")))
-    ;; Avoid running hooks when tangling.
-    (let ((prog-mode-hook nil))
-      (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
-      ;; uncomment to byte compile init.el on save
-      ;;(byte-compile-file (concat user-emacs-directory "init.el"))
-      )))
-(add-hook 'after-save-hook 'tangle-init-call)
-#+END_SRC
-
 * Fira-Code (graphics only)
 I use a font called Fira-Code. This enables the font as well as the font's ligatures.
 #+BEGIN_SRC emacs-lisp
@@ -1282,5 +1267,26 @@ For writing assembly
 
 (add-hook 'asm-mode-hook 'my-asm-setup-mode)
 #+END_SRC
+
+* Special to init.org (tangle)
+We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed.
+The part that performed the byte-compile is currently disabled as it caused problems with use-package.
+#+BEGIN_SRC emacs-lisp
+(eval-and-compile
+  (defvar do-byte-compile nil "If this file should be byte-compiled after tangled"))
+
+(defun tangle-init-call ()
+  "Tangles this and only this file on save into init.el"
+  (when (equal (buffer-file-name)
+	       (expand-file-name (concat user-emacs-directory "init.org")))
+    ;; Avoid running hooks when tangling.
+    (let ((prog-mode-hook nil))
+      (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
+      (when do-byte-compile (byte-compile-file (concat user-emacs-directory "init.el"))))))
+
+(add-hook 'after-save-hook 'tangle-init-call)
+#+END_SRC 
+
+
 
 
