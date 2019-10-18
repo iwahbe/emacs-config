@@ -242,8 +242,6 @@ again. This is necessary because otherwise it gets called repeatedly.
   (flyspell-mode +1)         ; recognizes misspellings
   (visual-line-mode +1)      ; we want the words to wrap
   (setq tab-width 4)
-  (superword-mode +1)
-  (auto-fill-mode +1)
   (message "%s" "my-text-mode was called successfully.")
   )
 (add-hook 'text-mode-hook 'my-text-mode)
@@ -343,7 +341,6 @@ There is a collection of minor modes that trigger after other major modes load.
 
 (use-package smartparens
   :straight t
-  :defer t
   :config
   (sp-pair "(" ")" :unless '(sp-point-before-word-p))
   (add-hook 'c-mode-hook (lambda () (sp-pair "'" nil :actions :rem)))
@@ -618,8 +615,7 @@ org-mode does most of what markdown does.
   (setq markdown-enable-math t)
   :config
   (add-to-path "/Library/TeX/texbin/" t)
-  (setq tab-width 4)
-  (flyspell-mode +1)
+  (auto-fill-mode +1)
   (message "%s" "Markdown mode was successfully called")
   )
 #+END_SRC
@@ -820,6 +816,7 @@ Sets up latex support along with a collection of skeletons for latex. This is al
   :hook ((LaTeX-mode . (lambda ()  (yas-activate-extra-mode 'text-mode)
 			 (define-key LaTeX-mode-map (kbd "C-j")  'backward-word))))
   :config
+  (auto-fill-mode -1)
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
   (visual-line-mode +1)
@@ -888,10 +885,11 @@ I use a font called Fira-Code. This enables the font as well as the font's ligat
        (setq n (1+ n)))
      (cons s (append prefix suffix (list (decode-char 'ucs code))))))
      list)))
-
+;; Unwanted ligatures are replaced with untypeable charicters
 (defconst fira-code-mode--ligatures
-  '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\"
-    "{-" "[]" "::" ":::" ":=" "!!" "!=" "!==" "-}"
+  (list "www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\"
+    (char-to-string 0); "{-"
+    "[]" "::" ":::" ":=" "!!" "!=" "!==" "-}"
     "--" "---" "-->" "->" "->>" "-<" "-<<" "-~"
     "#{" "#[" "##" "###" "####" "#(" "#?" "#_" "#_("
     ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*"
@@ -902,7 +900,8 @@ I use a font called Fira-Code. This enables the font as well as the font's ligat
     "<$" "<$>" "<!--" "<-" "<--" "<->" "<+" "<+>" "<="
     "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<" "<~"
     "<~~" "</" "</>" "~@" "~-" "~=" "~>" "~~" "~~>" "%%"
-    "!d!i!s!p!l!a!y!s!t!a!r!" ":" "+" "+" "*"))
+    (char-to-string 1); "x"
+    ":" "+" "+" "*"))
 
 (defvar fira-code-mode--old-prettify-alist)
 
