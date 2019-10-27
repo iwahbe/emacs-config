@@ -107,12 +107,13 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
   )
 (use-package smart-mode-line
   :straight t
-  :when window-system
   :init
   (sml/setup)
   :config
   (setq sml/no-confirm-load-theme t)
   (setq sml/theme 'respectful) ;conforms to main emacs theme, set to nil to allow default colors
+  (setq sml/name-width 40)
+  (setq sml/mode-width 'full)
   (defface sml/charging ;this is much easier to see
     '((t :inherit sml/global :foreground "green")) "" :group 'smart-mode-line-faces)
   (add-to-list 'sml/replacer-regexp-list '("^~/Google Drive/" ":GDrive:") t) ;re replacement Google Drive -> GDrive
@@ -171,7 +172,6 @@ I'm trying out EVIL, because reasons.
 #+BEGIN_SRC emacs-lisp
 (use-package evil
   :straight t
-  :defer t
   :bind
   ("C-\\" . 'evil-toggle)
   :init
@@ -446,8 +446,8 @@ We maintain a list of common key-bindings to activate in all modes
 					))
 (global-set-key (kbd "M-c") 'capitalize-region)
 
-(global-set-key (kbd "C-M-v") 'scroll-other-window-down)
-(global-set-key (kbd "C-M-r") 'scroll-other-window)
+(global-set-key (kbd "C-M-v") 'scroll-other-window)
+(global-set-key (kbd "C-M-r") 'scroll-other-window-down)
 (global-set-key (kbd "s-p") nil) ;used to be print
 (global-set-key (kbd "s-o") nil) ;used to be ns-open-file-using-panel
 
@@ -1007,15 +1007,18 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
 
 (use-package cmake-ide
   :straight t
-  :defer
-  :bind (:map c++-mode-map ("C-c C-c" . 'cmake-ide-compile))
+  :hook (c-mode c++-mode objc-mode)
   :config
+  (setq cmake-ide-build-dir (concat (cide--locate-project-dir) "build"))
   (cmake-ide-setup)
+  (cmake-ide-run-cmake)
+  (local-set-key (kbd "C-c C-c")  'cmake-ide-compile)
   )
 
 (use-package clang-format
   :straight t
-  :after cmake-ide
+  :defer
+  :after (cmake-ide)
   :config
   (setenv "Clang_DIR" "/usr/local/Cellar/llvm/9.0.0/Toolchains/LLVM9.0.0.xctoolchain/usr/lib/cmake/clang/")
   (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM9.0.0.xctoolchain/usr/bin/clang-format")
@@ -1044,6 +1047,7 @@ CQuery is the a completion and indexing framework for C/C++ programs.
 
 (use-package lsp-ui
   :straight t
+  :disabled
   :hook ((lsp-mode-hook . lsp-ui-mode)
 	 (prog-mode-hook . flycheck-mode))
   :config
@@ -1227,7 +1231,15 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
       (message "%s" "c-func-description requires yas-expand-snippet")
     (c-func-description)))
 
-(add-hook 'irony-mode-hook (lambda ()
+(add-hook 'c-mode-hook (lambda ()
+			     (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
+			     (if (not (equal major-mode "c-mode"))
+				 (yas-activate-extra-mode 'c-mode))))
+(add-hook 'c++-mode-hook (lambda ()
+			     (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
+			     (if (not (equal major-mode "c-mode"))
+				 (yas-activate-extra-mode 'c-mode))))
+(add-hook 'objc-mode-hook (lambda ()
 			     (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
 			     (if (not (equal major-mode "c-mode"))
 				 (yas-activate-extra-mode 'c-mode))))
