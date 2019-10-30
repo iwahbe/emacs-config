@@ -356,6 +356,23 @@ There is a collection of minor modes that trigger after other major modes load.
   (custom-set-variables
    '(vlf-application 'dont-ask))
   )
+
+#+END_SRC
+
+* FlyCheck
+FlyCheck provides dynamic error highlighting from multiple backends.
+Notes on use:
+- "C-c ! v" provides a diagnosis for flycheck
+- "C-c ! n" & "C-c ! p" navigate to errors
+- "C-c ! l" provides an error list for the current buffer
+- "C-c ! ?" provides information on any syntax checker
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck
+  :straight t
+  :config
+  (global-flycheck-mode +1)
+  )
+
 #+END_SRC
 
 * Helm
@@ -428,6 +445,14 @@ Snippets are kept in the folder described by "yas-snippet-dirs"
 * Global Key Bindings
 We maintain a list of common key-bindings to activate in all modes
 #+BEGIN_SRC emacs-lisp
+(defun current-line-length ()
+  (save-excursion
+    (beginning-of-line)
+    (let ((first-pos (point)))
+      (end-of-line)
+      (- (point) first-pos))
+      ))
+
 (global-set-key (kbd "C-r") 'scroll-down)
 (global-set-key (kbd "C-v") 'scroll-up)
 (global-set-key (kbd "C-l") 'forward-word)
@@ -436,16 +461,13 @@ We maintain a list of common key-bindings to activate in all modes
 (global-set-key (kbd "M-b") 'backward-sentence)
 (global-set-key (kbd "C-z") 'ispell-word)
 (global-set-key (kbd "M--") 'undo)
-(global-set-key (kbd "C-M-n") (lambda () (interactive)
-		  (ignore-errors (next-line 5))))
-(global-set-key (kbd "C-M-p") (lambda () (interactive)
-  		  (ignore-errors (previous-line 5))))
+(global-set-key (kbd "C-M-n") (lambda () (interactive) (with-no-warnings (next-line 5))))
+(global-set-key (kbd "C-M-p") (lambda () (interactive) (with-no-warnings (next-line -5))))
 (global-set-key (kbd "C-<backspace>") (lambda () (interactive)
 					(forward-word)
 					(backward-kill-word 1)
 					))
 (global-set-key (kbd "M-c") 'capitalize-region)
-
 (global-set-key (kbd "C-M-v") 'scroll-other-window)
 (global-set-key (kbd "C-M-r") 'scroll-other-window-down)
 (global-set-key (kbd "s-p") nil) ;used to be print
@@ -657,20 +679,15 @@ Simple setup for emacs-lisp mode. Does very little.
 #+END_SRC
 
 * Rust (and Cargo)
-Configure rust, enabling rust-mode, cargo-mode, flymake-rust, and company-racer.
+Configure rust, enabling rust-mode, cargo-mode, flycheck-rust, and company-racer.
 #+BEGIN_SRC emacs-lisp
-
-;; rust plugin to enable flymake
-(use-package flymake-rust
-  :disabled ;;FIXME
+(use-package flycheck-rust
   :straight t
-  :hook ((rust-mode . flymake-rust-load))
+  :hook (rust-mode . flycheck-rust-setup)
   :config
-  (let ((rust-root-path (string-trim
-			 (shell-command-to-string "rustc --print sysroot"))))
-    (setq flymake-rust-use-cargo nil)
-    (setq flymake-rust-executable (concat rust-root-path "/bin/cargo")))
-  (message "%s" "flymake-rust has been enabled")
+  (flycheck-mode +1)
+  (flycheck-rust-setup)
+  (message "%s" "flycheck-rust has been enabled")
   )
 
 ;; Provides Cargo integration
@@ -1001,7 +1018,7 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
 
 * C/C++
 
-#+TITLE: C/C++ standards
+#+TITLE: C/C++ No matter what
 #+BEGIN_SRC emacs-lisp
 ;; Enable company auto-complete
 
@@ -1284,7 +1301,7 @@ We want init.org to have special behavior, specifically we want init.org to tang
 The part that performed the byte-compile is currently disabled as it caused problems with use-package.
 #+BEGIN_SRC emacs-lisp
 (eval-and-compile
-  (defvar do-byte-compile nil "If this file should be byte-compiled after tangled"))
+  (defvar do-byte-compile t "If this file should be byte-compiled after tangled"))
 
 (defun tangle-init-call ()
   "Tangles this and only this file on save into init.el"
@@ -1295,9 +1312,5 @@ The part that performed the byte-compile is currently disabled as it caused prob
       (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
       (when do-byte-compile (byte-compile-file (concat user-emacs-directory "init.el"))))))
 
-(add-hook 'after-save-hook 'tangle-init-call)
+(add-hook 'after-save-hook 'tangle-init-call) 
 #+END_SRC 
-
-
-
-
