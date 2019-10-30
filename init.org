@@ -1,10 +1,11 @@
 We hold the entire init file in Org mode to allow increased comments, along with
 better organization. 
-This further gives the easy ability to debug by disabling select components of
-the init with ':tangle no'. 
-The original version of this file lives in github [[https://github.com/iwahbe/emacs][here]].
+This file lives in Github [[https://github.com/iwahbe/emacs][here]].
+
 
 * Preliminary
+This loads frameworks necessary for much of the following settings. 
+This section should be used only for packages that must be loaded before everything else.
 ** Path Control
 We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula, which is
 my most common command line tool location.
@@ -24,7 +25,7 @@ my most common command line tool location.
 (add-to-path "/usr/local/bin")
 #+END_SRC
 
-** MELPA
+** MELPA (disabled)
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that
 use-package is installed
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -38,6 +39,15 @@ use-package is installed
 (package-initialize)
 (when (not package-archive-contents)
   (package-refresh-contents))
+#+END_SRC
+
+** Custom: Not in init.el
+We set the custom package to it's own file, instead of polluting our init.el file.
+Also, init.el is reset on tangle away on tangle.
+#+BEGIN_SRC emacs-lisp
+(setq custom-file (expand-file-name (concat user-emacs-directory "custom.el")))
+(unless (file-exists-p custom-file) (write-region "" "" custom-file))
+(load custom-file)
 #+END_SRC
 
 ** Package Manager: Straight
@@ -62,7 +72,7 @@ use-package is installed
 (straight-use-package 'use-package) ;ensures both that use-package is installed and works with straight.el
 #+END_SRC
 
-** Special to init.org (tangle)
+** Tangle init.org on save
 We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed.
 The part that performed the byte-compile is currently disabled as it caused problems with use-package.
 #+BEGIN_SRC emacs-lisp
@@ -83,6 +93,7 @@ The part that performed the byte-compile is currently disabled as it caused prob
 
 
 * Cosmetics
+Purely cosmetic changes. Nothing else.
 ** Minimal Graphics
 #+BEGIN_SRC emacs-lisp
 (use-package emacs
@@ -101,16 +112,7 @@ The part that performed the byte-compile is currently disabled as it caused prob
 ;; Turn off mouse interface early in startup to avoid momentary display
 #+END_SRC
 
-** Custom: Not in init.el
-We set the custom package to it's own file, instead of polluting our init, and we can't put it in init.el, as it's blown
-away on tangle.
-#+BEGIN_SRC emacs-lisp
-(setq custom-file (expand-file-name (concat user-emacs-directory "custom.el")))
-(unless (file-exists-p custom-file) (write-region "" "" custom-file))
-(load custom-file)
-#+END_SRC
-
-** Graphics: Theme and Windowing
+** Theme and Windowing
 We apply the kaolin-galaxy theme if and only if we are using GUI emacs.
 We setup preferences for the mode-line.
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
@@ -241,6 +243,9 @@ I use a font called Fira-Code. This enables the font as well as the font's ligat
 
 #+END_SRC
 
+
+* Universal Alterations
+These packages change the normal function of emacs in all major modes. 
 ** Universal Variables
 Sets up helpful universal variables.
 #+BEGIN_SRC emacs-lisp
@@ -248,8 +253,6 @@ Sets up helpful universal variables.
 (setq-default sentence-end "[\\.\\?\\!] +")
 #+END_SRC
 
-
-* Important Changes (for everything)
 ** Evil: Extensible VI Layer
 I'm trying out EVIL, because reasons.
 #+BEGIN_SRC emacs-lisp
@@ -393,7 +396,7 @@ I use helm for fuzzy searching among known options
 
 #+END_SRC
 
-** Ido (not used)
+** Ido (disabled)
 Ido provides a great navigation experience with the find-file command.
 #+BEGIN_SRC emacs-lisp
 
@@ -588,8 +591,25 @@ Multiple cursors should be self-explanatory.
   )
 #+END_SRC
 
+** Backups (broken: FIXME)
+Sets all backups to path to .emacs.d instead of cluttering the folder their in
+#+BEGIN_SRC emacs-lisp
+;; sets autosaves to one folder
+(setq auto-save-file-name-transforms
+      `((".*" ,temporary-file-directory t)))
+
+;; Write backup files to own directory
+(setq backup-directory-alist
+      `(("." . ,(expand-file-name
+		 (concat user-emacs-directory "backups")))))
+
+;; Make backups of files, even when they're in version control
+(setq vc-make-backup-files t)
+#+END_SRC
+
 
 * Major Modes
+This contains a set of mutually exclusive Major Modes packages, along with their associated settings. 
 ** Fundamental-Mode
 For setting up lisp-interaction-mode: the scratch buffer
 #+BEGIN_SRC emacs-lisp
@@ -687,25 +707,8 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
 	)
 #+END_SRC
 
-** Backups (broken: FIXME)
-Sets all backups to path to .emacs.d instead of cluttering the folder their in
-#+BEGIN_SRC emacs-lisp
-;; sets autosaves to one folder
-(setq auto-save-file-name-transforms
-      `((".*" ,temporary-file-directory t)))
-
-;; Write backup files to own directory
-(setq backup-directory-alist
-      `(("." . ,(expand-file-name
-		 (concat user-emacs-directory "backups")))))
-
-;; Make backups of files, even when they're in version control
-(setq vc-make-backup-files t)
-#+END_SRC
-
-** ESS (Emacs Speaks Statistics)
-ESS (Emacs Speaks Statistics) is a major mode that I use to handle R. It could be extended to handle other S type
-statistics languages in the future.
+** R
+ESS (Emacs Speaks Statistics) is a major mode that facilitates S type statistics languages.
 #+BEGIN_SRC emacs-lisp
 (use-package ess
   :straight t
@@ -750,7 +753,7 @@ org-mode does most of what markdown does.
   )
 #+END_SRC
 
-** Sly-Mode (lisp)
+** Lisp
 I use sly as my lisp editor
 #+BEGIN_SRC emacs-lisp
 (use-package sly
@@ -775,7 +778,7 @@ I use sly as my lisp editor
   )
 #+END_SRC
 
-** Emacs-Lisp (lisp)
+** Emacs-Lisp
 Simple setup for emacs-lisp mode. Does very little.
 #+BEGIN_SRC emacs-lisp
 (defun my-emacs-lisp-mode ()
@@ -786,7 +789,7 @@ Simple setup for emacs-lisp mode. Does very little.
 (add-hook 'emacs-lisp-mode-hook #'my-emacs-lisp-mode)
 #+END_SRC
 
-** Rust (and Cargo)
+** Rust
 Configure rust, enabling rust-mode, cargo-mode, flycheck-rust, and company-racer.
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck-rust
@@ -840,7 +843,7 @@ Configure rust, enabling rust-mode, cargo-mode, flycheck-rust, and company-racer
 
 #+END_SRC
 
-** Elpy (Python)
+** Python
 Setup elpy to provide auto-complete, highlighting, indent guides, along with an inferior shell for writing python.
 #+BEGIN_SRC emacs-lisp
 ;;; Python Minor Modes
