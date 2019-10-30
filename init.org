@@ -4,26 +4,8 @@ This further gives the easy ability to debug by disabling select components of
 the init with ':tangle no'. 
 The original version of this file lives in github [[https://github.com/iwahbe/emacs][here]].
 
-
-* First Steps
-#+BEGIN_SRC emacs-lisp
-;(use-package emacs
-;  :init
-  (if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
-  (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
-  (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
-  ;; No splash screen please ... jeez
-  (setq inhibit-startup-message t)
-  (blink-cursor-mode -1)
-  ;; The error bell is really annoying
-  (setq ring-bell-function 'ignore)
-  ;;Fringes are not space efficiant
-  (set-fringe-mode 0)
-;)
-;; Turn off mouse interface early in startup to avoid momentary display
-#+END_SRC
-
-* Path Control
+* Preliminary
+** Path Control
 We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula, which is
 my most common command line tool location.
 #+BEGIN_SRC emacs-lisp
@@ -42,7 +24,7 @@ my most common command line tool location.
 (add-to-path "/usr/local/bin")
 #+END_SRC
 
-* Use-package
+** MELPA
 We ensure that packages are installed by using the use-package package, so we require that melpa is hooked up and that
 use-package is installed
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -56,14 +38,9 @@ use-package is installed
 (package-initialize)
 (when (not package-archive-contents)
   (package-refresh-contents))
-(unless (package--user-selected-p 'use-package)
-  (package-install 'use-package)
-  )
-(eval-and-compile
-  (require 'use-package))
 #+END_SRC
 
-* Package Manager: Straight
+** Package Manager: Straight
 [[https://github.com/raxod502/straight.el][straight.el]] is a package manager.
 - A benefit is that packages installed are defined entirely by this file.
 - unfortunately, straight.el is normally slower then package.el, because it checks for changes in source material. This
@@ -85,7 +62,46 @@ use-package is installed
 (straight-use-package 'use-package) ;ensures both that use-package is installed and works with straight.el
 #+END_SRC
 
-* Custom: Not in init.el
+** Special to init.org (tangle)
+We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed.
+The part that performed the byte-compile is currently disabled as it caused problems with use-package.
+#+BEGIN_SRC emacs-lisp
+(eval-and-compile
+  (defvar do-byte-compile nil "If this file should be byte-compiled after tangled"))
+
+(defun tangle-init-call ()
+  "Tangles this and only this file on save into init.el"
+  (when (equal (buffer-file-name)
+	       (expand-file-name (concat user-emacs-directory "init.org")))
+    ;; Avoid running hooks when tangling.
+    (let ((prog-mode-hook nil))
+      (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
+      (when do-byte-compile (byte-compile-file (concat user-emacs-directory "init.el"))))))
+
+(add-hook 'after-save-hook 'tangle-init-call) 
+#+END_SRC 
+
+
+* Cosmetics
+** Minimal Graphics
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :init
+  (if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
+  (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
+  (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
+  ;; No splash screen please ... jeez
+  (setq inhibit-startup-message t)
+  (blink-cursor-mode -1)
+  ;; The error bell is really annoying
+  (setq ring-bell-function 'ignore)
+  ;;Fringes are not space efficiant
+  (set-fringe-mode 0)
+)
+;; Turn off mouse interface early in startup to avoid momentary display
+#+END_SRC
+
+** Custom: Not in init.el
 We set the custom package to it's own file, instead of polluting our init, and we can't put it in init.el, as it's blown
 away on tangle.
 #+BEGIN_SRC emacs-lisp
@@ -94,7 +110,7 @@ away on tangle.
 (load custom-file)
 #+END_SRC
 
-* Graphics: Theme and Windowing
+** Graphics: Theme and Windowing
 We apply the kaolin-galaxy theme if and only if we are using GUI emacs.
 We setup preferences for the mode-line.
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
@@ -151,23 +167,90 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
 
 #+END_SRC
 
-* Fundamental-Mode
-For setting up lisp-interaction-mode: the scratch buffer
+** Fira-Code (graphics only)
+I use a font called Fira-Code. This enables the font as well as the font's ligatures.
 #+BEGIN_SRC emacs-lisp
-(add-hook 'lisp-interaction-mode-hook (lambda ()
-					(local-set-key (kbd "C-j") 'backward-word)
-					(local-set-key (kbd "C-S-j") 'eval-print-last-sexp)
-					))
+(defun fira-code-mode--make-alist (list)
+  "Generate prettify-symbols alist from LIST."
+  (let ((idx -1))
+    (mapcar
+     (lambda (s)
+       (setq idx (1+ idx))
+       (let* ((code (+ #Xe100 idx))
+          (width (string-width s))
+          (prefix ())
+          (suffix '(?\s (Br . Br)))
+          (n 1))
+     (while (< n width)
+       (setq prefix (append prefix '(?\s (Br . Bl))))
+       (setq n (1+ n)))
+     (cons s (append prefix suffix (list (decode-char 'ucs code))))))
+     list)))
+;; Unwanted ligatures are replaced with untypeable charicters
+(defconst fira-code-mode--ligatures
+  (list "www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\"
+    (char-to-string 0); "{-"
+    "[]" "::" ":::" ":=" "!!" "!=" "!==" "-}"
+    "--" "---" "-->" "->" "->>" "-<" "-<<" "-~"
+    "#{" "#[" "##" "###" "####" "#(" "#?" "#_" "#_("
+    ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*"
+    "/**" "/=" "/==" "/>" "//" "///" "&&" "||" "||="
+    "|=" "|>" "^=" "$>" "++" "+++" "+>" "=:=" "=="
+    "===" "==>" "=>" "=>>" "<=" "=<<" "=/=" ">-" ">="
+    ">=>" ">>" ">>-" ">>=" ">>>" "<*" "<*>" "<|" "<|>"
+    "<$" "<$>" "<!--" "<-" "<--" "<->" "<+" "<+>" "<="
+    "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<" "<~"
+    "<~~" "</" "</>" "~@" "~-" "~=" "~>" "~~" "~~>" "%%"
+    (char-to-string 1); "x"
+    ":" "+" "+" "*"))
+
+(defvar fira-code-mode--old-prettify-alist)
+
+(defun fira-code-mode--enable ()
+  "Enable Fira Code ligatures in current buffer."
+  (setq-local fira-code-mode--old-prettify-alist prettify-symbols-alist)
+  (setq-local prettify-symbols-alist (append (fira-code-mode--make-alist fira-code-mode--ligatures) fira-code-mode--old-prettify-alist))
+  (prettify-symbols-mode t))
+
+(defun fira-code-mode--disable ()
+  "Disable Fira Code ligatures in current buffer."
+  (setq-local prettify-symbols-alist fira-code-mode--old-prettify-alist)
+  (prettify-symbols-mode -1))
+
+(define-minor-mode fira-code-mode
+  "Fira Code ligatures minor mode"
+  :lighter " Fira Code"
+  (setq-local prettify-symbols-unprettify-at-point 'right-edge)
+  (if fira-code-mode
+      (fira-code-mode--enable)
+    (fira-code-mode--disable)))
+
+(defun fira-code-mode--setup ()
+  "Setup Fira Code Symbols"
+  (set-fontset-font t '(#Xe100 . #Xe16f) "Fira Code Symbol"))
+
+(provide 'fira-code-mode)
+
+
+(when (and (window-system) (member "Fira Code" (font-family-list)))
+  (set-frame-font "Fira Code")
+  (when (member "Fira Code Symbol" (font-family-list))
+    (add-hook 'prog-mode-hook #'fira-code-mode--enable)
+    (add-hook 'text-mode-hook #'fira-code-mode--enable)
+    ))
+
 #+END_SRC
 
-* Universal Variables
+** Universal Variables
 Sets up helpful universal variables.
 #+BEGIN_SRC emacs-lisp
 (setq-default fill-column 80)
 (setq-default sentence-end "[\\.\\?\\!] +")
 #+END_SRC
 
-* Evil: Extensible VI Layer
+
+* Important Changes (for everything)
+** Evil: Extensible VI Layer
 I'm trying out EVIL, because reasons.
 #+BEGIN_SRC emacs-lisp
 (use-package evil
@@ -204,50 +287,34 @@ I'm trying out EVIL, because reasons.
   )
 #+END_SRC
 
-* Programming-Mode
-Used to setup modes derived from prog-mode. We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode
-again. This is necessary because otherwise it gets called repeatedly.
+** Yasnippet
+yasnippet allows snippet expansion
+Snippets are kept in the folder described by "yas-snippet-dirs"
 #+BEGIN_SRC emacs-lisp
-(defun my-prog-mode ()
-  "Run as part of global prog-mode setup"
-    (local-set-key (kbd "C-c q") 'comment-or-uncomment-region)
-    (setq display-line-numbers t)
-    (line-number-mode 0)
-    (column-number-mode 1)
-    (if (version<= "26.0.50" emacs-version)
-	(display-line-numbers-mode 1) ; displays line numbers on the left
-      (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
-      )
-    (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
+(use-package yasnippet
+  :straight t
+  :after (company) ;due to company-mode
+  :init
+  (defun setup-yas-company ()
+    (defvar company-mode/enable-yas t
+      "Enable yasnippet for all backends.")
 
-    (eldoc-mode 1)
-    (setq company-minimum-prefix-length 1) ;we want an active company for programming, as there are many variable names, and memory is hard
-    (setq font-lock-maximum-decoration t) ;lots of syntax highlighting
-    (subword-mode +1)
-    (setq my-prog-mode-called t)
-    (message "%s" (concat
-		   "my-prog-mode was called successfully on major mode: "
-		   (symbol-name major-mode)))
+    (defun company-mode/backend-with-yas (backend)
+      "addes company-yasnippet to \"backend\""
+      (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+	  backend
+	(append (if (consp backend) backend (list backend))
+		'(:with company-yasnippet))))
+
+    (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
     )
-(add-hook 'prog-mode-hook 'my-prog-mode)
-
+  :config
+  (setup-yas-company)
+  (yas-global-mode 1)
+)
 #+END_SRC
 
-* Text-Mode
-#+BEGIN_SRC emacs-lisp
-
-(defun my-text-mode ()
-  "A hook to call on text-mode init"
-  (wc-mode +1)               ; provides a word count
-  (flyspell-mode +1)         ; recognizes misspellings
-  (visual-line-mode +1)      ; we want the words to wrap
-  (setq tab-width 4)
-  (message "%s" "my-text-mode was called successfully.")
-  )
-(add-hook 'text-mode-hook 'my-text-mode)
-#+END_SRC
-
-* Rename-Current-Buffer Function
+** Rename-Current-Buffer Function
 Function to rename the file in the current buffer.
 #+BEGIN_SRC emacs-lisp
 (defun rename-current-buffer-file ()
@@ -271,7 +338,109 @@ Function to rename the file in the current buffer.
 
 #+END_SRC
 
-* Very Minor Modes
+** FlyCheck
+FlyCheck provides dynamic error highlighting from multiple backends.
+Notes on use:
+- "C-c ! v" provides a diagnosis for flycheck
+- "C-c ! n" & "C-c ! p" navigate to errors
+- "C-c ! l" provides an error list for the current buffer
+- "C-c ! ?" provides information on any syntax checker
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck
+  :straight t
+  :config
+  (global-flycheck-mode +1)
+  )
+#+END_SRC
+
+** Helm
+I use helm for fuzzy searching among known options
+#+BEGIN_SRC emacs-lisp
+
+(use-package helm
+  :straight t
+  :config
+  (helm-mode 1)
+  (setq helm-default-display-buffer-functions '(display-buffer-in-side-window))
+  (global-set-key (kbd "M-x") 'helm-M-x)
+  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  :bind (:map helm-occur-map
+	      ("C-h c" . #'describe-key-briefly)
+	      )
+  )
+
+;; for fast multi-file searches
+(use-package helm-ag
+  :straight t
+  :after (helm)
+  :config
+  (defun search-selector (do-ag)
+    (interactive "P")
+    (if (equal do-ag 1) (helm-do-ag-this-file)
+      (if (equal do-ag 2) (helm-do-ag-buffers)
+	  (if do-ag (helm-do-ag-project-root)
+	    (isearch-forward)))))
+  (global-set-key (kbd "C-s") 'search-selector)
+  )
+
+(use-package helm-company
+  :straight t
+  :after (company helm)
+  :config
+  (define-key company-mode-map (kbd "C-;") 'helm-company)
+  (define-key company-active-map (kbd "C-;") 'helm-company)
+  )
+
+#+END_SRC
+
+** Ido (not used)
+Ido provides a great navigation experience with the find-file command.
+#+BEGIN_SRC emacs-lisp
+
+;; Interactively Do Things
+(use-package ido
+  :disabled
+  :straight t
+  :config
+  (ido-mode t)
+  )
+(setq read-file-name-completion-ignore-case nil)
+#+END_SRC
+
+** Global Key Bindings
+We maintain a list of common key-bindings to activate in all modes
+#+BEGIN_SRC emacs-lisp
+(defun current-line-length ()
+  (save-excursion
+    (beginning-of-line)
+    (let ((first-pos (point)))
+      (end-of-line)
+      (- (point) first-pos))
+      ))
+
+(global-set-key (kbd "C-r") 'scroll-down)
+(global-set-key (kbd "C-v") 'scroll-up)
+(global-set-key (kbd "C-l") 'forward-word)
+(global-set-key (kbd "C-j") 'backward-word)
+(global-set-key (kbd "M-f") 'forward-sentence)
+(global-set-key (kbd "M-b") 'backward-sentence)
+(global-set-key (kbd "C-z") 'ispell-word)
+(global-set-key (kbd "M--") 'undo)
+(global-set-key (kbd "C-M-n") (lambda () (interactive) (with-no-warnings (next-line 5))))
+(global-set-key (kbd "C-M-p") (lambda () (interactive) (with-no-warnings (next-line -5))))
+(global-set-key (kbd "C-<backspace>") (lambda () (interactive)
+					(forward-word)
+					(backward-kill-word 1)
+					))
+(global-set-key (kbd "M-c") 'capitalize-region)
+(global-set-key (kbd "C-M-v") 'scroll-other-window)
+(global-set-key (kbd "C-M-r") 'scroll-other-window-down)
+(global-set-key (kbd "s-p") nil) ;used to be print
+(global-set-key (kbd "s-o") nil) ;used to be ns-open-file-using-panel
+
+#+END_SRC
+
+** Very Minor Modes
 There is a collection of minor modes that trigger after other major modes load.
 - saveplace has reopened files remember the mark position
 - ace-window allows a multi-window mode (vim style)
@@ -359,198 +528,7 @@ There is a collection of minor modes that trigger after other major modes load.
 
 #+END_SRC
 
-* FlyCheck
-FlyCheck provides dynamic error highlighting from multiple backends.
-Notes on use:
-- "C-c ! v" provides a diagnosis for flycheck
-- "C-c ! n" & "C-c ! p" navigate to errors
-- "C-c ! l" provides an error list for the current buffer
-- "C-c ! ?" provides information on any syntax checker
-#+BEGIN_SRC emacs-lisp
-(use-package flycheck
-  :straight t
-  :config
-  (global-flycheck-mode +1)
-  )
-
-#+END_SRC
-
-* Helm
-I use helm for fuzzy searching among known options
-#+BEGIN_SRC emacs-lisp
-
-(use-package helm
-  :straight t
-  :config
-  (helm-mode 1)
-  (setq helm-default-display-buffer-functions '(display-buffer-in-side-window))
-  (global-set-key (kbd "M-x") 'helm-M-x)
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)
-  :bind (:map helm-occur-map
-	      ("C-h c" . #'describe-key-briefly)
-	      )
-  )
-
-;; for fast multi-file searches
-(use-package helm-ag
-  :straight t
-  :after (helm)
-  :config
-  (defun search-selector (do-ag)
-    (interactive "P")
-    (if (equal do-ag 1) (helm-do-ag-this-file)
-      (if (equal do-ag 2) (helm-do-ag-buffers)
-	  (if do-ag (helm-do-ag-project-root)
-	    (isearch-forward)))))
-  (global-set-key (kbd "C-s") 'search-selector)
-  )
-
-(use-package helm-company
-  :straight t
-  :after (company helm)
-  :config
-  (define-key company-mode-map (kbd "C-;") 'helm-company)
-  (define-key company-active-map (kbd "C-;") 'helm-company)
-  )
-
-#+END_SRC
-
-* Yasnippet
-yasnippet allows snippet expansion
-Snippets are kept in the folder described by "yas-snippet-dirs"
-#+BEGIN_SRC emacs-lisp
-(use-package yasnippet
-  :straight t
-  :after (company) ;due to company-mode
-  :init
-  (defun setup-yas-company ()
-    (defvar company-mode/enable-yas t
-      "Enable yasnippet for all backends.")
-
-    (defun company-mode/backend-with-yas (backend)
-      "addes company-yasnippet to \"backend\""
-      (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
-	  backend
-	(append (if (consp backend) backend (list backend))
-		'(:with company-yasnippet))))
-
-    (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
-    )
-  :config
-  (setup-yas-company)
-  (yas-global-mode 1)
-)
-#+END_SRC
-
-* Global Key Bindings
-We maintain a list of common key-bindings to activate in all modes
-#+BEGIN_SRC emacs-lisp
-(defun current-line-length ()
-  (save-excursion
-    (beginning-of-line)
-    (let ((first-pos (point)))
-      (end-of-line)
-      (- (point) first-pos))
-      ))
-
-(global-set-key (kbd "C-r") 'scroll-down)
-(global-set-key (kbd "C-v") 'scroll-up)
-(global-set-key (kbd "C-l") 'forward-word)
-(global-set-key (kbd "C-j") 'backward-word)
-(global-set-key (kbd "M-f") 'forward-sentence)
-(global-set-key (kbd "M-b") 'backward-sentence)
-(global-set-key (kbd "C-z") 'ispell-word)
-(global-set-key (kbd "M--") 'undo)
-(global-set-key (kbd "C-M-n") (lambda () (interactive) (with-no-warnings (next-line 5))))
-(global-set-key (kbd "C-M-p") (lambda () (interactive) (with-no-warnings (next-line -5))))
-(global-set-key (kbd "C-<backspace>") (lambda () (interactive)
-					(forward-word)
-					(backward-kill-word 1)
-					))
-(global-set-key (kbd "M-c") 'capitalize-region)
-(global-set-key (kbd "C-M-v") 'scroll-other-window)
-(global-set-key (kbd "C-M-r") 'scroll-other-window-down)
-(global-set-key (kbd "s-p") nil) ;used to be print
-(global-set-key (kbd "s-o") nil) ;used to be ns-open-file-using-panel
-
-#+END_SRC
-
-* Ido (not used)
-Ido provides a great navigation experience with the find-file command.
-#+BEGIN_SRC emacs-lisp
-
-;; Interactively Do Things
-(use-package ido
-  :disabled
-  :straight t
-  :config
-  (ido-mode t)
-  )
-(setq read-file-name-completion-ignore-case nil)
-#+END_SRC
-
-* Org-Mode
-Org mode provides a function text mode, so we give it many text mode type things.
-Note: htmlize allows org-mode to publish to html more complex stuff like src blocks.
-#+BEGIN_SRC emacs-lisp
-
-  (use-package htmlize
-	:straight t
-	:after (org)
-	)
-
-  (use-package org
-	:straight t
-	:defer t
-	:bind (:map org-mode-map ("C-j" . 'backward-word))
-	:config
-	(setq org-src-window-setup 'current-window)
-	(set-fill-column 120)
-	(setq org-babel-python-command "python3")
-	(org-babel-do-load-languages 'org-babel-load-languages
-	 '((python . t) (emacs-lisp . t) (C . t)))
-	(when (equal (buffer-file-name) ;the init.org file is special
-			 (expand-file-name (concat user-emacs-directory "init.org")))
-	  (my-prog-mode)
-	  )
-	(setq org-src-fontify-natively t)
-	(setq org-src-tab-acts-natively t)
-	(setq org-confirm-babel-evaluate nil)
-	(setq org-src-preserve-indentation t)
-	(defvar  *src-default-language* nil)
-	(defun src-default-language ()
-	  "Used to set a default src language for skeleton-src-blocks"
-	  (interactive)
-	  (setq *src-default-language* (read-string "Language: ")))
-	(define-skeleton skeleton-src-block
-	  "Inserts a SRC Block Letter into the buffer"
-	  ""
-	  "#+BEGIN_SRC " (if *src-default-language* *src-default-language* (skeleton-read "Language: ")) "\n"
-	  "\n"
-	  "#+END_SRC"
-	  )
-	(yas-activate-extra-mode 'text-mode)
-	(message "%s" "Org mode called successfully.")
-	)
-#+END_SRC
-
-* Backups (broken: FIXME)
-Sets all backups to path to .emacs.d instead of cluttering the folder their in
-#+BEGIN_SRC emacs-lisp
-;; sets autosaves to one folder
-(setq auto-save-file-name-transforms
-      `((".*" ,temporary-file-directory t)))
-
-;; Write backup files to own directory
-(setq backup-directory-alist
-      `(("." . ,(expand-file-name
-		 (concat user-emacs-directory "backups")))))
-
-;; Make backups of files, even when they're in version control
-(setq vc-make-backup-files t)
-#+END_SRC
-
-* Company
+** Company
 Company is used for auto-completions. In the spirit of emacs, it can be customized for almost any language, but those
 customizations are module specific. Here, we only call the main version.
 #+BEGIN_SRC emacs-lisp
@@ -595,7 +573,137 @@ customizations are module specific. Here, we only call the main version.
   )
 #+END_SRC
 
-* ESS (Emacs Speaks Statistics)
+** Multiple Cursors (GUI only)
+Multiple cursors should be self-explanatory.
+#+BEGIN_SRC emacs-lisp
+(use-package multiple-cursors
+  :straight t
+  :defer t
+  :bind
+  (("C->" . mc/mark-next-like-this)
+   ("C-<" . mc/mark-previous-like-this)
+   ("C-c ," . mc/mark-all-like-this)
+   (:map mc/keymap
+	 ("<return>" . nil))) ;allows entry of <return> with multiple cursors
+  )
+#+END_SRC
+
+
+* Major Modes
+** Fundamental-Mode
+For setting up lisp-interaction-mode: the scratch buffer
+#+BEGIN_SRC emacs-lisp
+(add-hook 'lisp-interaction-mode-hook (lambda ()
+					(local-set-key (kbd "C-j") 'backward-word)
+					(local-set-key (kbd "C-S-j") 'eval-print-last-sexp)
+					))
+#+END_SRC
+
+** Programming-Mode
+Used to setup modes derived from prog-mode. We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode
+again. This is necessary because otherwise it gets called repeatedly.
+#+BEGIN_SRC emacs-lisp
+(defun my-prog-mode ()
+  "Run as part of global prog-mode setup"
+    (local-set-key (kbd "C-c q") 'comment-or-uncomment-region)
+    (setq display-line-numbers t)
+    (line-number-mode 0)
+    (column-number-mode 1)
+    (if (version<= "26.0.50" emacs-version)
+	(display-line-numbers-mode 1) ; displays line numbers on the left
+      (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
+      )
+    (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
+
+    (eldoc-mode 1)
+    (setq company-minimum-prefix-length 1) ;we want an active company for programming, as there are many variable names, and memory is hard
+    (setq font-lock-maximum-decoration t) ;lots of syntax highlighting
+    (subword-mode +1)
+    (setq my-prog-mode-called t)
+    (message "%s" (concat
+		   "my-prog-mode was called successfully on major mode: "
+		   (symbol-name major-mode)))
+    )
+(add-hook 'prog-mode-hook 'my-prog-mode)
+
+#+END_SRC
+
+** Text-Mode
+#+BEGIN_SRC emacs-lisp
+
+(defun my-text-mode ()
+  "A hook to call on text-mode init"
+  (wc-mode +1)               ; provides a word count
+  (flyspell-mode +1)         ; recognizes misspellings
+  (visual-line-mode +1)      ; we want the words to wrap
+  (setq tab-width 4)
+  (message "%s" "my-text-mode was called successfully.")
+  )
+(add-hook 'text-mode-hook 'my-text-mode)
+#+END_SRC
+
+** Org-Mode
+Org mode provides a function text mode, so we give it many text mode type things.
+Note: htmlize allows org-mode to publish to html more complex stuff like src blocks.
+#+BEGIN_SRC emacs-lisp
+
+  (use-package htmlize
+	:straight t
+	:after (org)
+	)
+
+  (use-package org
+	:straight t
+	:defer t
+	:bind (:map org-mode-map ("C-j" . 'backward-word))
+	:config
+	(setq org-src-window-setup 'current-window)
+	(set-fill-column 120)
+	(setq org-babel-python-command "python3")
+	(org-babel-do-load-languages 'org-babel-load-languages
+	 '((python . t) (emacs-lisp . t) (C . t)))
+	(when (equal (buffer-file-name) ;the init.org file is special
+			 (expand-file-name (concat user-emacs-directory "init.org")))
+	  (my-prog-mode)
+	  )
+	(setq org-src-fontify-natively t)
+	(setq org-src-tab-acts-natively t)
+	(setq org-confirm-babel-evaluate nil)
+	(setq org-src-preserve-indentation t)
+	(defvar  *src-default-language* nil)
+	(defun src-default-language ()
+	  "Used to set a default src language for skeleton-src-blocks"
+	  (interactive)
+	  (setq *src-default-language* (read-string "Language: ")))
+	(define-skeleton skeleton-src-block
+	  "Inserts a SRC Block Letter into the buffer"
+	  ""
+	  "#+BEGIN_SRC " (if *src-default-language* *src-default-language* (skeleton-read "Language: ")) "\n"
+	  "\n"
+	  "#+END_SRC"
+	  )
+	(yas-activate-extra-mode 'text-mode)
+	(message "%s" "Org mode called successfully.")
+	)
+#+END_SRC
+
+** Backups (broken: FIXME)
+Sets all backups to path to .emacs.d instead of cluttering the folder their in
+#+BEGIN_SRC emacs-lisp
+;; sets autosaves to one folder
+(setq auto-save-file-name-transforms
+      `((".*" ,temporary-file-directory t)))
+
+;; Write backup files to own directory
+(setq backup-directory-alist
+      `(("." . ,(expand-file-name
+		 (concat user-emacs-directory "backups")))))
+
+;; Make backups of files, even when they're in version control
+(setq vc-make-backup-files t)
+#+END_SRC
+
+** ESS (Emacs Speaks Statistics)
 ESS (Emacs Speaks Statistics) is a major mode that I use to handle R. It could be extended to handle other S type
 statistics languages in the future.
 #+BEGIN_SRC emacs-lisp
@@ -617,7 +725,7 @@ statistics languages in the future.
   )
 #+END_SRC
 
-* Markdown-Mode
+** Markdown-Mode
 I assign markdown to the appropriate extensions, and enable math-mode and wc-mode. I honestly don't use this much as
 org-mode does most of what markdown does.
 #+BEGIN_SRC emacs-lisp
@@ -642,7 +750,7 @@ org-mode does most of what markdown does.
   )
 #+END_SRC
 
-* Sly-Mode (lisp)
+** Sly-Mode (lisp)
 I use sly as my lisp editor
 #+BEGIN_SRC emacs-lisp
 (use-package sly
@@ -667,7 +775,7 @@ I use sly as my lisp editor
   )
 #+END_SRC
 
-* Emacs-Lisp (lisp)
+** Emacs-Lisp (lisp)
 Simple setup for emacs-lisp mode. Does very little.
 #+BEGIN_SRC emacs-lisp
 (defun my-emacs-lisp-mode ()
@@ -678,7 +786,7 @@ Simple setup for emacs-lisp mode. Does very little.
 (add-hook 'emacs-lisp-mode-hook #'my-emacs-lisp-mode)
 #+END_SRC
 
-* Rust (and Cargo)
+** Rust (and Cargo)
 Configure rust, enabling rust-mode, cargo-mode, flycheck-rust, and company-racer.
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck-rust
@@ -732,7 +840,7 @@ Configure rust, enabling rust-mode, cargo-mode, flycheck-rust, and company-racer
 
 #+END_SRC
 
-* Elpy (Python)
+** Elpy (Python)
 Setup elpy to provide auto-complete, highlighting, indent guides, along with an inferior shell for writing python.
 #+BEGIN_SRC emacs-lisp
 ;;; Python Minor Modes
@@ -819,7 +927,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   )
 #+END_SRC
 
-* LaTeX
+** LaTeX
 Sets up latex support along with a collection of skeletons for latex. This is also mostly replaced by org-mode
 #+BEGIN_SRC emacs-lisp
 (straight-use-package '(format-latex-mode :host github :repo "iwahbe/format-latex"))
@@ -883,81 +991,7 @@ Sets up latex support along with a collection of skeletons for latex. This is al
   )
 #+END_SRC
 
-* Fira-Code (graphics only)
-I use a font called Fira-Code. This enables the font as well as the font's ligatures.
-#+BEGIN_SRC emacs-lisp
-(defun fira-code-mode--make-alist (list)
-  "Generate prettify-symbols alist from LIST."
-  (let ((idx -1))
-    (mapcar
-     (lambda (s)
-       (setq idx (1+ idx))
-       (let* ((code (+ #Xe100 idx))
-          (width (string-width s))
-          (prefix ())
-          (suffix '(?\s (Br . Br)))
-          (n 1))
-     (while (< n width)
-       (setq prefix (append prefix '(?\s (Br . Bl))))
-       (setq n (1+ n)))
-     (cons s (append prefix suffix (list (decode-char 'ucs code))))))
-     list)))
-;; Unwanted ligatures are replaced with untypeable charicters
-(defconst fira-code-mode--ligatures
-  (list "www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\"
-    (char-to-string 0); "{-"
-    "[]" "::" ":::" ":=" "!!" "!=" "!==" "-}"
-    "--" "---" "-->" "->" "->>" "-<" "-<<" "-~"
-    "#{" "#[" "##" "###" "####" "#(" "#?" "#_" "#_("
-    ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*"
-    "/**" "/=" "/==" "/>" "//" "///" "&&" "||" "||="
-    "|=" "|>" "^=" "$>" "++" "+++" "+>" "=:=" "=="
-    "===" "==>" "=>" "=>>" "<=" "=<<" "=/=" ">-" ">="
-    ">=>" ">>" ">>-" ">>=" ">>>" "<*" "<*>" "<|" "<|>"
-    "<$" "<$>" "<!--" "<-" "<--" "<->" "<+" "<+>" "<="
-    "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<" "<~"
-    "<~~" "</" "</>" "~@" "~-" "~=" "~>" "~~" "~~>" "%%"
-    (char-to-string 1); "x"
-    ":" "+" "+" "*"))
-
-(defvar fira-code-mode--old-prettify-alist)
-
-(defun fira-code-mode--enable ()
-  "Enable Fira Code ligatures in current buffer."
-  (setq-local fira-code-mode--old-prettify-alist prettify-symbols-alist)
-  (setq-local prettify-symbols-alist (append (fira-code-mode--make-alist fira-code-mode--ligatures) fira-code-mode--old-prettify-alist))
-  (prettify-symbols-mode t))
-
-(defun fira-code-mode--disable ()
-  "Disable Fira Code ligatures in current buffer."
-  (setq-local prettify-symbols-alist fira-code-mode--old-prettify-alist)
-  (prettify-symbols-mode -1))
-
-(define-minor-mode fira-code-mode
-  "Fira Code ligatures minor mode"
-  :lighter " Fira Code"
-  (setq-local prettify-symbols-unprettify-at-point 'right-edge)
-  (if fira-code-mode
-      (fira-code-mode--enable)
-    (fira-code-mode--disable)))
-
-(defun fira-code-mode--setup ()
-  "Setup Fira Code Symbols"
-  (set-fontset-font t '(#Xe100 . #Xe16f) "Fira Code Symbol"))
-
-(provide 'fira-code-mode)
-
-
-(when (and (window-system) (member "Fira Code" (font-family-list)))
-  (set-frame-font "Fira Code")
-  (when (member "Fira Code Symbol" (font-family-list))
-    (add-hook 'prog-mode-hook #'fira-code-mode--enable)
-    (add-hook 'text-mode-hook #'fira-code-mode--enable)
-    ))
-
-#+END_SRC
-
-* Javascript
+** Javascript
 Setup for my JavaScript IDE.
 #+BEGIN_SRC emacs-lisp
 (use-package xref-js2
@@ -990,7 +1024,7 @@ Setup for my JavaScript IDE.
   )
 #+END_SRC
 
-* Haskell
+** Haskell
 Haskell is a functional language
 ghc functions as a backend for Haskell, company-ghc hooks that into company, providing smart and real-time completion. Haskell-mode provides the from of the Haskell IDE.
 #+BEGIN_SRC emacs-lisp
@@ -1016,7 +1050,7 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
   )
 #+END_SRC
 
-* C/C++
+** C/C++
 
 #+TITLE: C/C++ No matter what
 #+BEGIN_SRC emacs-lisp
@@ -1262,22 +1296,7 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 				 (yas-activate-extra-mode 'c-mode))))
 #+END_SRC
 
-* Multiple Cursors
-Multiple cursors should be self-explanatory.
-#+BEGIN_SRC emacs-lisp
-(use-package multiple-cursors
-  :straight t
-  :defer t
-  :bind
-  (("C->" . mc/mark-next-like-this)
-   ("C-<" . mc/mark-previous-like-this)
-   ("C-c ," . mc/mark-all-like-this)
-   (:map mc/keymap
-	 ("<return>" . nil))) ;allows entry of <return> with multiple cursors
-  )
-#+END_SRC
-
-* CMake
+** CMake
 CMake files suck, there should be a major mode for them:
 #+BEGIN_SRC emacs-lisp
 (use-package cmake-mode
@@ -1286,7 +1305,7 @@ CMake files suck, there should be a major mode for them:
   )
 #+END_SRC
 
-* ASM (assembly)
+** ASM (assembly)
 For writing assembly
 #+BEGIN_SRC emacs-lisp
 (defun my-asm-setup-mode ()
@@ -1296,21 +1315,3 @@ For writing assembly
 (add-hook 'asm-mode-hook 'my-asm-setup-mode)
 #+END_SRC
 
-* Special to init.org (tangle)
-We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed.
-The part that performed the byte-compile is currently disabled as it caused problems with use-package.
-#+BEGIN_SRC emacs-lisp
-(eval-and-compile
-  (defvar do-byte-compile t "If this file should be byte-compiled after tangled"))
-
-(defun tangle-init-call ()
-  "Tangles this and only this file on save into init.el"
-  (when (equal (buffer-file-name)
-	       (expand-file-name (concat user-emacs-directory "init.org")))
-    ;; Avoid running hooks when tangling.
-    (let ((prog-mode-hook nil))
-      (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
-      (when do-byte-compile (byte-compile-file (concat user-emacs-directory "init.el"))))))
-
-(add-hook 'after-save-hook 'tangle-init-call) 
-#+END_SRC 
