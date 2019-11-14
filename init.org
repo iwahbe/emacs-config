@@ -969,6 +969,7 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     "\\newcommand{\\exc}[1]{$ $\\\\\\noindent\\textbf{Problem #1}}\n"
     "\\newcommand{\\inpr}[2]{\\langle #1, #2\\rangle}\n"
     "\\newcommand{\\floor}[1]{\\lfloor #1 \\rfloor}\n"
+    "\newcommand{\\ceil}[1]{\\lceil #1 \\rceil}"
     "\\newcommand{\\bmatrix}[1]{\\begin{bmatrix}#1\\end{bmatrix}}\n"
     "\\newcommand{\\fl}{{\\mathcal L}}\n"
     "\\newcommand{\\fu}{{\\mathcal U}}\n"
