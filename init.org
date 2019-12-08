@@ -453,7 +453,6 @@ There is a collection of minor modes that trigger after other major modes load.
 - wc-mode provides a word count in the mode line
 - electric operators provide spacing for prog modes that lack a util to prettify code
 - define-word shows a word definition at point or on lookup
-- magit is a git wrapper
 - helm and helm-company provide fuzzy completion on system searches
 - smartparens gives (semi) smart paired symbol insertion
 - VLF (Very Large Files)
@@ -505,12 +504,6 @@ There is a collection of minor modes that trigger after other major modes load.
   (global-set-key (kbd "C-c D") 'define-word)
   )
 
-(use-package magit
-  :straight t
-  :defer t
-  :bind (("C-x g" . magit-status))
-  )
-
 (use-package smartparens
   :straight t
   :config
@@ -528,6 +521,21 @@ There is a collection of minor modes that trigger after other major modes load.
   (custom-set-variables
    '(vlf-application 'dont-ask))
   )
+
+#+END_SRC
+
+** Git (Magit)
+#+BEGIN_SRC emacs-lisp
+(use-package magit
+  :straight t
+  :defer t
+  :bind (("C-x g" . magit-status))
+  )
+(use-package magit-todos
+  :straight t
+  :after (:any magit)
+  :config (magit-todos-mode +1)
+)
 
 #+END_SRC
 
@@ -969,7 +977,7 @@ Sets up latex support along with a collection of skeletons for latex. This is al
     "\\newcommand{\\exc}[1]{$ $\\\\\\noindent\\textbf{Problem #1}}\n"
     "\\newcommand{\\inpr}[2]{\\langle #1, #2\\rangle}\n"
     "\\newcommand{\\floor}[1]{\\lfloor #1 \\rfloor}\n"
-    "\newcommand{\\ceil}[1]{\\lceil #1 \\rceil}"
+    "\\newcommand{\\ceil}[1]{\\lceil #1 \\rceil}\n"
     "\\newcommand{\\bmatrix}[1]{\\begin{bmatrix}#1\\end{bmatrix}}\n"
     "\\newcommand{\\fl}{{\\mathcal L}}\n"
     "\\newcommand{\\fu}{{\\mathcal U}}\n"
