@@ -52,19 +52,28 @@
   "\\newcommand{\\Q}{\\mathbb Q}\n"
   "\\newcommand{\\R}{\\mathbb R}\n"
   "\\newcommand{\\C}{\\mathbb C}\n"
-  "\\renewcommand{\epsilon}{\varepsilon}\n"
-  "\n"
-  "\\title{Math 332 Homework " (skeleton-read "Homework number: ") "}\n"
-  "\\author{Ian Wahbe}\n"
+  "\\renewcommand{\\epsilon}{\\varepsilon}\n"
   "\n"
   "\\begin{document}\n"
-  "\\maketitle\n"
+  "\\\\{\\Huge Math 332 Homework Assignment\\\\}\n"
+  "\\\\\n"
+  "\\\\\n"
+  "\\\\{\\LARGE Name: Ian Wahbe \\\\}\n"
+  "\\\\\n"
+  "\\\\{\LARGE Assignment Number: " (skeleton-read "Assignment Number: ") " \\\\}\n"
+  "\\\\\n"
+  "\\\\{\\LARGE Collaborators: " (skeleton-read "Collaborators: ") " \\\\}\n"
+  "\\newpage\n"
   "\n"
   "\\begin{prob}[" (skeleton-read "First Problem: ") "]\n"
-  "\n"
   -
   "\n"
+  "\n"
   "\\end{prob}\n"
+  "\\begin{solution}\n"
+  "\n"
+  "\n"
+  "\\end{solution}\n"
   "\\end{document}\n"
   )
 
@@ -76,6 +85,11 @@
   -
   "\n"
   "\\end{prob}\n"
+  "\\begin{solution}\n"
+  "\n"
+  "\n"
+  "\\end{solution}\n"
+
   )
 
 
