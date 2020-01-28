@@ -1,5 +1,5 @@
 # -*- mode: snippet -*-
-# name: LaTeX_cases
+# name: LaTeX_Cases
 # key: \cases
 # --
 \begin{cases} ${1} \end{cases}
