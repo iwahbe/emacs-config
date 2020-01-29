@@ -1045,8 +1045,8 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
   :defer
   :after (cmake-ide)
   :config
-  (setenv "Clang_DIR" "/usr/local/Cellar/llvm/9.0.0/Toolchains/LLVM9.0.0.xctoolchain/usr/lib/cmake/clang/")
-  (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM9.0.0.xctoolchain/usr/bin/clang-format")
+  (setenv "Clang_DIR" "/usr/local/Cellar/llvm/9.0.0/Toolchains/LLVM9.0.1.xctoolchain/usr/lib/cmake/clang/")
+  (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM9.0.1.xctoolchain/usr/bin/clang-format")
   (setq clang-format-style "file")
   (defun clang-format-safe-buffer ()
     (interactive)
@@ -1288,4 +1288,17 @@ For writing assembly
 
 (add-hook 'asm-mode-hook 'my-asm-setup-mode)
 #+END_SRC
+
+** ansi-term
+#+BEGIN_SRC emacs-lisp
+(use-package term
+  ;; Note: No ensure
+  :bind (:map term-mode-map
+	      ("M-p" . term-send-up)
+	      ("M-n" . term-send-down)
+	      ("C-y" . term-paste))
+  )
+#+END_SRC
+
+
 

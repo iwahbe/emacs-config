@@ -60,7 +60,7 @@
   "\\\\\n"
   "\\\\{\\LARGE Name: Ian Wahbe \\\\}\n"
   "\\\\\n"
-  "\\\\{\LARGE Assignment Number: " (skeleton-read "Assignment Number: ") " \\\\}\n"
+  "\\\\{\\LARGE Assignment Number: " (skeleton-read "Assignment Number: ") " \\\\}\n"
   "\\\\\n"
   "\\\\{\\LARGE Collaborators: " (skeleton-read "Collaborators: ") " \\\\}\n"
   "\\newpage\n"
@@ -68,10 +68,8 @@
   "\\begin{prob}[" (skeleton-read "First Problem: ") "]\n"
   -
   "\n"
-  "\n"
   "\\end{prob}\n"
   "\\begin{solution}\n"
-  "\n"
   "\n"
   "\\end{solution}\n"
   "\\end{document}\n"
@@ -81,7 +79,6 @@
   "Problem for David Krumm"
   "head"
   "\\begin{prob}[" (skeleton-read "Problem: ") "]\n"
-  "\n"
   -
   "\n"
   "\\end{prob}\n"
@@ -89,7 +86,6 @@
   "\n"
   "\n"
   "\\end{solution}\n"
-
   )
 
 
