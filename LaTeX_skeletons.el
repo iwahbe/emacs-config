@@ -42,7 +42,7 @@
   "head"
   "\\documentclass[12pt]{amsart}\n"
   "\\usepackage{amsmath,amssymb}\n"
-  "\\usepackage{graphicx,enumerate}\n"
+  "\\usepackage{graphicx,enumerate,enumitem}\n"
   "\n"
   "\\theoremstyle{definition}\n"
   "\\newtheorem{prob}{Problem}\n"

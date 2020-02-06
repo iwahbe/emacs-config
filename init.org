@@ -632,6 +632,12 @@ For setting up lisp-interaction-mode: the scratch buffer
 Used to setup modes derived from prog-mode. We use my-prog-mode-called as a flag to indicate wither we load my-prog-mode
 again. This is necessary because otherwise it gets called repeatedly.
 #+BEGIN_SRC emacs-lisp
+(use-package highlight-numbers
+  :straight t
+  :hook ((highlight-numbers . (lambda () (highlight-numbers-mode 1))))
+  :config (set-face-foreground 'highlight-numbers-number "DarkOrchid2")
+  )
+
 (defun my-prog-mode ()
   "Run as part of global prog-mode setup"
   (local-set-key (kbd "C-c q") 'comment-or-uncomment-region)
