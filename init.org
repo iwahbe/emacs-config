@@ -634,7 +634,7 @@ again. This is necessary because otherwise it gets called repeatedly.
 #+BEGIN_SRC emacs-lisp
 (use-package highlight-numbers
   :straight t
-  :hook ((highlight-numbers . (lambda () (highlight-numbers-mode 1))))
+  :hook ((prog-mode . (lambda () (highlight-numbers-mode 1))))
   :config (set-face-foreground 'highlight-numbers-number "DarkOrchid2")
   )
 
