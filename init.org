@@ -616,6 +616,12 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
 (setq vc-make-backup-files t)
 #+END_SRC
 
+** Auto-insert
+#+BEGIN_SRC emacs-lisp
+(auto-insert-mode +1)
+(setq auto-insert-query nil)
+#+END_SRC
+
 
 * Major Modes
 This contains a set of mutually exclusive Major Modes packages, along with their associated settings. 
@@ -871,6 +877,18 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   :config
   (pyenv-mode +1)
   )
+
+(eval-after-load 'autoinsert
+  '(define-auto-insert '(python-mode . "Python skeleton")
+     '("The header for all python files"
+       "#!/usr/bin/env python3" \n
+       "# -*- codeing: utf-8 -*-" \n
+       "\"\"\"" \n
+       "Created on " (format-time-string "%B %d %y") \n
+       "Author github/twitter @iwahbe" \n
+       "\"\"\"" \n
+       |
+       )))
 
 ;; Indentation Guide
 (use-package highlight-indent-guides

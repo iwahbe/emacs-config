@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: LaTeX_Solution
+# key: \solution
+# --
+\begin{solution}
+	$0
+\end{solution}

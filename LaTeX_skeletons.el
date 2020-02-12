@@ -47,6 +47,7 @@
   "\\theoremstyle{definition}\n"
   "\\newtheorem{prob}{Problem}\n"
   "\n"
+  "\\DeclareMathOperator{\\lcm}{lcm}\n"
   "\\newcommand{\\N}{\\mathbb N}\n"
   "\\newcommand{\\Z}{\\mathbb Z}\n"
   "\\newcommand{\\Q}{\\mathbb Q}\n"
