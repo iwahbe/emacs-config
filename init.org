@@ -1,7 +1,5 @@
-We hold the entire init file in Org mode to allow increased comments, along with
-better organization. 
-This file lives in Github [[https://github.com/iwahbe/emacs][here]].
-
+We hold the entire init file in Org mode to allow increased comments, 
+along with better organization. This file lives in Github [[https://github.com/iwahbe/emacs][here]].
 
 * Preliminary
 This loads frameworks necessary for much of the following settings. 
@@ -304,18 +302,18 @@ Snippets are kept in the folder described by "yas-snippet-dirs"
 
     (defun company-mode/backend-with-yas (backend)
       "addes company-yasnippet to \"backend\""
-      (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+      (if (or (not company-mode/enable-yas) (and (listp backend)
+						 (member 'company-yasnippet backend)))
 	  backend
 	(append (if (consp backend) backend (list backend))
 		'(:with company-yasnippet))))
 
-    (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+    (setq company-backends (mapcar #'company-mode/backend-with-yas
+				   company-backends))
     )
   :config
   (setup-yas-company)
   (yas-global-mode 1)
-  ;; TODO: Expiremental fix to: 
-  ;; "yas-exand requires properly setup yas-minor-mode"
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil)
 )
@@ -325,7 +323,8 @@ Snippets are kept in the folder described by "yas-snippet-dirs"
 Function to rename the file in the current buffer.
 #+BEGIN_SRC emacs-lisp
 (defun rename-current-buffer-file ()
-  "Renames current buffer and file it is visiting. From http://whattheemacsd.com/"
+  "Renames current buffer and file it is visiting."
+  ;;From http://whattheemacsd.com/
   (interactive)
   (let ((name (buffer-name))
         (filename (buffer-file-name)))
@@ -433,14 +432,27 @@ We maintain a list of common key-bindings to activate in all modes
 (global-set-key (kbd "M-b") 'backward-sentence)
 (global-set-key (kbd "C-z") 'ispell-word)
 (global-set-key (kbd "M--") 'undo)
-(global-set-key (kbd "C-M-n") (lambda (arg) (interactive "P") (with-no-warnings (next-line (* 5 (if (equal arg nil) 1 arg))))))
-(global-set-key (kbd "C-M-p") (lambda (arg) (interactive "P") (with-no-warnings (next-line (* -5 (if (equal arg nil) 1 arg))))))
-(global-set-key (kbd "C-<backspace>") (lambda (arg) (interactive "P") (forward-word) (backward-kill-word (if (equal arg nil) 1 arg))))
+(global-set-key
+ (kbd "C-M-n") (lambda (arg) (interactive "P")
+		 (with-no-warnings
+		   (next-line
+		    (* 5 (if (equal arg nil) 1 arg))))))
+(global-set-key
+ (kbd "C-M-p") (lambda (arg) (interactive "P")
+		 (with-no-warnings
+		   (next-line
+		    (* -5 (if (equal arg nil) 1 arg))))))
+(global-set-key
+ (kbd "C-<backspace>") (lambda (arg) (interactive "P")
+			 (forward-word)
+			 (backward-kill-word
+			  (if (equal arg nil) 1 arg))))
 (global-set-key (kbd "M-c") 'capitalize-region)
 (global-set-key (kbd "C-M-v") 'scroll-other-window)
 (global-set-key (kbd "C-M-r") 'scroll-other-window-down)
 (global-set-key (kbd "s-p") nil) ;used to be print
 (global-set-key (kbd "s-o") nil) ;used to be ns-open-file-using-panel
+(define-key doc-view-mode-map (kbd "C-r") 'image-scroll-down)
 
 #+END_SRC
 
@@ -616,10 +628,20 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
 (setq vc-make-backup-files t)
 #+END_SRC
 
-** Auto-insert
+** Auto Insert
 #+BEGIN_SRC emacs-lisp
 (auto-insert-mode +1)
 (setq auto-insert-query nil)
+#+END_SRC
+
+** Fill Column Indicator
+#+BEGIN_SRC emacs-lisp
+(use-package whitespace-mode
+  :hook ((prog-mode))
+  :config
+   (setq whitespace-style '(face lines-tail))
+)
+
 #+END_SRC
 
 
@@ -857,7 +879,8 @@ Configure rust, enabling rust-mode, cargo-mode, flycheck-rust, and company-racer
 	(concat rust-root-path"/lib/rustlib/src/rust/src"))
   (setq rust-rustfmt-bin (concat rust-root-path "/bin/rustfmt")))
   :config
-  (setq rust-format-on-save t)
+  (setq rust-format-on-save t
+	fill-column 98)
   (message "%s" "Rust mode was called successfully")
   )
 
@@ -879,7 +902,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   )
 
 (eval-after-load 'autoinsert
-  '(define-auto-insert '(python-mode . "Python skeleton")
+  '(define-auto-insert '(python-mode . "Python Header")
      '("The header for all python files"
        "#!/usr/bin/env python3" \n
        "# -*- codeing: utf-8 -*-" \n
@@ -897,15 +920,19 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   :after (elpy)
   :config
   (highlight-indentation-mode 0)
-  (setq highlight-indent-guides-method 'column); could be "character", "fill", "column"
-  (setq highlight-indent-guides-character ?\|) ;sets character of the highlight, if in character mode
-  (setq highlight-indent-guides-responsive nil); options: 'top, 'stack, this dictates if and how it responds to the cursor position
+  ;; Options: "character", "fill", "column"
+  (setq highlight-indent-guides-method 'column)
+  ;;;sets character of the highlight, if in character mode
+  (setq highlight-indent-guides-character ?\|)
+  ;; Options: 'top, 'stack
+  (setq highlight-indent-guides-responsive nil)
   (setq highlight-indent-guides-delay 0); respond immediately to the cursor
-  (setq highlight-indent-guides-auto-enabled nil) ;this means that I can set colors, t means that it will guess based on theme
+  ;; Sets if colors are controlled by theme
+  (setq highlight-indent-guides-auto-enabled nil)
   (set-face-background 'highlight-indent-guides-odd-face "darkcyan")
   (set-face-background 'highlight-indent-guides-even-face "darkcyan")
   (set-face-foreground 'highlight-indent-guides-character-face "dimgrey")
-  (highlight-indent-guides-mode 1); turn on mode
+  (highlight-indent-guides-mode +1)
   )
 
 ;; Setup Python3 shell
@@ -951,10 +978,11 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   :config
   (add-hook 'before-save-hook #'elpy-format-code nil t)
   (elpy-enable)
-  (setq elpy-rpc-backend "company")
-  (setq indent-tabs-mode nil)
-  (setq elpy-rpc-python-command "python3")
-  (setq elpy-syntax-check-command "/usr/local/bin/flake8")
+  (setq elpy-rpc-backend "company"
+	fill-column 80
+	indent-tabs-mode nil
+	elpy-rpc-python-command "python3"
+	elpy-syntax-check-command "/usr/local/bin/flake8")
   (elpy-rpc-restart)
   (set-shell-python3)
   (message "%s" (concat "Python mode was called successfully. major-mode: "
@@ -965,7 +993,8 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 ** LaTeX
 Sets up latex support along with a collection of skeletons for latex. This is also mostly replaced by org-mode
 #+BEGIN_SRC emacs-lisp
-(straight-use-package '(format-latex-mode :host github :repo "iwahbe/format-latex"))
+(straight-use-package '(format-latex-mode
+			:host github :repo "iwahbe/format-latex"))
 (add-hook 'LaTeX-mode-hook 'format-latex-mode)
 
 
@@ -974,17 +1003,17 @@ Sets up latex support along with a collection of skeletons for latex. This is al
   :defer t
   :mode ("\\.tex\\'" . LaTeX-mode)
   :hook ((LaTeX-mode . (lambda ()  (yas-activate-extra-mode 'text-mode)
-			 (define-key LaTeX-mode-map (kbd "C-j")  'backward-word))))
+			 (define-key LaTeX-mode-map (kbd "C-j")  'backward-word)
+			 )))
   :config
-  (setq TeX-auto-save t)
-  (setq TeX-parse-self t)
+  (setq TeX-auto-save t
+	TeX-parse-self t
+	font-latex-fontify-script nil
+	tex--prettify-symbols-alist nil)
   (visual-line-mode +1)
   (load (expand-file-name (concat user-emacs-directory "LaTeX_skeletons.el")))
-  (setq font-latex-fontify-script nil) ;disables inline subscripts and superscripts
   (add-to-path "/Library/TeX/texbin/" t)
-  (setq tex--prettify-symbols-alist nil)
   (set-fill-column 100)
-
   (message "%s" "LaTeX-mode has been loaded successfully")
   )
 #+END_SRC
