@@ -416,43 +416,44 @@ Ido provides a great navigation experience with the find-file command.
 ** Global Key Bindings
 We maintain a list of common key-bindings to activate in all modes
 #+BEGIN_SRC emacs-lisp
-(defun current-line-length ()
-  (save-excursion
-    (beginning-of-line)
-    (let ((first-pos (point)))
-      (end-of-line)
-      (- (point) first-pos))
-      ))
+  (defun current-line-length ()
+    (save-excursion
+      (beginning-of-line)
+      (let ((first-pos (point)))
+	(end-of-line)
+	(- (point) first-pos))
+	))
 
-(global-set-key (kbd "C-r") 'scroll-down)
-(global-set-key (kbd "C-v") 'scroll-up)
-(global-set-key (kbd "C-l") 'forward-word)
-(global-set-key (kbd "C-j") 'backward-word)
-(global-set-key (kbd "M-f") 'forward-sentence)
-(global-set-key (kbd "M-b") 'backward-sentence)
-(global-set-key (kbd "C-z") 'ispell-word)
-(global-set-key (kbd "M--") 'undo)
-(global-set-key
- (kbd "C-M-n") (lambda (arg) (interactive "P")
-		 (with-no-warnings
-		   (next-line
-		    (* 5 (if (equal arg nil) 1 arg))))))
-(global-set-key
- (kbd "C-M-p") (lambda (arg) (interactive "P")
-		 (with-no-warnings
-		   (next-line
-		    (* -5 (if (equal arg nil) 1 arg))))))
-(global-set-key
- (kbd "C-<backspace>") (lambda (arg) (interactive "P")
-			 (forward-word)
-			 (backward-kill-word
-			  (if (equal arg nil) 1 arg))))
-(global-set-key (kbd "M-c") 'capitalize-region)
-(global-set-key (kbd "C-M-v") 'scroll-other-window)
-(global-set-key (kbd "C-M-r") 'scroll-other-window-down)
-(global-set-key (kbd "s-p") nil) ;used to be print
-(global-set-key (kbd "s-o") nil) ;used to be ns-open-file-using-panel
-(define-key doc-view-mode-map (kbd "C-r") 'image-scroll-down)
+  (global-set-key (kbd "C-r") 'scroll-down)
+  (global-set-key (kbd "C-v") 'scroll-up)
+  (global-set-key (kbd "C-l") 'forward-word)
+  (global-set-key (kbd "C-j") 'backward-word)
+  (global-set-key (kbd "M-f") 'forward-sentence)
+  (global-set-key (kbd "M-b") 'backward-sentence)
+  (global-set-key (kbd "C-z") 'ispell-word)
+  (global-set-key (kbd "M--") 'undo)
+  (global-set-key
+   (kbd "C-M-n") (lambda (arg) (interactive "P")
+		   (with-no-warnings
+		     (next-line
+		      (* 5 (if (equal arg nil) 1 arg))))))
+  (global-set-key
+   (kbd "C-M-p") (lambda (arg) (interactive "P")
+		   (with-no-warnings
+		     (next-line
+		      (* -5 (if (equal arg nil) 1 arg))))))
+  (global-set-key
+   (kbd "C-<backspace>") (lambda (arg) (interactive "P")
+			   (forward-word)
+			   (backward-kill-word
+			    (if (equal arg nil) 1 arg))))
+  (global-set-key (kbd "M-c") 'capitalize-region)
+  (global-set-key (kbd "C-M-v") 'scroll-other-window)
+  (global-set-key (kbd "C-M-r") 'scroll-other-window-down)
+  (global-set-key (kbd "s-p") nil) ;used to be print
+  (global-set-key (kbd "s-o") nil) ;used to be ns-open-file-using-panel
+  (eval-after-load 'doc-view
+    (lambda () (define-key doc-view-mode-map (kbd "C-r") 'image-scroll-down)))
 
 #+END_SRC
 
@@ -630,18 +631,29 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
 
 ** Auto Insert
 #+BEGIN_SRC emacs-lisp
-(auto-insert-mode +1)
-(setq auto-insert-query nil)
+(defun auto-insert-yas-expand()
+  "Replace text in yasnippet template."
+  (yas-expand-snippet (buffer-string) (point-min) (point-max)))
+
+(use-package autoinsert
+  :init
+  (setq auto-insert-query nil)
+  (setq auto-insert-directory (concat user-emacs-directory "auto-insert/"))
+  (setq auto-insert-alist nil)
+  (auto-insert-mode +1)
+  :config  
+  (define-auto-insert 'python-mode ["python-header.py" auto-insert-yas-expand])
+)
 #+END_SRC
 
 ** Fill Column Indicator
 #+BEGIN_SRC emacs-lisp
 (use-package whitespace-mode
   :hook ((prog-mode))
-  :config
-   (setq whitespace-style '(face lines-tail))
+  :init
+  (setq whitespace-line-column 80
+   whitespace-style '(face lines-tail))
 )
-
 #+END_SRC
 
 
@@ -876,11 +888,11 @@ Configure rust, enabling rust-mode, cargo-mode, flycheck-rust, and company-racer
   (let ((rust-root-path (string-trim
 		 (shell-command-to-string "rustc --print sysroot"))))
   (setq racer-rust-src-path
-	(concat rust-root-path"/lib/rustlib/src/rust/src"))
+	(concat rust-root-path "/lib/rustlib/src/rust/src"))
   (setq rust-rustfmt-bin (concat rust-root-path "/bin/rustfmt")))
   :config
   (setq rust-format-on-save t
-	fill-column 98)
+	whitespace-line-column 98)
   (message "%s" "Rust mode was called successfully")
   )
 
@@ -900,18 +912,6 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   :config
   (pyenv-mode +1)
   )
-
-(eval-after-load 'autoinsert
-  '(define-auto-insert '(python-mode . "Python Header")
-     '("The header for all python files"
-       "#!/usr/bin/env python3" \n
-       "# -*- codeing: utf-8 -*-" \n
-       "\"\"\"" \n
-       "Created on " (format-time-string "%B %d %y") \n
-       "Author github/twitter @iwahbe" \n
-       "\"\"\"" \n
-       |
-       )))
 
 ;; Indentation Guide
 (use-package highlight-indent-guides
@@ -1231,7 +1231,9 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 	(check-against-list (cdr list-to-check) bool-function)
       nil)))
 
-(cl-defun concat-until-n  (lst &key (n 0) (before "") (after "") (count-from 0 count-from-p) (after-count "") (add-before-last ""))
+(cl-defun concat-until-n
+    (lst &key (n 0) (before "") (after "") 
+	 (count-from 0 count-from-p) (after-count "") (add-before-last ""))
   "Returns a concatonated list of list elements ignoring the last n with an optional count and surrounding text"
   (if (<= (length lst) n)
       ""   ; recursion base case
@@ -1243,8 +1245,15 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
      (if count-from-p (int-to-string count-from) "")
      after-count
      (if count-from-p
-	 (concat-until-n (cdr lst) :n n :before before :after after :count-from (1+ count-from) :after-count after-count :add-before-last add-before-last)
-       (concat-until-n (cdr lst) :n n :before before :after after :after-count after-count :add-before-last add-before-last)))))
+	 (concat-until-n (cdr lst)
+			 :n n :before before :after after
+			 :count-from (1+ count-from)
+			 :after-count after-count
+			 :add-before-last add-before-last)
+       (concat-until-n (cdr lst)
+		       :n n :before before
+		       :after after :after-count after-count
+		       :add-before-last add-before-last)))))
 
 (defun remove-blank-lines (except num-blank &optional reverse)
   "Removes lines that start with \"excpet\" and blank lines until there are only \"num-blank\" blank lines above."
