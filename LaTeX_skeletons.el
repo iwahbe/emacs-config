@@ -112,7 +112,7 @@
   "  \\huge MATH/CSCI 382 \\\\\n"
   "  \\large Homework " (skeleton-read "Assignment Number: ") "\n"
   "  \\normalsize Due " (skeleton-read "Due Date (Day, Month date): ") "}\n"
-  "\\author[]{\\largeIan Wahbe}\n"
+  "\\author[]{\\large Ian Wahbe}\n"
   "\n"
   "\\begin{document}\n"
   "\\maketitle\n"
