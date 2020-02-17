@@ -643,6 +643,7 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
   (auto-insert-mode +1)
   :config  
   (define-auto-insert 'python-mode ["python-header.py" auto-insert-yas-expand])
+  (define-auto-insert 'cmake-mode ["cmake-basic.yas" auto-insert-yas-expand])
 )
 #+END_SRC
 

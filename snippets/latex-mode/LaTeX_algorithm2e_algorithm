@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: LaTeX_algorithm2e_algorithm
+# key: \algorithm
+# --
+\begin{algorithm}
+\SetKwComment{${1:// }}{}
+\AlgTitle{${2:Algorithm}}
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+\Input{${3:Inputs}}
+\Output{${4: Outputs}}
+\BlankLine
+$0
+
+\end{algorithm}
