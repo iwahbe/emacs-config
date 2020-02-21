@@ -105,6 +105,8 @@
   "\\newcommand{\\N}{\\mathbb N}\n"
   "\\newcommand{\\Z}{\\mathbb Z}\n"
   "\\renewcommand{\\epsilon}{\\varepsilon}\n"
+  "\\newcommand{\\V}[1]{\\texttt{\\MakeUppercase{#1}}}\n"
+  "\\renewcommand{\\v}[1]{\\texttt{#1}}"
   "\\newenvironment{solution}\n"
   "{\\renewcommand\\qedsymbol{$\\blacksquare$}\\begin{proof}[Solution:]}\n"
   "{\\end{proof}}\n"

@@ -57,17 +57,19 @@ Also, init.el is reset on tangle away on tangle.
 (defvar bootstrap-version)
 (setq straight-check-for-modifications '(check-on-save find-when-checking))
 (let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+       (expand-file-name
+	"straight/repos/straight.el/bootstrap.el" user-emacs-directory))
       (bootstrap-version 5))
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
         (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+	 "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
          'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
-(straight-use-package 'use-package) ;ensures both that use-package is installed and works with straight.el
+;;ensures both that use-package is installed and works with straight.el
+(straight-use-package 'use-package) 
 #+END_SRC
 
 ** Tangle init.org on save
@@ -656,6 +658,16 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
    whitespace-style '(face lines-tail))
 )
 #+END_SRC
+
+** Vterm
+Vterm is a alternative terminal-emulator, to be used instead of ansii-term. 
+It runs primarily in C instead of elisp, and is such so much faster. 
+#+BEGIN_SRC emacs-lisp
+(use-package vterm
+  :straight t
+  )
+#+END_SRC
+
 
 
 * Major Modes
