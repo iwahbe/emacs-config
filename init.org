@@ -361,6 +361,14 @@ Notes on use:
   )
 #+END_SRC
 
+** FlyMake
+Used for dependencies, eglot among others
+#+BEGIN_SRC emacs-lisp
+(use-package flymake
+  :straight t
+  )
+#+END_SRC
+
 ** Helm
 I use helm for fuzzy searching among known options
 #+BEGIN_SRC emacs-lisp
@@ -449,7 +457,6 @@ We maintain a list of common key-bindings to activate in all modes
 			   (forward-word)
 			   (backward-kill-word
 			    (if (equal arg nil) 1 arg))))
-  (global-set-key (kbd "M-c") 'capitalize-region)
   (global-set-key (kbd "C-M-v") 'scroll-other-window)
   (global-set-key (kbd "C-M-r") 'scroll-other-window-down)
   (global-set-key (kbd "s-p") nil) ;used to be print
@@ -667,6 +674,35 @@ It runs primarily in C instead of elisp, and is such so much faster.
   :straight t
   )
 #+END_SRC
+
+
+** eglot (lsp server)
+#+BEGIN_SRC emacs-lisp
+
+#+END_SRC
+
+
+#+TITLE: Eglot Server
+#+BEGIN_SRC emacs-lisp
+(use-package eglot
+  :straight t
+  :hook ((c-mode c++-mode objc-mode) . eglot-ensure)
+  :config
+  (require 'eglot)
+  )
+#+END_SRC
+
+** Projectile
+#+BEGIN_SRC emacs-lisp
+(use-package projectile
+  :straight t
+  :bind ("C-c C-c" . projectile-compile-project)
+  :config
+  (projectile-mode +1)  
+  )
+#+END_SRC
+
+
 
 
 
@@ -1096,19 +1132,8 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
 #+BEGIN_SRC emacs-lisp
 ;; Enable company auto-complete
 
-(use-package cmake-ide
-  :straight t
-  :hook (c-mode c++-mode objc-mode)
-  :config
-  (setq cmake-ide-build-dir (concat (cide--locate-project-dir) "build"))
-  (cmake-ide-setup)
-  (cmake-ide-run-cmake)
-  (local-set-key (kbd "C-c C-c")  'cmake-ide-compile)
-  )
-
 (use-package clang-format
   :straight t
-  :defer
   :after (cmake-ide)
   :config
   (setenv "Clang_DIR" "/usr/local/Cellar/llvm/9.0.0/Toolchains/LLVM9.0.1.xctoolchain/usr/lib/cmake/clang/")
@@ -1121,117 +1146,9 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
   (add-hook 'before-save-hook 'clang-format-safe-buffer)
   )
 
-
 #+END_SRC
 
-CQuery is the a completion and indexing framework for C/C++ programs. 
-- it provides company-completion through company-lsp
-- It provides syntax highlighting through 
-
-#+TITLE: cquery
-#+BEGIN_SRC emacs-lisp
-(use-package lsp-mode
-  :straight t
-  :hook ((c-mode c++-mode objc-mode) . lsp-mode)
-  :commands (lsp lsp-deferred)
-   )
-
-(use-package lsp-ui
-  :straight t
-  :disabled
-  :hook ((lsp-mode-hook . lsp-ui-mode)
-	 (prog-mode-hook . flycheck-mode))
-  :config
-  (lsp-ui-doc-mode -1)
-  )
-
-(use-package company-lsp
-  :straight t
-  :after (lsp-mode company-mode)
-  :config
-  (push 'company-lsp company-backends)
-  )
-
-(use-package cquery
-  :straight t
-  :after (lsp-mode)
-  :config
-  (setq cquery-executable "/usr/local/bin/cquery")
-  (setq cquery-sem-highlight-method 'font-lock)
-  (lsp)
-)
-#+END_SRC
-
-rtags
-- Is a complicated process, that requires a running a cpp program in a
-  separate deamon. It also requires building upon install.
-- The separate process is spun up by cmake-ide on setup.
-- We assume that rtags was build in it's default straight repo
-#+TITLE: rtags
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package company-rtags
-  :straight t
-  :after (:all rtags company)
-  :config
-  (setq rtags-path (concat user-emacs-directory "straight/repos/rtags/bin/"))
-  (add-company-backend 'company-rtags)
-  )
-
-(use-package rtags
-  :after (cmake-ide)
-  :straight t
-  :config 
-  (cmake-ide-maybe-start-rdm)
-  )
-#+END_SRC
-
-- To install irony on a fresh computer, you need to have llvm installed. You then need to set the environmental
-  variable "Clang_DIR" to the directory that contains "ClangConfig.cmake"
-- to find, use `pwd $(sudo find /usr/ ClangConfig.cmake)`
-- On mac I also tried this: "install_name_tool -change @rpath/libclang.dylib
-  /usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/libclang.dylib
-  ~/.emacs.d/irony/bin/irony-server"
-
-#+TITLE: Irony-mode
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package company-irony-c-headers
-  :straight t
-  :after (irony)
-  :config
-  (add-company-backend '(company-irony-c-headers))
-  )
-
-(use-package irony-eldoc
-  :straight t
-  :after (irony)
-  :config
-  (irony-eldoc +1)
-  )
-
-(use-package company-irony
-  :straight t
-  :after (:all irony company)
-  :config
-  (setq company-irony-ignore-case 'smart)
-  (add-company-backend '(company-irony))
-  )
-
-(use-package flycheck-irony
-  :straight t
-  :after (:all irony)
-  :hook ((irony-mode-hook . flycheck-irony-setup))
-  :config
-  (flycheck-mode +1)
-  )
-
-(use-package irony
-  :straight irony
-  :hook ((c-mode objc-mode c++-mode) . irony-mode)
-  :config
-  (message "%s" "c/objc/c++ has been set up ")
-  )
-#+END_SRC
-
+*** Auto-insert C function comments
 Auto-inserts c headers:
 Binds "C-c C-f" to a function that inserts c function description yassnippet
 #+BEGIN_SRC emacs-lisp
@@ -1343,6 +1260,129 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 			     (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
 			     (if (not (equal major-mode "c-mode"))
 				 (yas-activate-extra-mode 'c-mode))))
+#+END_SRC
+
+*** CMake-ide(Disabled)
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package cmake-ide
+  :straight t
+  :hook (c-mode c++-mode objc-mode)
+  :config
+  (setq cmake-ide-build-dir (concat (cide--locate-project-dir) "build"))
+  (cmake-ide-setup)
+  (cmake-ide-run-cmake)
+  (local-set-key (kbd "C-c C-c")  'cmake-ide-compile)
+  )
+#+END_SRC
+
+*** CQuery(Disabled)
+CQuery is the a completion and indexing framework for C/C++ programs. 
+- it provides company-completion through company-lsp
+- It provides syntax highlighting through 
+
+#+TITLE: cquery
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package lsp-mode
+  :straight t
+  :hook ((c-mode c++-mode objc-mode) . lsp-mode)
+  :commands (lsp lsp-deferred)
+   )
+
+(use-package lsp-ui
+  :straight t
+  :disabled
+  :hook ((lsp-mode-hook . lsp-ui-mode)
+	 (prog-mode-hook . flycheck-mode))
+  :config
+  (lsp-ui-doc-mode -1)
+  )
+
+(use-package company-lsp
+  :straight t
+  :after (lsp-mode company-mode)
+  :config
+  (push 'company-lsp company-backends)
+  )
+
+(use-package cquery
+  :straight t
+  :after (lsp-mode)
+  :config
+  (setq cquery-executable "/usr/local/bin/cquery")
+  (setq cquery-sem-highlight-method 'font-lock)
+  (lsp)
+)
+#+END_SRC
+
+*** Irony (Disabled)
+- To install irony on a fresh computer, you need to have llvm installed. You then need to set the environmental
+  variable "Clang_DIR" to the directory that contains "ClangConfig.cmake"
+- to find, use `pwd $(sudo find /usr/ ClangConfig.cmake)`
+- On mac I also tried this: "install_name_tool -change @rpath/libclang.dylib
+  /usr/local/Cellar/llvm/8.0.1/Toolchains/LLVM8.0.1.xctoolchain/usr/lib/libclang.dylib
+  ~/.emacs.d/irony/bin/irony-server"
+
+#+TITLE: Irony-mode
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package company-irony-c-headers
+  :straight t
+  :after (irony)
+  :config
+  (add-company-backend '(company-irony-c-headers))
+  )
+
+(use-package irony-eldoc
+  :straight t
+  :after (irony)
+  :config
+  (irony-eldoc +1)
+  )
+
+(use-package company-irony
+  :straight t
+  :after (:all irony company)
+  :config
+  (setq company-irony-ignore-case 'smart)
+  (add-company-backend '(company-irony))
+  )
+
+(use-package flycheck-irony
+  :straight t
+  :after (:all irony)
+  :hook ((irony-mode-hook . flycheck-irony-setup))
+  :config
+  (flycheck-mode +1)
+  )
+
+(use-package irony
+  :straight irony
+  :hook ((c-mode objc-mode c++-mode) . irony-mode)
+  :config
+  (message "%s" "c/objc/c++ has been set up ")
+  )
+#+END_SRC
+
+*** rtags(disabled)
+- Is a complicated process, that requires a running a cpp program in a
+  separate deamon. It also requires building upon install.
+- The separate process is spun up by cmake-ide on setup.
+- We assume that rtags was build in it's default straight repo
+#+TITLE: rtags
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package company-rtags
+  :straight t
+  :after (:all rtags company)
+  :config
+  (setq rtags-path (concat user-emacs-directory "straight/repos/rtags/bin/"))
+  (add-company-backend 'company-rtags)
+  )
+
+(use-package rtags
+  :after (cmake-ide)
+  :straight t
+  :config 
+  (cmake-ide-maybe-start-rdm)
+  )
 #+END_SRC
 
 ** CMake
