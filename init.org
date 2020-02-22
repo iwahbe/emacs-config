@@ -675,18 +675,12 @@ It runs primarily in C instead of elisp, and is such so much faster.
   )
 #+END_SRC
 
-
 ** eglot (lsp server)
-#+BEGIN_SRC emacs-lisp
-
-#+END_SRC
-
-
 #+TITLE: Eglot Server
 #+BEGIN_SRC emacs-lisp
 (use-package eglot
   :straight t
-  :hook ((c-mode c++-mode objc-mode) . eglot-ensure)
+  :hook ((c-mode c++-mode objc-mode bash-mode) . eglot-ensure)
   :config
   (require 'eglot)
   )
