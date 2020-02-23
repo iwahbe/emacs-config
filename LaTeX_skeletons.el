@@ -112,7 +112,7 @@
   "{\\end{proof}}\n"
   "\\title[]{%\n"
   "  \\huge MATH/CSCI 382 \\\\\n"
-  "  \\large Homework " (skeleton-read "Assignment Number: ") "\n"
+  "  \\large Homework " (skeleton-read "Assignment Number: ") "\\\\\n"
   "  \\normalsize Due " (skeleton-read "Due Date (Day, Month date): ") "}\n"
   "\\author[]{\\large Ian Wahbe}\n"
   "\n"
