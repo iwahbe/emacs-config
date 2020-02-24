@@ -2,8 +2,8 @@
 # name: LaTeX_algorithm2e_algorithm
 # key: \algorithm
 # --
-\begin{algorithm}
-\SetKwComment{${1:// }}{}
+\begin{algorithm}[h]
+\SetKwComment{Comment}{${1:// }}{}
 \AlgTitle{${2:Algorithm}}
 \SetKwInOut{Input}{input}
 \SetKwInOut{Output}{output}
