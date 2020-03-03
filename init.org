@@ -545,6 +545,12 @@ There is a collection of minor modes that trigger after other major modes load.
    '(vlf-application 'dont-ask))
   )
 
+(use-package show-paren
+  :config
+  (setq show-paren-style 'parenthesis)
+  (show-paren-mode +1)
+)
+
 #+END_SRC
 
 ** Git (Magit)
@@ -1130,8 +1136,6 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
   :straight t
   :after (cmake-ide)
   :config
-  (setenv "Clang_DIR" "/usr/local/Cellar/llvm/9.0.0/Toolchains/LLVM9.0.1.xctoolchain/usr/lib/cmake/clang/")
-  (setq clang-format-executable "/usr/local/opt/llvm/Toolchains/LLVM9.0.1.xctoolchain/usr/bin/clang-format")
   (setq clang-format-style "file")
   (defun clang-format-safe-buffer ()
     (interactive)
