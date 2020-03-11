@@ -90,6 +90,7 @@
   "\\usepackage{algorithm2e}\n"
   "\\RestyleAlgo{algoruled}\n"
   "\\newcommand{\\xAlCapSty}[1]{\\small\\sffamily\\bfseries\\MakeUppercase{#1}}\n"
+  "\\newcommand{\\AlgTitle}[1]{\\caption{\\small\\sffamily\\bfseries #1:}}\n"
   "\\newcommand{\\makecaption}[1]{\\caption{\\small\\sffamily\\bfseries\\MakeUppercase{#1}:}}\n"
   "\\newcommand{\\mycommfont}[1]{\\footnotesize\\ttfamily{#1}}\n"
   "\\newcommand{\\cmt}[1]{\\Comment*[r]{#1}}\n"

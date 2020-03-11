@@ -545,11 +545,10 @@ There is a collection of minor modes that trigger after other major modes load.
    '(vlf-application 'dont-ask))
   )
 
-(use-package show-paren
-  :config
-  (setq show-paren-style 'parenthesis)
-  (show-paren-mode +1)
-)
+;; show-paren mode highlights matching parentheses
+(setq show-paren-style 'parenthesis)
+(show-paren-mode +1)
+
 
 #+END_SRC
 
@@ -696,9 +695,8 @@ It runs primarily in C instead of elisp, and is such so much faster.
 #+BEGIN_SRC emacs-lisp
 (use-package projectile
   :straight t
-  :bind ("C-c C-c" . projectile-compile-project)
   :config
-  (projectile-mode +1)  
+  (projectile-mode +1)
   )
 #+END_SRC
 
@@ -1130,18 +1128,21 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
 
 #+TITLE: C/C++ No matter what
 #+BEGIN_SRC emacs-lisp
-;; Enable company auto-complete
 
 (use-package clang-format
   :straight t
-  :after (cmake-ide)
-  :config
+  :defer t
+  :init
   (setq clang-format-style "file")
+  (add-hook 'c++-mode-hook 'clang-format-buffer)
+  (add-hook 'c-mode-hook 'clang-format-buffer)
+  :config
   (defun clang-format-safe-buffer ()
     (interactive)
     (when (or (eql major-mode 'c-mode) (eql major-mode 'c++-mode))
       (clang-format-buffer)))
   (add-hook 'before-save-hook 'clang-format-safe-buffer)
+  (message "clang-format setup")
   )
 
 #+END_SRC
@@ -1269,7 +1270,6 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
   (setq cmake-ide-build-dir (concat (cide--locate-project-dir) "build"))
   (cmake-ide-setup)
   (cmake-ide-run-cmake)
-  (local-set-key (kbd "C-c C-c")  'cmake-ide-compile)
   )
 #+END_SRC
 
