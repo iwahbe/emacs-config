@@ -1145,6 +1145,11 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
   (message "clang-format setup")
   )
 
+(let ((f (lambda () (local-set-key (kbd "C-c C-c") 'projectile-compile-project))))
+  (add-hook 'c++-mode-hook f)
+  (add-hook 'c-mode-hook f)
+  )
+
 #+END_SRC
 
 *** Auto-insert C function comments
@@ -1220,22 +1225,33 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
   (scroll-down-blank)
   (beginning-of-line)
   (let* ((func-body-pair (split-string (thing-at-point 'line t) "{"))
-	 (objects (split-string (car func-body-pair) "[\(,\)]")) (type-name (split-string (car objects) "[ ]+"))
+	 (objects (split-string (car func-body-pair) "[\(,\)]")) (type-name
+ (split-string (car objects) "[ ]+"))
 	 (field-n 1)
-	 (func-decorations (car (split-string (car (last type-name)) "[a-zA-Z-_:]" t)))
-	 (func-undecorated (car (split-string (car (last type-name)) "[^a-zA-Z-_:]" t)))
+	 (func-decorations (car (split-string (car (last type-name))
+					      "[a-zA-Z-_:]" t)))
+	 (func-undecorated (car (split-string (car (last type-name))
+					      "[^a-zA-Z-_:]" t)))
 	 )
     (defun field-n () (int-to-string field-n))
-    ;; We assume that the first thing is the function name and everything else is an argument
+    ;; We assume that the first thing is the function name
+    ;; and everything else is an argument
     (yas-expand-snippet
      (concat "// " func-undecorated ": ${" (field-n) ":Describe Function}\n"
-	     (if (and (check-against-list (cdr objects) (lambda (x) (string-match-p "[a-zA-Z]" x))) (not (equal (cadr objects) "void")))
+	     (if (and
+		  (check-against-list
+		   (cdr objects) (lambda (x) (string-match-p "[a-zA-Z]" x)))
+		  (not (equal (cadr objects) "void")))
 		 (concat "//\n"
-			 (concat-until-n (cdr objects) :n 1 :before "// " :after ": ${" :after-count ":Describe Argument}\n" :count-from 2)))
+			 (concat-until-n
+			  (cdr objects) :n 1 :before "// " :after ": ${"
+			  :after-count ":Describe Argument}\n" :count-from 2)))
 	     (if (or func-decorations (not (string-equal "void" (car type-name))))
 		 (concat "//\n" "// return"
-			 (concat-until-n type-name :n 1 :before " " :add-before-last func-decorations)
-			 ": ${" (int-to-string (length objects)) ":Describe Return}\n\n")
+			 (concat-until-n type-name :n 1 :before " "
+					 :add-before-last func-decorations)
+			 ": ${" (int-to-string (length objects))
+			 ":Describe Return}\n\n")
 	       "\n"))))
   (remove-blank-lines "//" 1))
 
@@ -1247,18 +1263,18 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
       (message "%s" "c-func-description requires yas-expand-snippet")
     (c-func-description)))
 
-(add-hook 'c-mode-hook (lambda ()
-			     (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
-			     (if (not (equal major-mode "c-mode"))
-				 (yas-activate-extra-mode 'c-mode))))
-(add-hook 'c++-mode-hook (lambda ()
-			     (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
-			     (if (not (equal major-mode "c-mode"))
-				 (yas-activate-extra-mode 'c-mode))))
-(add-hook 'objc-mode-hook (lambda ()
-			     (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
-			     (if (not (equal major-mode "c-mode"))
-				 (yas-activate-extra-mode 'c-mode))))
+(add-hook 'c-mode-hook
+	  (lambda () (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
+	    (if (not (equal major-mode "c-mode"))
+		(yas-activate-extra-mode 'c-mode))))
+(add-hook 'c++-mode-hook
+	  (lambda () (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
+	    (if (not (equal major-mode "c-mode"))
+		(yas-activate-extra-mode 'c-mode))))
+(add-hook 'objc-mode-hook
+	  (lambda () (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
+	    (if (not (equal major-mode "c-mode"))
+		(yas-activate-extra-mode 'c-mode))))
 #+END_SRC
 
 *** CMake-ide(Disabled)
