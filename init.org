@@ -584,7 +584,8 @@ customizations are module specific. Here, we only call the main version.
   :config
   (setq company-minimum-prefix-length 1)
   (setq company-idle-delay 0.1) ; this makes company respond in real time (no delay)
-  (setq company-dabbrev-downcase 0) ; this makes it so company correctly gives cases
+  (setq company-dabbrev-downcase 1)
+  (setq company-require-match 'never)
   (global-company-mode t)
   :bind (:map company-active-map
   	      ("<return>" . nil)
@@ -1148,6 +1149,7 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
 (let ((f (lambda () (local-set-key (kbd "C-c C-c") 'projectile-compile-project))))
   (add-hook 'c++-mode-hook f)
   (add-hook 'c-mode-hook f)
+  (add-hook 'cmake-mode f)
   )
 
 #+END_SRC
@@ -1263,18 +1265,41 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
       (message "%s" "c-func-description requires yas-expand-snippet")
     (c-func-description)))
 
-(add-hook 'c-mode-hook
-	  (lambda () (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
-	    (if (not (equal major-mode "c-mode"))
-		(yas-activate-extra-mode 'c-mode))))
-(add-hook 'c++-mode-hook
-	  (lambda () (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
-	    (if (not (equal major-mode "c-mode"))
-		(yas-activate-extra-mode 'c-mode))))
-(add-hook 'objc-mode-hook
-	  (lambda () (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
-	    (if (not (equal major-mode "c-mode"))
-		(yas-activate-extra-mode 'c-mode))))
+(defun cpp-file-switch (buffer-prefix buffer-postfix from-postfix to-postfix)
+  (if (equal buffer-postfix from-postfix)
+      (let ((new-buffer (concat buffer-prefix to-postfix)))
+	(if (file-exists-p new-buffer)
+	    (progn
+	    (find-file new-buffer)
+	    nil)
+	    (message "file %s was not found" new-buffer)))
+    t
+    ))
+
+(defun switch-cpp-file-type ()
+  (interactive)
+  (let* ((buf_name (buffer-name))
+	 (prefix (file-name-sans-extension buf_name))
+	 (postfix (concat "."(file-name-extension buf_name)))
+	 )
+    (if (cpp-file-switch prefix postfix ".cc" ".hh")
+	(if (cpp-file-switch prefix postfix ".hh" ".cc")
+	    (if (cpp-file-switch prefix postfix ".c" ".h")
+		(if (cpp-file-switch prefix postfix ".h" ".c")
+		    (message "file with extension %s not recognized" postfix)
+		  ))))))
+
+(defun add-c-style-functions ()
+  (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
+  (if (not (equal major-mode "c-mode"))
+      (yas-activate-extra-mode 'c-mode))
+  (local-set-key (kbc "M-p") 'switch-cpp-file-type)  
+  )
+
+(add-hook 'c-mode-hook 'add-c-style-functions)
+(add-hook 'c++-mode-hook 'add-c-style-functions)
+(add-hook 'objc-mode-hook 'add-c-style-functions)
+
 #+END_SRC
 
 *** CMake-ide(Disabled)
