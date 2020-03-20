@@ -1228,7 +1228,7 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
   (beginning-of-line)
   (let* ((func-body-pair (split-string (thing-at-point 'line t) "{"))
 	 (objects (split-string (car func-body-pair) "[\(,\)]")) (type-name
- (split-string (car objects) "[ ]+"))
+								  (split-string (car objects) "[ ]+"))
 	 (field-n 1)
 	 (func-decorations (car (split-string (car (last type-name))
 					      "[a-zA-Z-_:]" t)))
@@ -1270,11 +1270,14 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
       (let ((new-buffer (concat buffer-prefix to-postfix)))
 	(if (file-exists-p new-buffer)
 	    (progn
-	    (find-file new-buffer)
-	    nil)
-	    (message "file %s was not found" new-buffer)))
+	      (find-file new-buffer)
+	      nil
+	      )
+	  (progn (message "%s was not found" new-buffer) nil)))
     t
-    ))
+    )
+  )
+
 
 (defun switch-cpp-file-type ()
   (interactive)
@@ -1286,14 +1289,14 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 	(if (cpp-file-switch prefix postfix ".hh" ".cc")
 	    (if (cpp-file-switch prefix postfix ".c" ".h")
 		(if (cpp-file-switch prefix postfix ".h" ".c")
-		    (message "file with extension %s not recognized" postfix)
+		    (message "file with extension \"%s\" not recognized" postfix)
 		  ))))))
 
 (defun add-c-style-functions ()
   (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
   (if (not (equal major-mode "c-mode"))
       (yas-activate-extra-mode 'c-mode))
-  (local-set-key (kbc "M-p") 'switch-cpp-file-type)  
+  (local-set-key (kbd "M-p") 'switch-cpp-file-type)  
   )
 
 (add-hook 'c-mode-hook 'add-c-style-functions)
