@@ -69,7 +69,11 @@ Also, init.el is reset on tangle away on tangle.
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 ;;ensures both that use-package is installed and works with straight.el
-(straight-use-package 'use-package) 
+(defvar package-count 0 "The number of packages loaded by 'use-package.")
+(defun incr-package-count (&rest args)(setq package-count (1+ package-count)))
+(advice-add 'use-package :after #'incr-package-count)
+(straight-use-package 'use-package)
+
 #+END_SRC
 
 ** Tangle init.org on save
@@ -552,13 +556,18 @@ There is a collection of minor modes that trigger after other major modes load.
 
 #+END_SRC
 
-** Git (Magit)
+** Git (Magit and forge)
 #+BEGIN_SRC emacs-lisp
 (use-package magit
   :straight t
   :defer t
   :bind (("C-x g" . magit-status))
   )
+
+(use-package forge
+  :after magit
+  )
+
 (use-package magit-todos
   :straight t
   :after (:any magit)
@@ -686,7 +695,7 @@ It runs primarily in C instead of elisp, and is such so much faster.
 #+BEGIN_SRC emacs-lisp
 (use-package eglot
   :straight t
-  :hook ((c-mode c++-mode objc-mode bash-mode) . eglot-ensure)
+  :hook ((c-mode c++-mode objc-mode bash-mode python-mode) . eglot-ensure)
   :config
   (require 'eglot)
   )
@@ -951,23 +960,11 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 #+BEGIN_SRC emacs-lisp
 ;;; Python Minor Modes
 
-;;pyenv mode - Virtual Enviroment Manager
-(use-package pyenv-mode
-  :straight t
-  :after (elpy)
-  :init
-  (setenv "WORKON_HOME" "~/.pyenv/versions/")
-  :config
-  (pyenv-mode +1)
-  )
-
 ;; Indentation Guide
 (use-package highlight-indent-guides
-  :disabled
   :straight t
-  :after (elpy)
+  :mode (("\\.py\\'" . highlight-indent-guides-mode))
   :config
-  (highlight-indentation-mode 0)
   ;; Options: "character", "fill", "column"
   (setq highlight-indent-guides-method 'column)
   ;;;sets character of the highlight, if in character mode
@@ -980,7 +977,6 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   (set-face-background 'highlight-indent-guides-odd-face "darkcyan")
   (set-face-background 'highlight-indent-guides-even-face "darkcyan")
   (set-face-foreground 'highlight-indent-guides-character-face "dimgrey")
-  (highlight-indent-guides-mode +1)
   )
 
 ;; Setup Python3 shell
@@ -1001,14 +997,64 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 	 nil "_"))))
   )
 
-;; Setup iPython shell
-(defun set-shell-ipython ()
-  "Sets shell to ipython"
-  (interactive)
-  (setq python-shell-interpreter "ipython")
-  (setq python-shell-interpreter-args "--simple-prompt -i")
+(use-package python
+  :mode (("\\.py\\'" . python-mode))
+  :init
+  (setq python-indent-guess-indent-offset t)
+  (setq python-indent-guess-indent-offset-verbose nil)
+  :config
+  (set-shell-python3)
   )
 
+
+#+END_SRC
+
+*** autopep8 enable on save
+#+BEGIN_SRC emacs-lisp
+(define-minor-mode autopep8
+  "Toggle autopep8 enable on save"
+  :init-value nil
+  :lighter ap8
+  (defvar autopep8-executable nil "The location of the autopep8 command.")
+  (defvar autopep8-enable-on-save t "Enable autopep8 on save")
+  (defvar autopep8-options "" "The options given to autopep8. Must not reroute output.")
+  (defun autopep8-buffer ()
+    (interactive)
+    (if (equal (file-name-extension (buffer-file-name)) "py")
+	(let (
+	      (file (buffer-file-name))
+	      (tmp-buf (generate-new-buffer "autopep8"))
+	      (exec (if autopep8-executable
+			autopep8-executable
+		      (executable-find "autopep8")))
+	      )
+	  (if (equal exec "")
+	      (message "Could not find autopep8")
+	    (progn
+	      (call-process-region 1 (buffer-size)
+				   exec nil tmp-buf nil (concat "-" autopep8-options))
+	      (if (with-current-buffer tmp-buf (not (equal (buffer-substring 1 7) "[Errno")))
+		  (progn (replace-buffer-contents tmp-buf)
+			 (message "autopep8 format succeeded"))
+		(with-current-buffer tmp-buf
+		  (message "%s" (buffer-string))
+		  )
+		)
+	      (kill-buffer tmp-buf)
+	      )))))
+  (defun autopep8-on-save ()
+    (if (and autopep8 autopep8-enable-on-save)
+	(autopep8-buffer)))
+  (add-hook 'before-save-hook #'autopep8-on-save nil t)
+  )
+
+(add-hook 'python-mode-hook 'autopep8)
+#+END_SRC
+
+
+
+*** Elpy (Disabled)
+#+BEGIN_SRC emacs-lisp :tangle no
 ;;; Python Major Mode - Elpy
 (use-package elpy
   :straight t
