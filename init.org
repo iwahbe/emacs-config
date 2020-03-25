@@ -565,12 +565,13 @@ There is a collection of minor modes that trigger after other major modes load.
   )
 
 (use-package forge
+  :straight t
   :after magit
   )
 
 (use-package magit-todos
   :straight t
-  :after (:any magit)
+  :after magit
   :config (magit-todos-mode +1)
 )
 
@@ -963,7 +964,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 ;; Indentation Guide
 (use-package highlight-indent-guides
   :straight t
-  :mode (("\\.py\\'" . highlight-indent-guides-mode))
+  :mode (("\\.py\\'" . (lambda () (highlight-indent-guides-mode +1))))
   :config
   ;; Options: "character", "fill", "column"
   (setq highlight-indent-guides-method 'column)
@@ -973,7 +974,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   (setq highlight-indent-guides-responsive nil)
   (setq highlight-indent-guides-delay 0); respond immediately to the cursor
   ;; Sets if colors are controlled by theme
-  (setq highlight-indent-guides-auto-enabled nil)
+  (setq highlight-indent-guides-auto-enabled t)
   (set-face-background 'highlight-indent-guides-odd-face "darkcyan")
   (set-face-background 'highlight-indent-guides-even-face "darkcyan")
   (set-face-foreground 'highlight-indent-guides-character-face "dimgrey")
