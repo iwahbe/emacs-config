@@ -1019,7 +1019,21 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
   :lighter ap8
   (defvar autopep8-executable nil "The location of the autopep8 command.")
   (defvar autopep8-enable-on-save t "Enable autopep8 on save")
-  (defvar autopep8-options "" "The options given to autopep8. Must not reroute output.")
+  (defvar autopep8-macro-var nil "A dummy variable for mutable state in macros")
+  (defvar autopep8-options '("--aggressive" "--aggressive")
+    "A list of options given to autopep8. Must not reroute output.")
+  (defmacro autopep8-process-region (exec tmp-buf options)
+    "applies 'exec' on curreqnt buff, piping to 'tmp-buf' with 'options'"
+    `(eval
+	     (progn
+	     (setq autopep8-macro-var
+		   (reverse '(call-process-region 1 (buffer-size) ,exec nil
+						  ,tmp-buf nil)))
+	     (dolist (var ,options)
+	       (push var autopep8-macro-var))
+	     (push "-" autopep8-macro-var)
+	     (reverse autopep8-macro-var))))
+  
   (defun autopep8-buffer ()
     (interactive)
     (if (equal (file-name-extension (buffer-file-name)) "py")
@@ -1033,20 +1047,18 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 	  (if (or (not exec) (equal exec ""))
 	      (message "Could not find autopep8")
 	    (progn
-	      (call-process-region 1 (buffer-size)
-				   exec nil tmp-buf nil (concat "-" autopep8-options))
+	      (autopep8-process-region exec tmp-buf autopep8-options)
 	      (if (with-current-buffer tmp-buf
-		    (not (or (equal (buffer-substring-no-properties 1 7) "[Errno")
+		    (not (or (= (buffer-size) 0)
+			  (equal (buffer-substring-no-properties 1 7) "[Errno")
 			  (equal (buffer-substring-no-properties 1 8) "usage: "))
 			 ))
 		  (progn (replace-buffer-contents tmp-buf)
 			 (message "autopep8 format succeeded"))
 		(with-current-buffer tmp-buf
-		  (message "%s" (buffer-string))
-		  )
-		)
-	      (kill-buffer tmp-buf)
-	      )))))
+		  (message "%s" (buffer-string))))
+	      (kill-buffer tmp-buf))))))
+
   (defun autopep8-on-save ()
     (if (and autopep8 autopep8-enable-on-save)
 	(autopep8-buffer)))
