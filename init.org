@@ -958,7 +958,9 @@ Configure rust, enabling rust-mode, cargo-mode, flycheck-rust, and company-racer
 #+END_SRC
 
 ** Python
-Setup elpy to provide auto-complete, highlighting, indent guides, along with an inferior shell for writing python.
+
+*** Main Python
+Setup shell, highlights, and python-mode. Most work is handled by a lsp-server
 #+BEGIN_SRC emacs-lisp
 ;;; Python Minor Modes
 
@@ -1049,7 +1051,7 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 	    (progn
 	      (autopep8-process-region exec tmp-buf autopep8-options)
 	      (if (with-current-buffer tmp-buf
-		    (not (or (= (buffer-size) 0)
+		    (not (or (< (buffer-size) 8)
 			  (equal (buffer-substring-no-properties 1 7) "[Errno")
 			  (equal (buffer-substring-no-properties 1 8) "usage: "))
 			 ))
@@ -1067,8 +1069,6 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 
 (add-hook 'python-mode-hook 'autopep8)
 #+END_SRC
-
-
 
 *** Elpy (Disabled)
 #+BEGIN_SRC emacs-lisp :tangle no
