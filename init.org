@@ -858,10 +858,11 @@ org-mode does most of what markdown does.
 			    (visual-line-mode 1))))
   :init
   (setq markdown-command "/usr/local/bin/multimarkdown")
-  (setq markdown-enable-math t)
+  (let (extension (file-name-extension (buffer-file-name)))
+  (if (or (equal "md" extension) (equal "markdown" extension))
+  (setq markdown-enable-math t)))
   :config
   (add-to-path "/Library/TeX/texbin/" t)
-  (message "%s" "Markdown mode was successfully called")
   )
 #+END_SRC
 
@@ -1029,12 +1030,15 @@ Setup elpy to provide auto-complete, highlighting, indent guides, along with an 
 			autopep8-executable
 		      (executable-find "autopep8")))
 	      )
-	  (if (equal exec "")
+	  (if (or (not exec) (equal exec ""))
 	      (message "Could not find autopep8")
 	    (progn
 	      (call-process-region 1 (buffer-size)
 				   exec nil tmp-buf nil (concat "-" autopep8-options))
-	      (if (with-current-buffer tmp-buf (not (equal (buffer-substring 1 7) "[Errno")))
+	      (if (with-current-buffer tmp-buf
+		    (not (or (equal (buffer-substring-no-properties 1 7) "[Errno")
+			  (equal (buffer-substring-no-properties 1 8) "usage: "))
+			 ))
 		  (progn (replace-buffer-contents tmp-buf)
 			 (message "autopep8 format succeeded"))
 		(with-current-buffer tmp-buf
