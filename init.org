@@ -117,9 +117,8 @@ Purely cosmetic changes. Nothing else.
 #+END_SRC
 
 ** Theme and Windowing
+
 We apply the kaolin-galaxy theme if and only if we are using GUI emacs.
-We setup preferences for the mode-line.
-I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
 #+BEGIN_SRC emacs-lisp
 (use-package kaolin-themes
   :straight t
@@ -127,6 +126,41 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
   :config
   (load-theme 'kaolin-galaxy t)
   )
+
+
+
+#+END_SRC
+
+We setup preferences for the mode-line.
+I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
+Feebleline is a package to replace the mode-line with the echo area. 
+#+BEGIN_SRC emacs-lisp
+
+(use-package feebleline
+  :straight t
+  :config
+  (defun my-feebleline-time ()
+    "Displays time: [month day Time]"
+    (format "[%s]" (substring (format-time-string "%b %d %T") 0 -3))
+    )
+  ;; Note: any function that returns a string is acceptable to feebleline
+  (setq feebleline-msg-functions
+	'((feebleline-line-number         :post "" :fmt "%5s")
+	  (feebleline-column-number       :pre ":" :fmt "%-2s")
+	  (feebleline-file-directory      :face feebleline-dir-face :post "")
+	  (feebleline-file-or-buffer-name :face font-lock-keyword-face :post "")
+	  (feebleline-file-modified-star  :face font-lock-warning-face :post "")
+	  (feebleline-git-branch          :face feebleline-git-face :pre " : ")
+	  (feebleline-project-name        :pre "[" :post "]" :align right)
+	  (my-feebleline-time             :align right)
+	  ))
+  (feebleline-mode 1)
+  )
+
+#+END_SRC
+
+Smart-mode-line Customizes the normal mode-line. (Disabled)
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package smart-mode-line
   :straight t
   :init
@@ -142,6 +176,10 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
   (add-to-list 'sml/replacer-regexp-list '("^~/Dropbox" ":DBox:") t) ;re replacement Drop Box -> DBox
   )
 
+#+END_SRC
+
+Setup normal graphics
+#+BEGIN_SRC emacs-lisp
 (defun my-setup-graphics ()
   (setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
   (setq display-time-24hr-format t)
@@ -149,18 +187,10 @@ I turn on battery and time displays, setup smart-mode-line (ssl) and disable the
   (display-time-mode 1); does not change in real time, so all settings must be assigned before
   (display-battery-mode 1) ;display the battery in mode-line
 
-  (defun frame-reset-size ()
-    "Sets the frame size back to the default"
-    (interactive)
-    (when (display-graphic-p)
-      (set-frame-size (selected-frame) 80 36)))
-
   ;; Frame manipulation bindings
   (global-set-key (kbd "s-t") 'make-frame)
   (global-set-key (kbd "s-w") 'delete-frame)
   (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
-  (global-set-key (kbd "M-s-<up>") 'toggle-frame-maximized)
-  (global-set-key (kbd "M-s-<down>") 'frame-reset-size)
   )
 
 (add-hook 'after-make-frame-functions
@@ -562,11 +592,6 @@ There is a collection of minor modes that trigger after other major modes load.
   :straight t
   :defer t
   :bind (("C-x g" . magit-status))
-  )
-
-(use-package forge
-  :straight t
-  :after magit
   )
 
 (use-package magit-todos
