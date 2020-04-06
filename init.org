@@ -98,7 +98,7 @@ The part that performed the byte-compile is currently disabled as it caused prob
 
 * Cosmetics
 Purely cosmetic changes. Nothing else.
-** Minimal Graphics
+** Minimize Graphics
 #+BEGIN_SRC emacs-lisp
 (use-package emacs
   :init
@@ -107,6 +107,7 @@ Purely cosmetic changes. Nothing else.
   (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
   ;; No splash screen please ... jeez
   (setq inhibit-startup-message t)
+  (setq initial-scratch-message "")
   (blink-cursor-mode -1)
   ;; The error bell is really annoying
   (setq ring-bell-function 'ignore)
@@ -126,9 +127,6 @@ We apply the kaolin-galaxy theme if and only if we are using GUI emacs.
   :config
   (load-theme 'kaolin-galaxy t)
   )
-
-
-
 #+END_SRC
 
 We setup preferences for the mode-line.
