@@ -800,34 +800,38 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
   (use-package org
 	:straight t
 	:defer t
-	:bind (:map org-mode-map ("C-j" . 'backward-word))
+	:bind (("C-c a" . org-agenda)
+	       ("C-c c" . org-capture)
+	       :map org-mode-map ("C-j" . 'backward-word))
 	:config
-	(setq org-src-window-setup 'current-window)
 	(set-fill-column 120)
+
+	;; Babel 
 	(setq org-babel-python-command "python3")
 	(org-babel-do-load-languages 'org-babel-load-languages
 	 '((python . t) (emacs-lisp . t) (C . t)))
-	(when (equal (buffer-file-name) ;the init.org file is special
-			 (expand-file-name (concat user-emacs-directory "init.org")))
-	  (my-prog-mode)
-	  )
+	
+	;; SRC
+	(setq org-src-window-setup 'current-window)
 	(setq org-src-fontify-natively t)
 	(setq org-src-tab-acts-natively t)
-	(setq org-confirm-babel-evaluate nil)
 	(setq org-src-preserve-indentation t)
-	(defvar  *src-default-language* nil)
-	(defun src-default-language ()
-	  "Used to set a default src language for skeleton-src-blocks"
-	  (interactive)
-	  (setq *src-default-language* (read-string "Language: ")))
-	(define-skeleton skeleton-src-block
-	  "Inserts a SRC Block Letter into the buffer"
-	  ""
-	  "#+BEGIN_SRC " (if *src-default-language* *src-default-language* (skeleton-read "Language: ")) "\n"
-	  "\n"
-	  "#+END_SRC"
-	  )
+	
 	(yas-activate-extra-mode 'text-mode)
+	
+	;; Agenda
+	(setq org-agenda-files (list "~/.org/school.org"
+				     "~/.org/projects.org"))
+	(setq org-capture-templates
+	      '(("s" "School" entry (file+headline "~/.org/school.org" "Tasks")
+		 "* TODO %?\n%(if (not (= (length \"%i\") 0))
+                         (concat \"%i\" \"\n  \"))  From: %a\n  SCHEDULED: %T")
+		("p" "Projects" entry (file+headline "~/.org/projects.org" "Tasks")
+		 "* TODO %?\n%(if (not (= (length \"%i\") 0))
+                         (concat \"%i\" \"\n  \"))  From: %a\n  SCHEDULED: %T")
+		))
+	(setq org-log-done 'time)
+	
 	(message "%s" "Org mode called successfully.")
 	)
 #+END_SRC
@@ -1224,7 +1228,7 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
 (let ((f (lambda () (local-set-key (kbd "C-c C-c") 'projectile-compile-project))))
   (add-hook 'c++-mode-hook f)
   (add-hook 'c-mode-hook f)
-  (add-hook 'cmake-mode f)
+  (add-hook 'cmake-mode-hook f)
   )
 
 #+END_SRC
@@ -1508,6 +1512,7 @@ CMake files suck, there should be a major mode for them:
 (use-package cmake-mode
   :defer t
   :straight t
+  :mode "CMakeLists.txt"
   )
 #+END_SRC
 
