@@ -12,15 +12,17 @@ my most common command line tool location.
   "Takes a path string, expands it, and adds it to exec path and PATH"
   (let* ((new-path (expand-file-name path-string))
 	 (env-path (getenv "PATH")))
+    (if (file-accessible-directory-p path-string)
+	(add-to-list 'exec-path new-path appendp)
+      
+      (if (not (member new-path (split-string env-path ":")))
+	  (if appendp
+	      (setenv "PATH" (concat env-path ":" new-path))
+	    (setenv "PATH" (concat new-path ":" env-path)))))))
 
-    (add-to-list 'exec-path new-path appendp)
-    
-    (if (not (member new-path (split-string env-path ":")))
-	(if appendp
-	    (setenv "PATH" (concat env-path ":" new-path))
-	  (setenv "PATH" (concat new-path ":" env-path))))))
 
 (add-to-path "/usr/local/bin")
+(add-to-path "~/.local/bin")
 #+END_SRC
 
 ** MELPA (disabled)
@@ -731,7 +733,6 @@ working over tramp.
   :commands (lsp lsp-deferred)
   )
 #+END_SRC
-
 
 ** Projectile
 #+BEGIN_SRC emacs-lisp
