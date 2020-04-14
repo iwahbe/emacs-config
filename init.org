@@ -705,7 +705,7 @@ It runs primarily in C instead of elisp, and is such so much faster.
 
 ** eglot (lsp server)
 #+TITLE: Eglot Server
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package eglot
   :straight t
   :hook ((c-mode c++-mode objc-mode bash-mode python-mode) . eglot-ensure)
@@ -713,6 +713,25 @@ It runs primarily in C instead of elisp, and is such so much faster.
   (require 'eglot)
   )
 #+END_SRC
+
+** lsp-mode (lsp server)
+This is the main lsp-interface for emacs.
+It is more complicated then eglot, but has the advantage of
+working over tramp. 
+
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-mode
+  :straight t
+  :init
+  ;; Performance Tunning
+  (setq gc-cons-threshold 100000000)
+  (setq read-process-output-max (* 1024 1024)) ;; 1mb
+  (setq lsp-prefer-capf t)
+  :hook ((c-mode c++-mode objc-mode bash-mode python-mode) . lsp-deferred)
+  :commands (lsp lsp-deferred)
+  )
+#+END_SRC
+
 
 ** Projectile
 #+BEGIN_SRC emacs-lisp
@@ -792,48 +811,49 @@ Org mode provides a function text mode, so we give it many text mode type things
 Note: htmlize allows org-mode to publish to html more complex stuff like src blocks.
 #+BEGIN_SRC emacs-lisp
 
-  (use-package htmlize
-	:straight t
-	:after (org)
-	)
+(use-package htmlize
+  :straight t
+  :after (org)
+  )
 
-  (use-package org
-	:straight t
-	:defer t
-	:bind (("C-c a" . org-agenda)
-	       ("C-c c" . org-capture)
-	       :map org-mode-map ("C-j" . 'backward-word))
-	:config
-	(set-fill-column 120)
+(use-package org
+  :straight t
+  :defer t
+  :bind (("C-c a" . org-agenda)
+	 ("C-c c" . org-capture)
+	 :map org-mode-map ("C-j" . 'backward-word))
+  :config
+  (set-fill-column 120)
 
-	;; Babel 
-	(setq org-babel-python-command "python3")
-	(org-babel-do-load-languages 'org-babel-load-languages
-	 '((python . t) (emacs-lisp . t) (C . t)))
-	
-	;; SRC
-	(setq org-src-window-setup 'current-window)
-	(setq org-src-fontify-natively t)
-	(setq org-src-tab-acts-natively t)
-	(setq org-src-preserve-indentation t)
-	
-	(yas-activate-extra-mode 'text-mode)
-	
-	;; Agenda
-	(setq org-agenda-files (list "~/.org/school.org"
-				     "~/.org/projects.org"))
-	(setq org-capture-templates
-	      '(("s" "School" entry (file+headline "~/.org/school.org" "Tasks")
-		 "* TODO %?\n%(if (not (= (length \"%i\") 0))
+  ;; Babel 
+  (setq org-babel-python-command "python3")
+  (org-babel-do-load-languages 'org-babel-load-languages
+			       '((python . t) (emacs-lisp . t) (C . t)))
+  
+  ;; SRC
+  (setq org-src-window-setup 'current-window)
+  (setq org-src-fontify-natively t)
+  (setq org-src-tab-acts-natively t)
+  (setq org-src-preserve-indentation t)
+  
+  (yas-activate-extra-mode 'text-mode)
+  
+  ;; Agenda
+  (setq org-agenda-files (list "~/.org/school.org"
+			       "~/.org/projects.org"))
+  (setq org-capture-templates
+	'(("s" "School" entry (file+headline "~/.org/school.org" "Tasks")
+	   "* TODO %?\n%(if (not (= (length \"%i\") 0))
                          (concat \"%i\" \"\n  \"))  From: %a\n  SCHEDULED: %T")
-		("p" "Projects" entry (file+headline "~/.org/projects.org" "Tasks")
-		 "* TODO %?\n%(if (not (= (length \"%i\") 0))
+	  ("p" "Projects" entry (file+headline "~/.org/projects.org" "Tasks")
+	   "* TODO %?\n%(if (not (= (length \"%i\") 0))
                          (concat \"%i\" \"\n  \"))  From: %a\n  SCHEDULED: %T")
-		))
-	(setq org-log-done 'time)
-	
-	(message "%s" "Org mode called successfully.")
-	)
+	  ))
+  (setq org-log-done 'time)
+  
+  (message "%s" "Org mode called successfully.")
+  )
+
 #+END_SRC
 
 ** R
