@@ -97,6 +97,12 @@ The part that performed the byte-compile is currently disabled as it caused prob
 (add-hook 'after-save-hook 'tangle-init-call) 
 #+END_SRC 
 
+** Speed
+#+BEGIN_SRC emacs-lisp
+  (setq gc-cons-threshold 100000000)
+  (setq read-process-output-max (* 1024 1024)) ;; 1mb
+#+END_SRC
+
 
 * Cosmetics
 Purely cosmetic changes. Nothing else.
@@ -726,11 +732,27 @@ working over tramp.
   :straight t
   :init
   ;; Performance Tunning
-  (setq gc-cons-threshold 100000000)
-  (setq read-process-output-max (* 1024 1024)) ;; 1mb
   (setq lsp-prefer-capf t)
   :hook ((c-mode c++-mode objc-mode bash-mode python-mode) . lsp-deferred)
   :commands (lsp lsp-deferred)
+  )
+
+(use-package lsp-ui
+  :straight t
+  :config
+  (setq
+   lsp-ui-doc-enable t
+   lsp-ui-doc-use-childframe t ;; Requires v>=26 + graphics
+   lsp-ui-doc-position 'top
+   lsp-ui-doc-include-signature t
+   lsp-ui-flycheck-enable t
+   lsp-ui-flycheck-list-position 'right
+   lsp-ui-flycheck-live-reporting t
+   lsp-ui-peek-enable t
+   lsp-ui-peek-list-width 60
+   lsp-ui-peek-peek-height 25
+   lsp-ui-sideline-enable t
+   lsp-ui-doc-alignment 'window)
   )
 #+END_SRC
 
