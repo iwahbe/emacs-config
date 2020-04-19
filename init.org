@@ -522,13 +522,13 @@ There is a collection of minor modes that trigger after other major modes load.
 
 (use-package ace-window
   :straight t
+  :config (setq aw-scope 'frame)
   :bind (("M-o" . ace-window))
   )
 
 (use-package zoom
   :straight t
-  :config
-  (zoom-mode 1)
+  :config (zoom-mode 1)
   )
 
 ;; typing replaces the active region
@@ -731,9 +731,10 @@ working over tramp.
 (use-package lsp-mode
   :straight t
   :init
-  ;; Performance Tunning
   (setq lsp-prefer-capf t)
-  :hook ((c-mode c++-mode objc-mode bash-mode python-mode) . lsp-deferred)
+  (setq lsp-rust-server 'rust-analyzer)
+  :hook ((c-mode c++-mode objc-mode bash-mode python-mode rust-mode) .
+	 lsp-deferred)
   :commands (lsp lsp-deferred)
   )
 
@@ -797,15 +798,15 @@ again. This is necessary because otherwise it gets called repeatedly.
   (line-number-mode 0)
   (column-number-mode 1)
   (if (version<= "26.0.50" emacs-version)
+      ;;; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
       (display-line-numbers-mode 1) ; displays line numbers on the left
-    (linum-mode 1) ; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
+    (linum-mode 1) 
     )
   (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
 
   (eldoc-mode 1)
-  (setq company-minimum-prefix-length 1) ;we want an active company for programming, as there are many variable names, and memory is hard
-  (setq font-lock-maximum-decoration t) ;lots of syntax highlighting
-  (subword-mode +1)
+  (setq company-minimum-prefix-length 1) ;we want to active company for programming
+  (setq font-lock-maximum-decoration t)
   (setq my-prog-mode-called t)
   (message "%s" (concat
 		 "my-prog-mode was called successfully on major mode: "
