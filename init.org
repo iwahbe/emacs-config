@@ -1277,9 +1277,9 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
 
 #+END_SRC
 
-*** Auto-insert C function comments
-Auto-inserts c headers:
-Binds "C-c C-f" to a function that inserts c function description yassnippet
+*** C/Cpp custom code
+Binds "C-c C-f" to a function that inserts c function description using yasnippet.
+Binds "M-p" to a function that switches .cc type files with .hh type files. 
 #+BEGIN_SRC emacs-lisp
 (defmacro incr (var) `(setq ,var (1+ ,var)))
 
@@ -1404,7 +1404,7 @@ Binds "C-c C-f" to a function that inserts c function description yassnippet
 
 (defun switch-cpp-file-type ()
   (interactive)
-  (let* ((buf_name (buffer-name))
+  (let* ((buf_name (buffer-file-name))
 	 (prefix (file-name-sans-extension buf_name))
 	 (postfix (concat "."(file-name-extension buf_name)))
 	 )
