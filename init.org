@@ -1185,6 +1185,13 @@ Sets up latex support along with a collection of skeletons for latex. This is al
   (load (expand-file-name (concat user-emacs-directory "LaTeX_skeletons.el")))
   (add-to-path "/Library/TeX/texbin/" t)
   (set-fill-column 100)
+  ;; sets up org-mode to use beamer
+  (add-to-list 'org-latex-classes
+               '("beamer"
+		 "\\documentclass\[presentation\]\{beamer\}"
+		 ("\\section\{%s\}" . "\\section*\{%s\}")
+		 ("\\subsection\{%s\}" . "\\subsection*\{%s\}")
+		 ("\\subsubsection\{%s\}" . "\\subsubsection*\{%s\}")))
   (message "%s" "LaTeX-mode has been loaded successfully")
   )
 #+END_SRC
@@ -1582,4 +1589,13 @@ For writing assembly
 #+END_SRC
 
 
+
+** ion-shell
+#+BEGIN_SRC emacs-lisp
+(use-package ion-mode
+  :straight (ion-mode
+	       :host github :repo "iwahbe/ion-mode")
+  :mode ("\\.ion\\'" . ion-mode)
+  )
+#+END_SRC
 
