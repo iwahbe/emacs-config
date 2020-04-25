@@ -201,6 +201,9 @@ Setup normal graphics
 ** Fira-Code (graphics only)
 I use a font called Fira-Code. This enables the font as well as the font's ligatures.
 #+BEGIN_SRC emacs-lisp
+(when (member "Fira Code" (font-family-list))
+  (set-frame-font "Fira Code" t t))
+
 (defun fira-code-mode--make-alist (list)
   "Generate prettify-symbols alist from LIST."
   (let ((idx -1))
@@ -280,6 +283,7 @@ Sets up helpful universal variables.
 #+BEGIN_SRC emacs-lisp
 (setq-default fill-column 80)
 (setq-default sentence-end "[\\.\\?\\!] +")
+(setq-default tab-width 4)
 #+END_SRC
 
 ** Evil: Extensible VI Layer
@@ -731,11 +735,12 @@ working over tramp.
 (use-package lsp-mode
   :straight t
   :init
-  (setq lsp-prefer-capf t)
-  (setq lsp-rust-server 'rust-analyzer)
+  (setq lsp-prefer-capf t
+	lsp-rust-server 'rust-analyzer
+	lsp-auto-guess-root t)
   :hook ((c-mode c++-mode objc-mode bash-mode python-mode rust-mode) .
-	 lsp-deferred)
-  :commands (lsp lsp-deferred)
+	 lsp)
+  :commands (lsp)
   )
 
 (use-package lsp-ui
@@ -824,7 +829,6 @@ again. This is necessary because otherwise it gets called repeatedly.
   (wc-mode +1)               ; provides a word count
   (flyspell-mode +1)         ; recognizes misspellings
   (visual-line-mode +1)      ; we want the words to wrap
-  (setq tab-width 4)
   (message "%s" "my-text-mode was called successfully.")
   )
 (add-hook 'text-mode-hook 'my-text-mode)
@@ -1587,7 +1591,6 @@ For writing assembly
 	      ("C-y" . term-paste))
   )
 #+END_SRC
-
 
 
 ** ion-shell
