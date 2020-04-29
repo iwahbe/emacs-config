@@ -431,43 +431,46 @@ Ido provides a great navigation experience with the find-file command.
 ** Global Key Bindings
 We maintain a list of common key-bindings to activate in all modes
 #+BEGIN_SRC emacs-lisp
-  (defun current-line-length ()
-    (save-excursion
-      (beginning-of-line)
-      (let ((first-pos (point)))
-	(end-of-line)
-	(- (point) first-pos))
-	))
+(defun current-line-length ()
+  (save-excursion
+    (beginning-of-line)
+    (let ((first-pos (point)))
+	  (end-of-line)
+	  (- (point) first-pos))))
 
-  (global-set-key (kbd "C-r") 'scroll-down)
-  (global-set-key (kbd "C-v") 'scroll-up)
-  (global-set-key (kbd "C-l") 'forward-word)
-  (global-set-key (kbd "C-j") 'backward-word)
-  (global-set-key (kbd "M-f") 'forward-sentence)
-  (global-set-key (kbd "M-b") 'backward-sentence)
-  (global-set-key (kbd "C-z") 'ispell-word)
-  (global-set-key (kbd "M--") 'undo)
-  (global-set-key
-   (kbd "C-M-n") (lambda (arg) (interactive "P")
-		   (with-no-warnings
-		     (next-line
-		      (* 5 (if (equal arg nil) 1 arg))))))
-  (global-set-key
-   (kbd "C-M-p") (lambda (arg) (interactive "P")
-		   (with-no-warnings
-		     (next-line
-		      (* -5 (if (equal arg nil) 1 arg))))))
-  (global-set-key
-   (kbd "C-<backspace>") (lambda (arg) (interactive "P")
-			   (forward-word)
-			   (backward-kill-word
-			    (if (equal arg nil) 1 arg))))
-  (global-set-key (kbd "C-M-v") 'scroll-other-window)
-  (global-set-key (kbd "C-M-r") 'scroll-other-window-down)
-  (global-set-key (kbd "s-p") nil) ;used to be print
-  (global-set-key (kbd "s-o") nil) ;used to be ns-open-file-using-panel
-  (eval-after-load 'doc-view
-    (lambda () (define-key doc-view-mode-map (kbd "C-r") 'image-scroll-down)))
+(defun safe-kill-region (begin end &optional region)
+  (interactive "r") (if mark-active (kill-region begin end)))
+
+(global-set-key (kbd "C-w") 'safe-kill-region)
+(global-set-key (kbd "C-r") 'scroll-down)
+(global-set-key (kbd "C-v") 'scroll-up)
+(global-set-key (kbd "C-l") 'forward-word)
+(global-set-key (kbd "C-j") 'backward-word)
+(global-set-key (kbd "M-f") 'forward-sentence)
+(global-set-key (kbd "M-b") 'backward-sentence)
+(global-set-key (kbd "C-z") 'ispell-word)
+(global-set-key (kbd "M--") 'undo)
+(global-set-key
+ (kbd "C-M-n") (lambda (arg) (interactive "P")
+				 (with-no-warnings
+				   (next-line
+					(* 5 (if (equal arg nil) 1 arg))))))
+(global-set-key
+ (kbd "C-M-p") (lambda (arg) (interactive "P")
+				 (with-no-warnings
+				   (next-line
+					(* -5 (if (equal arg nil) 1 arg))))))
+(global-set-key
+ (kbd "C-<backspace>") (lambda (arg) (interactive "P")
+						 (forward-word)
+						 (backward-kill-word
+						  (if (equal arg nil) 1 arg))))
+(global-set-key (kbd "C-M-v") 'scroll-other-window)
+(global-set-key (kbd "C-M-r") 'scroll-other-window-down)
+(global-set-key (kbd "s-p") nil) ;used to be print
+(global-set-key (kbd "s-o") nil) ;used to be ns-open-file-using-panel
+(eval-after-load 'doc-view
+  (lambda () (define-key doc-view-mode-map (kbd "C-r") 'image-scroll-down)))
 
 #+END_SRC
 
