@@ -126,16 +126,16 @@ Purely cosmetic changes. Nothing else.
 #+END_SRC
 
 ** Theme and Windowing
-
-We apply the kaolin-galaxy theme if and only if we are using GUI emacs.
-#+BEGIN_SRC emacs-lisp
-(use-package kaolin-themes
+humanoid-dark theme
+#+BEGIN_SRC  emacs-lisp
+(use-package humanoid-themes
   :straight t
   :when (or window-system (daemonp))
   :config
-  (load-theme 'kaolin-galaxy t)
+  (load-theme 'humanoid-dark t)
   )
 #+END_SRC
+
 
 We setup preferences for the mode-line.
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
@@ -198,81 +198,53 @@ Setup normal graphics
 (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
 #+END_SRC
 
+*** Kaolin-galaxy (disabled)
+We apply the kaolin-galaxy theme if and only if we are using GUI emacs.
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package kaolin-themes
+  :straight t
+  :when (or window-system (daemonp))
+  :config
+  (load-theme 'kaolin-galaxy t)
+  )
+#+END_SRC
+
 ** Fira-Code (graphics only)
 I use a font called Fira-Code. This enables the font as well as the font's ligatures.
 #+BEGIN_SRC emacs-lisp
-(when (member "Fira Code" (font-family-list))
-  (set-frame-font "Fira Code" t t))
-
-(defun fira-code-mode--make-alist (list)
-  "Generate prettify-symbols alist from LIST."
-  (let ((idx -1))
-    (mapcar
-     (lambda (s)
-       (setq idx (1+ idx))
-       (let* ((code (+ #Xe100 idx))
-          (width (string-width s))
-          (prefix ())
-          (suffix '(?\s (Br . Br)))
-          (n 1))
-     (while (< n width)
-       (setq prefix (append prefix '(?\s (Br . Bl))))
-       (setq n (1+ n)))
-     (cons s (append prefix suffix (list (decode-char 'ucs code))))))
-     list)))
-;; Unwanted ligatures are replaced with untypeable charicters
-(defconst fira-code-mode--ligatures
-  (list "www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\"
-    (char-to-string 0); "{-"
-    "[]" "::" ":::" ":=" "!!" "!=" "!==" "-}"
-    "--" "---" "-->" "->" "->>" "-<" "-<<" "-~"
-    "#{" "#[" "##" "###" "####" "#(" "#?" "#_" "#_("
-    ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*"
-    "/**" "/=" "/==" "/>" "//" "///" "&&" "||" "||="
-    "|=" "|>" "^=" "$>" "++" "+++" "+>" "=:=" "=="
-    "===" "==>" "=>" "=>>" "<=" "=<<" "=/=" ">-" ">="
-    ">=>" ">>" ">>-" ">>=" ">>>" "<*" "<*>" "<|" "<|>"
-    "<$" "<$>" "<!--" "<-" "<--" "<->" "<+" "<+>" "<="
-    "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<" "<~"
-    "<~~" "</" "</>" "~@" "~-" "~=" "~>" "~~" "~~>" "%%"
-    (char-to-string 1); "x"
-    ":" "+" "+" "*"))
-
-(defvar fira-code-mode--old-prettify-alist)
-
-(defun fira-code-mode--enable ()
-  "Enable Fira Code ligatures in current buffer."
-  (setq-local fira-code-mode--old-prettify-alist prettify-symbols-alist)
-  (setq-local prettify-symbols-alist (append (fira-code-mode--make-alist fira-code-mode--ligatures) fira-code-mode--old-prettify-alist))
-  (prettify-symbols-mode t))
-
-(defun fira-code-mode--disable ()
-  "Disable Fira Code ligatures in current buffer."
-  (setq-local prettify-symbols-alist fira-code-mode--old-prettify-alist)
-  (prettify-symbols-mode -1))
-
-(define-minor-mode fira-code-mode
-  "Fira Code ligatures minor mode"
-  :lighter " Fira Code"
-  (setq-local prettify-symbols-unprettify-at-point 'right-edge)
-  (if fira-code-mode
-      (fira-code-mode--enable)
-    (fira-code-mode--disable)))
-
-(defun fira-code-mode--setup ()
-  "Setup Fira Code Symbols"
-  (set-fontset-font t '(#Xe100 . #Xe16f) "Fira Code Symbol"))
-
-(provide 'fira-code-mode)
-
-
-(when (and (window-system) (member "Fira Code" (font-family-list)))
-  (set-frame-font "Fira Code")
-  (when (member "Fira Code Symbol" (font-family-list))
-    (add-hook 'prog-mode-hook #'fira-code-mode--enable)
-    (add-hook 'text-mode-hook #'fira-code-mode--enable)
-    ))
-
+;; code grabbed from: 
+;; https://github.com/tonsky/FiraCode/wiki/Emacs-instructions#using-composition-mode-in-emacs-mac-port
+(add-to-list 'default-frame-alist
+			 '(font . "Fira Code-10"))
+(let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
+               (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
+               (36 . ".\\(?:>\\)")
+               (37 . ".\\(?:\\(?:%%\\)\\|%\\)")
+               (38 . ".\\(?:\\(?:&&\\)\\|&\\)")
+               (42 . ".\\(?:\\(?:\\*\\*/\\)\\|\\(?:\\*[*/]\\)\\|[*/>]\\)")
+               (43 . ".\\(?:\\(?:\\+\\+\\)\\|[+>]\\)")
+               (45 . ".\\(?:\\(?:-[>-]\\|<<\\|>>\\)\\|[<>}~-]\\)")
+               (46 . ".\\(?:\\(?:\\.[.<]\\)\\|[.=-]\\)")
+               (47 . ".\\(?:\\(?:\\*\\*\\|//\\|==\\)\\|[*/=>]\\)")
+               (48 . ".\\(?:x[a-zA-Z]\\)")
+               (58 . ".\\(?:::\\|[:=]\\)")
+               (59 . ".\\(?:;;\\|;\\)")
+               (60 . ".\\(?:\\(?:!--\\)\\|\\(?:~~\\|->\\|\\$>\\|\\*>\\|\\+>\\|--\\|<[<=-]\\|=[<=>]\\||>\\)\\|[*$+~/<=>|-]\\)")
+               (61 . ".\\(?:\\(?:/=\\|:=\\|<<\\|=[=>]\\|>>\\)\\|[<=>~]\\)")
+               (62 . ".\\(?:\\(?:=>\\|>[=>-]\\)\\|[=>-]\\)")
+               (63 . ".\\(?:\\(\\?\\?\\)\\|[:=?]\\)")
+               (91 . ".\\(?:]\\)")
+               (92 . ".\\(?:\\(?:\\\\\\\\\\)\\|\\\\\\)")
+               (94 . ".\\(?:=\\)")
+               (119 . ".\\(?:ww\\)")
+               (123 . ".\\(?:-\\)")
+               (124 . ".\\(?:\\(?:|[=|]\\)\\|[=>|]\\)")
+               (126 . ".\\(?:~>\\|~~\\|[>=@~-]\\)")
+               )
+             ))
+  (dolist (char-regexp alist)
+    (set-char-table-range composition-function-table (car char-regexp)
+                          `([,(cdr char-regexp) 0 font-shape-gstring]))))
 #+END_SRC
 
 
@@ -735,12 +707,22 @@ working over tramp.
 (use-package lsp-mode
   :straight t
   :init
-  (setq lsp-prefer-capf t
+  (setq lsp-prefer-capf nil
 	lsp-rust-server 'rust-analyzer
 	lsp-auto-guess-root t)
   :hook ((c-mode c++-mode objc-mode bash-mode python-mode rust-mode) .
 	 lsp)
   :commands (lsp)
+  )
+
+(use-package company-lsp
+  :straight t
+  :config
+  (setq company-lsp-cache-canidates 'auto
+	company-lsp-async t
+	company-lsp-enable-snippet t
+	company-lsp-enable-recompletion t)
+  (push 'company-lsp company-backends)
   )
 
 (use-package lsp-ui
@@ -766,6 +748,9 @@ working over tramp.
 #+BEGIN_SRC emacs-lisp
 (use-package projectile
   :straight t
+  :bind (:map projectile-mode-map
+	      ("C-c C-t" . 'projectile-test-project)
+	      ("C-c C-c" . 'projectile-compile-project))
   :config
   (projectile-mode +1)
   )
@@ -846,7 +831,6 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
 
 (use-package org
   :straight t
-  :defer t
   :bind (("C-c a" . org-agenda)
 	 ("C-c c" . org-capture)
 	 :map org-mode-map ("C-j" . 'backward-word))
@@ -878,6 +862,14 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
                          (concat \"%i\" \"\n  \"))  From: %a\n  SCHEDULED: %T")
 	  ))
   (setq org-log-done 'time)
+  ;; sets up org-mode to use beamer
+  (with-eval-after-load 'ox-latex
+	(add-to-list 'org-latex-classes
+				 '("beamer"
+				   "\\documentclass\[presentation\]\{beamer\}"
+				   ("\\section\{%s\}" . "\\section*\{%s\}")
+				   ("\\subsection\{%s\}" . "\\subsection*\{%s\}")
+				   ("\\subsubsection\{%s\}" . "\\subsubsection*\{%s\}"))))
   
   (message "%s" "Org mode called successfully.")
   )
@@ -1189,13 +1181,6 @@ Sets up latex support along with a collection of skeletons for latex. This is al
   (load (expand-file-name (concat user-emacs-directory "LaTeX_skeletons.el")))
   (add-to-path "/Library/TeX/texbin/" t)
   (set-fill-column 100)
-  ;; sets up org-mode to use beamer
-  (add-to-list 'org-latex-classes
-               '("beamer"
-		 "\\documentclass\[presentation\]\{beamer\}"
-		 ("\\section\{%s\}" . "\\section*\{%s\}")
-		 ("\\subsection\{%s\}" . "\\subsection*\{%s\}")
-		 ("\\subsubsection\{%s\}" . "\\subsubsection*\{%s\}")))
   (message "%s" "LaTeX-mode has been loaded successfully")
   )
 #+END_SRC
@@ -1592,13 +1577,13 @@ For writing assembly
   )
 #+END_SRC
 
-
 ** ion-shell
 #+BEGIN_SRC emacs-lisp
 (use-package ion-mode
   :straight (ion-mode
 	       :host github :repo "iwahbe/ion-mode")
-  :mode ("\\.ion\\'" . ion-mode)
+  :mode (("\\.ion\\'" . ion-mode))
   )
 #+END_SRC
+
 
