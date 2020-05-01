@@ -377,7 +377,6 @@ Used for dependencies, eglot among others
 ** Helm
 I use helm for fuzzy searching among known options
 #+BEGIN_SRC emacs-lisp
-
 (use-package helm
   :straight t
   :config
@@ -385,15 +384,14 @@ I use helm for fuzzy searching among known options
   (setq helm-default-display-buffer-functions '(display-buffer-in-side-window))
   (global-set-key (kbd "M-x") 'helm-M-x)
   (global-set-key (kbd "C-x C-f") 'helm-find-files)
-  :bind (:map helm-occur-map
-	      ("C-h c" . #'describe-key-briefly)
-	      )
+  :bind (:map helm-occur-map ("C-h c" . #'describe-key-briefly))
   )
 
 ;; for fast multi-file searches
 (use-package helm-ag
   :straight t
   :after (helm)
+  :bind (("C-M-s" . helm-do-ag-project-root))
   :config
   (defun search-selector (do-ag)
     (interactive "P")
@@ -560,7 +558,7 @@ There is a collection of minor modes that trigger after other major modes load.
 
 #+END_SRC
 
-** Git (Magit and forge)
+** Git (Magit)
 #+BEGIN_SRC emacs-lisp
 (use-package magit
   :straight t
