@@ -707,6 +707,8 @@ working over tramp.
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-mode
   :straight t
+  :bind (:map lsp-mode-map
+			  ("C-c e" . 'lsp-execute-code-action))
   :init
   (setq lsp-prefer-capf nil
 	lsp-rust-server 'rust-analyzer
@@ -750,8 +752,7 @@ working over tramp.
 (use-package projectile
   :straight t
   :bind (:map projectile-mode-map
-	      ("C-c C-t" . 'projectile-test-project)
-	      ("C-c C-c" . 'projectile-compile-project))
+	      ("C-c p" . 'projectile-command-map))
   :config
   (projectile-mode +1)
   )
@@ -1265,13 +1266,6 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
   (add-hook 'before-save-hook 'clang-format-safe-buffer)
   (message "clang-format setup")
   )
-
-(let ((f (lambda () (local-set-key (kbd "C-c C-c") 'projectile-compile-project))))
-  (add-hook 'c++-mode-hook f)
-  (add-hook 'c-mode-hook f)
-  (add-hook 'cmake-mode-hook f)
-  )
-
 #+END_SRC
 
 *** C/Cpp custom code
@@ -1588,4 +1582,15 @@ For writing assembly
   )
 #+END_SRC
 
+
+** Java
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-java
+  :straight t
+  :config 
+  (add-hook 'java-mode-hook 'lsp)
+  (add-hook 'before-save-hook 'lsp-format-buffer 0 t)
+  )
+
+#+END_SRC
 
