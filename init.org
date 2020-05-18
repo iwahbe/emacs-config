@@ -387,6 +387,8 @@ I use helm for fuzzy searching among known options
   :bind (:map helm-occur-map ("C-h c" . #'describe-key-briefly))
   )
 
+(use-package ag :straight t)
+
 ;; for fast multi-file searches
 (use-package helm-ag
   :straight t
