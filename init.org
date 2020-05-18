@@ -1258,15 +1258,16 @@ ghc functions as a backend for Haskell, company-ghc hooks that into company, pro
   :defer t
   :init
   (setq clang-format-style "file")
-  (add-hook 'c++-mode-hook 'clang-format-buffer)
-  (add-hook 'c-mode-hook 'clang-format-buffer)
+  ;; (add-hook 'c++-mode-hook 'clang-format-buffer)
+  ;; (add-hook 'c-mode-hook 'clang-format-buffer)
   :config
   (defun clang-format-safe-buffer ()
     (interactive)
-    (when (or (eql major-mode 'c-mode) (eql major-mode 'c++-mode))
+    (when (or
+		   (and (eql major-mode 'c-mode) (equal c-file-style nil))
+		   (eql major-mode 'c++-mode))
       (clang-format-buffer)))
   (add-hook 'before-save-hook 'clang-format-safe-buffer)
-  (message "clang-format setup")
   )
 #+END_SRC
 
