@@ -78,7 +78,7 @@ The part that performed the byte-compile is currently disabled as it caused prob
       (org-babel-tangle-file buffer-file-name (concat user-emacs-directory "init.el"))
       (when do-byte-compile (byte-compile-file (concat user-emacs-directory "init.el"))))))
 
-(add-hook 'after-save-hook 'tangle-init-call) 
+(add-hook 'after-save-hook 'tangle-init-call)
 #+END_SRC 
 
 ** Speed
@@ -113,11 +113,11 @@ Purely cosmetic changes. Nothing else.
 humanoid-dark theme
 #+BEGIN_SRC  emacs-lisp
 (use-package humanoid-themes
-  :straight t
+  :straight (humanoid-themes :host github :repo "humanoid-colors/emacs-humanoid-themes")
   :when (or window-system (daemonp))
   :config
   (load-theme 'humanoid-dark t)
-  )
+ )
 #+END_SRC
 
 
