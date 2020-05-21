@@ -151,16 +151,21 @@ Feebleline is a package to replace the mode-line with the echo area.
 
 Setup normal graphics
 #+BEGIN_SRC emacs-lisp
-(setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
-(setq display-time-24hr-format t)
-(setq display-time-day-and-date t)
-(display-time-mode 1); does not change in real time, so all settings must be assigned before
-(display-battery-mode 1) ;display the battery in mode-line
+  (setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
+  (setq display-time-24hr-format t)
+  (setq display-time-day-and-date t)
+  (display-time-mode 1); does not change in real time, so all settings must be assigned before
 
-;; Frame manipulation bindings
-(global-set-key (kbd "s-t") 'make-frame)
-(global-set-key (kbd "s-w") 'delete-frame)
-(global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
+  (require 'battery)
+  (when (and battery-status-function
+	     (not (string-match-p "N/A"
+				  (battery-format "%B"
+						  (funcall battery-status-function)))))
+    (display-battery-mode 1))
+  ;; Frame manipulation bindings
+  (global-set-key (kbd "s-t") 'make-frame)
+  (global-set-key (kbd "s-w") 'delete-frame)
+  (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
 #+END_SRC
 
 ** Fira-Code (graphics only)
@@ -169,7 +174,7 @@ I use a font called Fira-Code. This enables the font as well as the font's ligat
 ;; code grabbed from: 
 ;; https://github.com/tonsky/FiraCode/wiki/Emacs-instructions#using-composition-mode-in-emacs-mac-port
 (add-to-list 'default-frame-alist
-			 '(font . "Fira Code-10"))
+			 '(font . "Fira Code"))
 (let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
                (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
                (36 . ".\\(?:>\\)")
@@ -518,7 +523,7 @@ There is a collection of minor modes that trigger after other major modes load.
 #+BEGIN_SRC emacs-lisp
 (use-package magit
   :straight t
-  :defer t
+  :defer (not (daemonp))
   :bind (("C-x g" . magit-status))
   )
 
@@ -526,7 +531,11 @@ There is a collection of minor modes that trigger after other major modes load.
   :straight t
   :after magit
   :config (magit-todos-mode +1)
-)
+  )
+
+(use-package forge
+  :straigt t
+  :afer magit)
 
 #+END_SRC
 
@@ -656,10 +665,11 @@ working over tramp.
 			  ("C-c e" . 'lsp-execute-code-action))
   :init
   (setq lsp-prefer-capf nil
-	lsp-rust-server 'rust-analyzer
-	lsp-auto-guess-root t)
+		lsp-server-install-dir (concat user-emacs-directory "lsp")
+		lsp-rust-server 'rust-analyzer
+		lsp-auto-guess-root t)
   :hook ((c-mode c++-mode objc-mode bash-mode python-mode rust-mode) .
-	 lsp)
+		 lsp)
   :commands (lsp)
   )
 
@@ -667,9 +677,9 @@ working over tramp.
   :straight t
   :config
   (setq company-lsp-cache-canidates 'auto
-	company-lsp-async t
-	company-lsp-enable-snippet t
-	company-lsp-enable-recompletion t)
+		company-lsp-async t
+		company-lsp-enable-snippet t
+		company-lsp-enable-recompletion t)
   (push 'company-lsp company-backends)
   )
 
@@ -1367,6 +1377,7 @@ For writing assembly
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-java
   :straight t
+  :after lsp-mode
   :config 
   (add-hook 'java-mode-hook 'lsp)
   (add-hook 'before-save-hook 'lsp-format-buffer 0 t)
