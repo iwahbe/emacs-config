@@ -534,8 +534,8 @@ There is a collection of minor modes that trigger after other major modes load.
   )
 
 (use-package forge
-  :straigt t
-  :afer magit)
+  :straight t
+  :after magit)
 
 #+END_SRC
 
@@ -668,7 +668,9 @@ working over tramp.
 		lsp-server-install-dir (concat user-emacs-directory "lsp")
 		lsp-rust-server 'rust-analyzer
 		lsp-auto-guess-root t)
-  :hook ((c-mode c++-mode objc-mode bash-mode python-mode rust-mode) .
+  :hook ((c-mode c++-mode objc-mode bash-mode 
+				 python-mode rust-mode typescript-mode)
+		 .
 		 lsp)
   :commands (lsp)
   )
@@ -1377,11 +1379,19 @@ For writing assembly
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-java
   :straight t
+  :disabled
   :after lsp-mode
   :config 
   (add-hook 'java-mode-hook 'lsp)
   (add-hook 'before-save-hook 'lsp-format-buffer 0 t)
   )
 
+#+END_SRC
+
+** TypeScript
+
+#+BEGIN_SRC emacs-lisp
+(use-package typescript-mode
+  :straight t)
 #+END_SRC
 
