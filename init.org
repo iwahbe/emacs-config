@@ -1,12 +1,12 @@
 * Overview
 This is my emacs configuration file. It should work for all modern versions, and
-is tested on version 26, 27 and 28. 
+is tested on version 26, 27 and 28. I make heavy use of =use-package= and
+=straight.el=. 
 
 * Getting Started
-This file is expected to reside in src_<bash>{~/.emacs.d} so start with
-src_<bash>{cp emacs-config ~/.emacs.d}. The src_<bash>{cp} into the file an type
-src_<bash>{make tangle; make hooks}. Then src_<bash>{emacs} will work as
-expected. I assume that src_<bash>{git} and src_<bash>{make} are installed.
+This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
+~/.emacs.d=. The =cp= into the file an type =make tangle; make hooks=. Then
+=emacs= will work as expected. I assume that =git= and =make= are installed.
 
 
 * Preliminary
