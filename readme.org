@@ -1,13 +1,10 @@
 * Overview
 This is my emacs configuration file. It should work for all modern versions, and
-is tested on version 26, 27 and 28. 
-
-* Getting Started
-This file is expected to reside in src_<bash>{~/.emacs.d} so start with
-src_<bash>{cp emacs-config ~/.emacs.d}. The src_<bash>{cp} into the file an type
-src_<bash>{make tangle; make hooks}. Then src_<bash>{emacs} will work as
-expected. I assume that src_<bash>{git} and src_<bash>{make} are installed.
-
+is tested on version 26, 27 and 28. It assumes at minimum that src_<bash>{git}
+is installed and in the default path. src_<bash>{.org} files are readable as
+src_<bash>{.el} files, so we tangle src_<bash>{init.org} on save. This means
+that editing src_<bash>{init.el} is transient. This functionality is enabled
+automatically, but can also be run with `make`.
 
 * Preliminary
 This loads frameworks necessary for much of the following settings.  This

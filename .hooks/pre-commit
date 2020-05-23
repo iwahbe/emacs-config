@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# creates a readme.org and adds it to every commit
+cp init.org readme.org
+git add readme.org
