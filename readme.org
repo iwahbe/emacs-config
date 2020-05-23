@@ -5,7 +5,7 @@ is tested on version 26, 27 and 28. I make heavy use of =use-package= and
 
 * Getting Started
 This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
-~/.emacs.d=. The =cp= into the file an type =make tangle; make hooks=. Then
+~/.emacs.d=. The =cp= into the file and type =make tangle; make hooks=. Then
 =emacs= will work as expected. I assume that =git= and =make= are installed.
 
 
