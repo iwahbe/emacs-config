@@ -3,6 +3,7 @@ This is my emacs configuration file. It should work for all modern versions, and
 is tested on version 26, 27 and 28. I make heavy use of =use-package= and
 =straight.el=. 
 
+
 * Getting Started
 This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
 ~/.emacs.d=. The =cp= into the file and type =make tangle; make hooks=. Then
@@ -665,7 +666,7 @@ It runs primarily in C instead of elisp, and is such so much faster.
   )
 #+END_SRC
 
-** lsp-mode (lsp server)
+** lsp-mode
 This is the main lsp-interface for emacs.
 It is more complicated then eglot, but has the advantage of
 working over tramp. 
@@ -678,10 +679,10 @@ working over tramp.
   :init
   (setq lsp-prefer-capf nil
 		lsp-server-install-dir (concat user-emacs-directory "lsp")
-		lsp-rust-server 'rust-analyzer
+		lsp-enable-completion-at t
 		lsp-auto-guess-root t)
-  :hook ((c-mode c++-mode objc-mode bash-mode 
-				 python-mode rust-mode typescript-mode)
+  :hook ((c-mode c++-mode objc-mode bash-mode
+				 python-mode typescript-mode)
 		 .
 		 lsp)
   :commands (lsp)
@@ -761,8 +762,7 @@ again. This is necessary because otherwise it gets called repeatedly.
   (if (version<= "26.0.50" emacs-version)
       ;;; display-line-numbers-mode was added in v26, so if earlier, we default to linum-mode
       (display-line-numbers-mode 1) ; displays line numbers on the left
-    (linum-mode 1) 
-    )
+    (linum-mode 1))
   (flyspell-prog-mode) ;this tells flyspell to not complain about variable names
 
   (eldoc-mode 1)
@@ -923,54 +923,19 @@ Simple setup for emacs-lisp mode. Does very little.
 #+END_SRC
 
 ** Rust
-Configure rust, enabling rust-mode, cargo-mode, flycheck-rust, and company-racer.
+Configure rust, enabling rustic-mode, cargo-mode, flycheck-rust, and company-racer.
 #+BEGIN_SRC emacs-lisp
-(use-package flycheck-rust
+(use-package rustic
   :straight t
-  :hook (rust-mode . flycheck-rust-setup)
-  :config
-  (flycheck-mode +1)
-  (flycheck-rust-setup)
-  )
-
-;; Provides Cargo integration
-(use-package cargo
-  :straight t
-  :hook (rust-mode . cargo-minor-mode)
-  :config
-  (cargo-minor-mode 1)
-  (setq cargo-process--enable-rust-backtrace t)
-  (setq cargo-process--command-build "build --verbose")
-  (setq cargo-process--command-run "run --verbose")
-  )
-
-;; Compamny integration with racer (rust backend completion client)
-(use-package racer
-  :straight t
-  :hook ((rust-mode . racer-mode))
-  :init
-  (setq company-racer-executable "racer")
-  :config
-  (company-mode +1)
-  (eldoc-mode +1)
-  )
-
-;; Rust Major Mode
-(use-package rust-mode
-  :straight t
-  :mode ("\\.rs\\'" . rust-mode)
   :init
   (add-to-path "~/.cargo/bin")
-  (let ((rust-root-path (string-trim
-		 (shell-command-to-string "rustc --print sysroot"))))
-  (setq racer-rust-src-path
-	(concat rust-root-path "/lib/rustlib/src/rust/src"))
-  (setq rust-rustfmt-bin (concat rust-root-path "/bin/rustfmt")))
   :config
-  (setq rust-format-on-save t
-	whitespace-line-column 98)
+  (setq
+   rustic-lsp-server 'rust-analyzer
+   rustic-lsp-client 'lsp-mode
+   rustic-format-trigger 'on-save
+   whitespace-line-column 98)
   )
-
 #+END_SRC
 
 ** Python
