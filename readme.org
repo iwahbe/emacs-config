@@ -2,22 +2,33 @@
 This is my emacs configuration file. It should work for all modern versions, and
 is tested on version 26, 27 and 28. I make heavy use of =use-package= and
 =straight.el=. 
-
+  
 
 * Getting Started
 This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
 ~/.emacs.d=. The =cp= into the file and type =make tangle; make hooks=. Then
-=emacs= will work as expected. I assume that =git= and =make= are installed.
+=emacs= will work as expected. 
+  
+** Dependencies
+- For the basic install
+  - =git=
+  - =make=
+  - For =vterm=, =libtool= must be installed.
+    - On MacOS, =glibtool= is needed.
+	- =vterm= might hang emacs on a bad install
+- For other packages
+  - some packages will be disabled until their relevant components are installed.
+  - These packages are discoverable by searching for =:if (executable-find "dependencie")=
 
-
+	
 * Preliminary
-This loads frameworks necessary for much of the following settings.  This
-section should be used only for packages that must be loaded before everything
-else.
+  This loads frameworks necessary for much of the following settings.  This
+  section should be used only for packages that must be loaded before everything
+  else.
 ** Path Control
 We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula, which is
 my most common command line tool location.
-#+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp
 (defun add-to-path (path-string &optional appendp)
   "Takes a path string, expands it, and adds it to exec path and PATH"
   (let* ((new-path (expand-file-name path-string))
@@ -120,7 +131,6 @@ Purely cosmetic changes. Nothing else.
 #+END_SRC
 
 ** Theme and Windowing
-humanoid-dark theme
 #+BEGIN_SRC  emacs-lisp
 (use-package humanoid-themes
   :straight (humanoid-themes :host github :repo "humanoid-colors/emacs-humanoid-themes")
@@ -183,47 +193,47 @@ I use a font called [[https://github.com/tonsky/FiraCode/wiki][Fira Code]]. This
 ligatures. The [[https://github.com/tonsky/FiraCode/issues/211#issuecomment-239058632][fira code wiki]] has instructions has advice for setting up on
 emacs.
 
+The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instructions#using-composition-mode-in-emacs-mac-port][here]]
 #+BEGIN_SRC emacs-lisp
-;; code grabbed from: 
-;; https://github.com/tonsky/FiraCode/wiki/Emacs-instructions#using-composition-mode-in-emacs-mac-port
-(add-to-list 'default-frame-alist
-			 '(font . "Fira Code"))
-(let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
-               (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
-               (36 . ".\\(?:>\\)")
-               (37 . ".\\(?:\\(?:%%\\)\\|%\\)")
-               (38 . ".\\(?:\\(?:&&\\)\\|&\\)")
-               (42 . ".\\(?:\\(?:\\*\\*/\\)\\|\\(?:\\*[*/]\\)\\|[*/>]\\)")
-               (43 . ".\\(?:\\(?:\\+\\+\\)\\|[+>]\\)")
-               (45 . ".\\(?:\\(?:-[>-]\\|<<\\|>>\\)\\|[<>}~-]\\)")
-               (46 . ".\\(?:\\(?:\\.[.<]\\)\\|[.=-]\\)")
-               (47 . ".\\(?:\\(?:\\*\\*\\|//\\|==\\)\\|[*/=>]\\)")
-               (48 . ".\\(?:x[a-zA-Z]\\)")
-               (58 . ".\\(?:::\\|[:=]\\)")
-               (59 . ".\\(?:;;\\|;\\)")
-               (60 . ".\\(?:\\(?:!--\\)\\|\\(?:~~\\|->\\|\\$>\\|\\*>\\|\\+>\\|--\\|<[<=-]\\|=[<=>]\\||>\\)\\|[*$+~/<=>|-]\\)")
-               (61 . ".\\(?:\\(?:/=\\|:=\\|<<\\|=[=>]\\|>>\\)\\|[<=>~]\\)")
-               (62 . ".\\(?:\\(?:=>\\|>[=>-]\\)\\|[=>-]\\)")
-               (63 . ".\\(?:\\(\\?\\?\\)\\|[:=?]\\)")
-               (91 . ".\\(?:]\\)")
-               (92 . ".\\(?:\\(?:\\\\\\\\\\)\\|\\\\\\)")
-               (94 . ".\\(?:=\\)")
-               (119 . ".\\(?:ww\\)")
-               (123 . ".\\(?:-\\)")
-               (124 . ".\\(?:\\(?:|[=|]\\)\\|[=>|]\\)")
-               (126 . ".\\(?:~>\\|~~\\|[>=@~-]\\)")
-               )
-             ))
-  (dolist (char-regexp alist)
-    (set-char-table-range composition-function-table (car char-regexp)
-                          `([,(cdr char-regexp) 0 font-shape-gstring]))))
+(when (x-list-fonts "Fira Code")
+  (add-to-list 'default-frame-alist
+			   '(font . "Fira Code"))
+  (let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
+				 (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
+				 (36 . ".\\(?:>\\)")
+				 (37 . ".\\(?:\\(?:%%\\)\\|%\\)")
+				 (38 . ".\\(?:\\(?:&&\\)\\|&\\)")
+				 (42 . ".\\(?:\\(?:\\*\\*/\\)\\|\\(?:\\*[*/]\\)\\|[*/>]\\)")
+				 (43 . ".\\(?:\\(?:\\+\\+\\)\\|[+>]\\)")
+				 (45 . ".\\(?:\\(?:-[>-]\\|<<\\|>>\\)\\|[<>}~-]\\)")
+				 (46 . ".\\(?:\\(?:\\.[.<]\\)\\|[.=-]\\)")
+				 (47 . ".\\(?:\\(?:\\*\\*\\|//\\|==\\)\\|[*/=>]\\)")
+				 (48 . ".\\(?:x[a-zA-Z]\\)")
+				 (58 . ".\\(?:::\\|[:=]\\)")
+				 (59 . ".\\(?:;;\\|;\\)")
+				 (60 . ".\\(?:\\(?:!--\\)\\|\\(?:~~\\|->\\|\\$>\\|\\*>\\|\\+>\\|--\\|<[<=-]\\|=[<=>]\\||>\\)\\|[*$+~/<=>|-]\\)")
+				 (61 . ".\\(?:\\(?:/=\\|:=\\|<<\\|=[=>]\\|>>\\)\\|[<=>~]\\)")
+				 (62 . ".\\(?:\\(?:=>\\|>[=>-]\\)\\|[=>-]\\)")
+				 (63 . ".\\(?:\\(\\?\\?\\)\\|[:=?]\\)")
+				 (91 . ".\\(?:]\\)")
+				 (92 . ".\\(?:\\(?:\\\\\\\\\\)\\|\\\\\\)")
+				 (94 . ".\\(?:=\\)")
+				 (119 . ".\\(?:ww\\)")
+				 (123 . ".\\(?:-\\)")
+				 (124 . ".\\(?:\\(?:|[=|]\\)\\|[=>|]\\)")
+				 (126 . ".\\(?:~>\\|~~\\|[>=@~-]\\)")
+				 )
+			   ))
+	(dolist (char-regexp alist)
+	  (set-char-table-range composition-function-table (car char-regexp)
+							`([,(cdr char-regexp) 0 font-shape-gstring])))))
 #+END_SRC
 
 
 * Universal Alterations
-These packages change the normal function of emacs in all major modes. 
+  These packages change the normal function of emacs in all major modes. 
 ** Universal Variables
-Sets up helpful universal variables.
+   Sets up helpful universal variables.
 #+BEGIN_SRC emacs-lisp
 (setq-default fill-column 80)
 (setq-default sentence-end "[\\.\\?\\!] +")
@@ -231,12 +241,12 @@ Sets up helpful universal variables.
 #+END_SRC
 
 ** Evil: Extensible VI Layer
-I'm trying out EVIL, because reasons.
+   I'm trying out EVIL, because reasons.
 #+BEGIN_SRC emacs-lisp
 (use-package evil
   :straight t
   :bind
-  ("C-\\" . 'evil-toggle)
+  (("C-\\" . 'evil-toggle))
   :init
   (setq evil-toggle-key (kbd ""))
   :bind (
@@ -268,8 +278,8 @@ I'm trying out EVIL, because reasons.
 #+END_SRC
 
 ** Yasnippet
-yasnippet allows snippet expansion
-Snippets are kept in the folder described by "yas-snippet-dirs"
+   yasnippet allows snippet expansion
+   Snippets are kept in the folder described by =yas-snippet-dirs=
 #+BEGIN_SRC emacs-lisp
 (use-package yasnippet
   :straight t
@@ -299,11 +309,10 @@ Snippets are kept in the folder described by "yas-snippet-dirs"
 #+END_SRC
 
 ** Rename-Current-Buffer Function
-Function to rename the file in the current buffer.
+   Function to rename the file in the current buffer. I found this [[From http://whattheemacsd.com/][here]].
 #+BEGIN_SRC emacs-lisp
 (defun rename-current-buffer-file ()
   "Renames current buffer and file it is visiting."
-  ;;From http://whattheemacsd.com/
   (interactive)
   (let ((name (buffer-name))
         (filename (buffer-file-name)))
@@ -324,8 +333,8 @@ Function to rename the file in the current buffer.
 #+END_SRC
 
 ** FlyCheck
-FlyCheck provides dynamic error highlighting from multiple backends.
-Notes on use:
+   FlyCheck provides dynamic error highlighting from multiple backends.
+   Notes on use:
 - "C-c ! v" provides a diagnosis for flycheck
 - "C-c ! n" & "C-c ! p" navigate to errors
 - "C-c ! l" provides an error list for the current buffer
@@ -339,7 +348,7 @@ Notes on use:
 #+END_SRC
 
 ** FlyMake
-Used for dependencies, eglot among others
+   Used for dependencies, eglot among others
 #+BEGIN_SRC emacs-lisp
 (use-package flymake
   :straight t
@@ -347,14 +356,13 @@ Used for dependencies, eglot among others
 #+END_SRC
 
 ** Helm
-I use helm for fuzzy searching among known options
+   I use helm for fuzzy searching among known options
 #+BEGIN_SRC emacs-lisp
 (use-package helm
   :straight t
   :config
   (helm-mode 1)
   (setq helm-default-display-buffer-functions '(display-buffer-in-side-window))
-  (global-set-key (kbd "M-x") 'helm-M-x)
   (global-set-key (kbd "C-x C-f") 'helm-find-files)
   :bind (:map helm-occur-map ("C-h c" . #'describe-key-briefly))
   )
@@ -387,7 +395,7 @@ I use helm for fuzzy searching among known options
 #+END_SRC
 
 ** Ido (disabled)
-Ido provides a great navigation experience with the find-file command.
+   Ido provides a great navigation experience with the find-file command. TODO: remove
 #+BEGIN_SRC emacs-lisp
 
 ;; Interactively Do Things
@@ -401,7 +409,7 @@ Ido provides a great navigation experience with the find-file command.
 #+END_SRC
 
 ** Global Key Bindings
-We maintain a list of common key-bindings to activate in all modes
+   We maintain a list of common key-bindings to activate in all modes
 #+BEGIN_SRC emacs-lisp
 (defun current-line-length ()
   (save-excursion
@@ -443,7 +451,7 @@ We maintain a list of common key-bindings to activate in all modes
 (global-set-key (kbd "s-o") nil) ;used to be ns-open-file-using-panel
 (eval-after-load 'doc-view
   (lambda () (define-key doc-view-mode-map (kbd "C-r") 'image-scroll-down)))
-
+(global-set-key (kbd "M-x") nil) ; used to be pallet
 #+END_SRC
 
 ** Very Minor Modes
@@ -519,7 +527,7 @@ There is a collection of minor modes that trigger after other major modes load.
 ;;Very Large Files
 (use-package vlf
   :straight t
-  :config
+  :init
   (require 'vlf-setup) ;not a seperate package, just pre-loading
   (custom-set-variables
    '(vlf-application 'dont-ask))
@@ -603,7 +611,7 @@ Multiple cursors should be self-explanatory.
 #+BEGIN_SRC emacs-lisp
 (use-package multiple-cursors
   :straight t
-  :defer t
+  :if window-system
   :bind
   (("C->" . mc/mark-next-like-this)
    ("C-<" . mc/mark-previous-like-this)
@@ -647,16 +655,6 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
 )
 #+END_SRC
 
-** Fill Column Indicator
-#+BEGIN_SRC emacs-lisp
-(use-package whitespace-mode
-  :hook ((prog-mode))
-  :init
-  (setq whitespace-line-column 80
-   whitespace-style '(face lines-tail))
-)
-#+END_SRC
-
 ** Vterm
 Vterm is a alternative terminal-emulator, to be used instead of ansii-term. 
 It runs primarily in C instead of elisp, and is such so much faster. 
@@ -681,7 +679,7 @@ working over tramp.
 		lsp-server-install-dir (concat user-emacs-directory "lsp")
 		lsp-enable-completion-at t
 		lsp-auto-guess-root t)
-  :hook ((c-mode c++-mode objc-mode bash-mode
+  :hook ((c-mode c++-mode objc-mode bash-mode js2-mode ;rustic relies on lsp
 				 python-mode typescript-mode)
 		 .
 		 lsp)
@@ -734,7 +732,7 @@ working over tramp.
 
 * Major Modes
 This contains a set of mutually exclusive Major Modes packages, along with their associated settings. 
-** Fundamental-Mode
+** Lisp-Interaction-Mode
 For setting up lisp-interaction-mode: the scratch buffer
 #+BEGIN_SRC emacs-lisp
 (add-hook 'lisp-interaction-mode-hook (lambda ()
@@ -849,8 +847,9 @@ ESS (Emacs Speaks Statistics) is a major mode that facilitates S type statistics
   :mode (("\\.r\\'" . ess-r-mode)
 	 ("\\.Rmd\\'" . ess-r-mode)
 	 ("\\.R\\'" . ess-r-mode))
+  :if (executable-find "R")
   :config
-  (setq inferior-ess-r-program "/usr/local/bin/R")
+  (setq inferior-ess-r-program (executable-find "R"))
   ;; We assume the ability to generate graphs using a WindowsX(QuartsX) program.
   (setq ess-dialect "R")
   (setq ess-ask-for-ess-directory nil) ; directory defaults to whatever ess-directory-function returns
@@ -871,17 +870,17 @@ org-mode does most of what markdown does.
   :defer t
   :commands (markdown-mode gfm-mode)
   :mode (("README\\.md\\'" . gfm-mode)
-  	 ("\\.md\\'" . markdown-mode)
-  	 ("\\.markdown\\'" . markdown-mode))
+		 ("\\.md\\'" . markdown-mode)
+		 ("\\.markdown\\'" . markdown-mode))
   :hook ((markdown-mode . (lambda ()
-			    (yas-activate-extra-mode 'text-mode)
-			    (display-line-numbers-mode -1)
-			    (visual-line-mode 1))))
+							(yas-activate-extra-mode 'text-mode)
+							(display-line-numbers-mode -1)
+							(visual-line-mode 1))))
   :init
-  (setq markdown-command "/usr/local/bin/multimarkdown")
+  (setq markdown-command (executable-find "multimarkdown"))
   (let (extension (file-name-extension (buffer-file-name)))
-  (if (or (equal "md" extension) (equal "markdown" extension))
-  (setq markdown-enable-math t)))
+	(if (or (equal "md" extension) (equal "markdown" extension))
+		(setq markdown-enable-math t)))
   :config
   (add-to-path "/Library/TeX/texbin/" t)
   )
@@ -892,22 +891,21 @@ I use sly as my lisp editor
 #+BEGIN_SRC emacs-lisp
 (use-package sly
   :straight t
-  :defer t
+  :if (executable-find "clisp")
   :mode (("\\.lisp\\'" . sly-mode))
-  :hook ((sly-mode . (lambda () (prettify-symbols-mode +1)))) ;lambda is necessary to call with arguments
+  :hook ((sly-mode . (lambda () (prettify-symbols-mode +1))))
   :config
   ;; The check prevents setting a new editor at compile time
   (prettify-symbols-mode +1)
   (modify-syntax-entry ?- "w" lisp-mode-syntax-table)
-  (lisp-mode)
   (if (string-suffix-p ".lisp" buffer-file-name)
-      (setq inferior-lisp-program "/usr/local/bin/clisp"))
+      (setq inferior-lisp-program (executable-find "clisp")))
   (define-key sly-prefix-map (kbd "M-h") 'sly-documentation-lookup)
-  (setq sly-lisp-implementations '(
-	  (clisp ("/usr/local/bin/clisp"))
+  (setq sly-lisp-implementations `(
+	  (clisp (,(executable-find "clisp")))
 	  ))
   (setq sly-default-lisp 'clisp)
-  (sly)
+  (sly-mode)
   )
 #+END_SRC
 
@@ -984,17 +982,20 @@ Setup shell, highlights, and python-mode. Most work is handled by a lsp-server
 
 (use-package python
   :mode (("\\.py\\'" . python-mode))
+  :if (or (executable-find "python") (executable-find "python3"))
   :init
   (setq python-indent-guess-indent-offset t)
   (setq python-indent-guess-indent-offset-verbose nil)
   :config
-  (set-shell-python3)
+  (when (executable-find "python3")
+	(set-shell-python3))
   )
 
 
 #+END_SRC
 
-*** autopep8 enable on save
+*** autopep8 enable on save	
+My autopep8 version
 #+BEGIN_SRC emacs-lisp
 (define-minor-mode autopep8
   "Toggle autopep8 enable on save"
@@ -1054,11 +1055,6 @@ Setup shell, highlights, and python-mode. Most work is handled by a lsp-server
 ** LaTeX
 Sets up latex support along with a collection of skeletons for latex. This is also mostly replaced by org-mode
 #+BEGIN_SRC emacs-lisp
-(straight-use-package '(format-latex-mode
-			:host github :repo "iwahbe/format-latex"))
-(add-hook 'LaTeX-mode-hook 'format-latex-mode)
-
-
 (use-package tex
   :straight auctex
   :defer t
@@ -1079,77 +1075,48 @@ Sets up latex support along with a collection of skeletons for latex. This is al
 #+END_SRC
 
 ** Javascript
-Setup for my JavaScript IDE.
 #+BEGIN_SRC emacs-lisp
 (use-package xref-js2
   :after (js2-mode)
   :straight t
   )
 
-(use-package tern
-  ;; Start with "npm install -g tern" in the terminal
-  :after (js2-mode)
-  :straight t
-  :hook ((js2-mode . (lambda () (tern-mode 1))))
-  )
-
-(use-package company-tern
-  :after (js2-mode)
-  :straight t
-  :config
-  (add-company-backend 'company-tern)
-  )
-
-(use-package indium
-  :after (js2-mode)
-  :straight t
-  )
-
 (use-package js2-mode
   :straight t
+  ;; uses lsp-mode
   :mode (("\\.js\\'" . js2-mode))
   )
 #+END_SRC
 
 ** Haskell
-Haskell is a functional language
-ghc functions as a backend for Haskell, company-ghc hooks that into company, providing smart and real-time completion. Haskell-mode provides the from of the Haskell IDE.
+Instructions on installing the haskell-language server can be found [[https://github.com/haskell/haskell-language-server#installation][here]].
 #+BEGIN_SRC emacs-lisp
-(use-package ghc
+(add-to-path "~/.cabal/bin")
+(use-package lsp-haskell
   :straight t
-  :hook((haskell-mode . ghc-init))
-  )
-
-(use-package company-ghc
-  :straight t
-  :after (ghc-mode company-mode)
+  :if (executable-find "haskell-language-server")
   :config
-  (add-company-backend 'company-ghc)
-  (setq company-ghc-show-module t)
-  )
-
+  (setq lsp-haskell-process-path-hie (executable-find "haskell-language-server-wrapper"))
+ )
 (use-package haskell-mode
   :straight t
   :defer t
   :config
-  (custom-set-variables
-   '(haskell-stylish-on-save t))
+  (setq haskell-stylish-on-save t)
   )
 #+END_SRC
 
 ** C/C++
-
 #+BEGIN_SRC emacs-lisp
-
 (use-package clang-format
   :straight t
+  :if (executable-find "clang-format")
   :defer t
   :init
   (setq clang-format-style "file")
-  ;; (add-hook 'c++-mode-hook 'clang-format-buffer)
-  ;; (add-hook 'c-mode-hook 'clang-format-buffer)
   :config
   (defun clang-format-safe-buffer ()
+	"Prevents clang-format from working outside it's mode"
     (interactive)
     (when (or
 		   (and (eql major-mode 'c-mode) (equal c-file-style nil))
@@ -1311,7 +1278,7 @@ Binds "M-p" to a function that switches .cc type files with .hh type files.
 #+END_SRC
 
 ** CMake
-CMake files suck, there should be a major mode for them:
+   CMake files suck, there should be a major mode for them:
 #+BEGIN_SRC emacs-lisp
 (use-package cmake-mode
   :defer t
@@ -1321,7 +1288,7 @@ CMake files suck, there should be a major mode for them:
 #+END_SRC
 
 ** ASM (assembly)
-For writing assembly
+   For writing assembly
 #+BEGIN_SRC emacs-lisp
 (defun my-asm-setup-mode ()
   (define-key asm-mode-map (kbd "C-j") 'backward-word)
@@ -1333,7 +1300,7 @@ For writing assembly
 ** ansi-term
 #+BEGIN_SRC emacs-lisp
 (use-package term
-  ;; Note: No ensure
+  ;; ensure: nil
   :bind (:map term-mode-map
 	      ("M-p" . term-send-up)
 	      ("M-n" . term-send-down)
@@ -1365,7 +1332,6 @@ For writing assembly
 #+END_SRC
 
 ** TypeScript
-
 #+BEGIN_SRC emacs-lisp
 (use-package typescript-mode
   :straight t)
