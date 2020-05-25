@@ -18,4 +18,10 @@ hooks:
 dict:
 	git clone git://anongit.freedesktop.org/libreoffice/dictionaries
 
+pyls:
+	@read -p "Python command to install under: " pcommand; \
+	$$pcommand -m pip install python-language-server
+
 init: tangle hooks dict
+
+servers: pyls

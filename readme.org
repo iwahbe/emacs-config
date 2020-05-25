@@ -31,37 +31,38 @@ This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
   section should be used only for packages that must be loaded before everything
   else.
 ** Path Control
-We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula, which is
-my most common command line tool location.
-   #+BEGIN_SRC emacs-lisp
+   We want emacs to work like the terminal version for maximum consistancy. This is where brew puts its formula, which is
+   my most common command line tool location.
+#+BEGIN_SRC emacs-lisp
 (defun add-to-path (path-string &optional appendp)
-  "Takes a path string, expands it, and adds it to exec path and PATH"
+  "Takes a path string, and if valid, expands it, adding to `exec-path' and `PATH'"
   (let* ((new-path (expand-file-name path-string))
-	 (env-path (getenv "PATH")))
+		 (env-path (getenv "PATH")))
     (if (file-accessible-directory-p path-string)
-	(add-to-list 'exec-path new-path appendp)
+		(add-to-list 'exec-path new-path appendp)
       
       (if (not (member new-path (split-string env-path ":")))
-	  (if appendp
-	      (setenv "PATH" (concat env-path ":" new-path))
-	    (setenv "PATH" (concat new-path ":" env-path)))))))
+		  (if appendp
+			  (setenv "PATH" (concat env-path ":" new-path))
+			(setenv "PATH" (concat new-path ":" env-path)))))))
 
-
+(add-to-path "~/.cargo/bin") ; rust programs
 (add-to-path "/usr/local/bin")
+(add-to-path "/usr/local/sbin")
 (add-to-path "~/.local/bin")
 #+END_SRC
 
 ** Custom: Not in init.el
-We set the custom package to it's own file, instead of polluting our init.el file.
-Also, init.el is reset on tangle away on tangle.
+   We set the custom package to it's own file, instead of polluting our init.el file.
+   Also, init.el is reset on tangle away on tangle.
 #+BEGIN_SRC emacs-lisp
 (setq custom-file (expand-file-name (concat user-emacs-directory "custom.el")))
-(unless (file-exists-p custom-file) (write-region "" "" custom-file))
-(load custom-file)
+(unless (file-exists-p custom-file)
+  (write-region "" "" custom-file) (load custom-file))
 #+END_SRC
 
 ** Package Manager: Straight
-[[https://github.com/raxod502/straight.el][straight.el]] is a package manager.
+   [[https://github.com/raxod502/straight.el][straight.el]] is a package manager.
 - A benefit is that packages installed are defined entirely by this file.
 - unfortunately, straight.el is normally slower then package.el, because it checks for changes in source material. This
   can be overcome by setting check-for-modifications to be based on file saves, instead of actual changes.
@@ -81,16 +82,12 @@ Also, init.el is reset on tangle away on tangle.
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 ;;ensures both that use-package is installed and works with straight.el
-(defvar package-count 0 "The number of packages loaded by 'use-package.")
-(defun incr-package-count (&rest args)(setq package-count (1+ package-count)))
-(advice-add 'use-package :after #'incr-package-count)
 (straight-use-package 'use-package)
-
 #+END_SRC
 
 ** Tangle init.org on save
-We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed.
-The part that performed the byte-compile is currently disabled as it caused problems with use-package.
+   We want init.org to have special behavior, specifically we want init.org to tangle to a .el file then byte compile for loading speed.
+   The part that performed the byte-compile is currently disabled as it caused problems with use-package.
 #+BEGIN_SRC emacs-lisp
 (eval-and-compile
   (defvar do-byte-compile nil "If this file should be byte-compiled after tangled"))
@@ -108,6 +105,7 @@ The part that performed the byte-compile is currently disabled as it caused prob
 #+END_SRC 
 
 ** Speed
+   We make it faster.
 #+BEGIN_SRC emacs-lisp
   (setq gc-cons-threshold 100000000)
   (setq read-process-output-max (* 1024 1024)) ;; 1mb
@@ -115,7 +113,7 @@ The part that performed the byte-compile is currently disabled as it caused prob
 
 
 * Cosmetics
-Purely cosmetic changes. Nothing else.
+  Purely cosmetic changes. Nothing else.
 ** Minimize Graphics
 #+BEGIN_SRC emacs-lisp
 (use-package emacs
@@ -123,16 +121,13 @@ Purely cosmetic changes. Nothing else.
   (if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
   (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
   (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
-  ;; No splash screen please ... jeez
-  (setq inhibit-startup-message t)
-  (setq initial-scratch-message "")
+  (setq inhibit-startup-message t
+		initial-scratch-message "")
   (blink-cursor-mode -1)
   ;; The error bell is really annoying
   (setq ring-bell-function 'ignore)
   ;;Fringes are not space efficiant
-  (set-fringe-mode 0)
-)
-;; Turn off mouse interface early in startup to avoid momentary display
+  (set-fringe-mode 0))
 #+END_SRC
 
 ** Theme and Windowing
@@ -141,8 +136,7 @@ Purely cosmetic changes. Nothing else.
   :straight (humanoid-themes :host github :repo "humanoid-colors/emacs-humanoid-themes")
   :when (or window-system (daemonp))
   :config
-  (load-theme 'humanoid-dark t)
- )
+  (load-theme 'humanoid-dark t))
 #+END_SRC
 
 
@@ -150,7 +144,6 @@ We setup preferences for the mode-line.
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
 Feebleline is a package to replace the mode-line with the echo area. 
 #+BEGIN_SRC emacs-lisp
-
 (use-package feebleline
   :straight t
   :config
@@ -159,38 +152,37 @@ Feebleline is a package to replace the mode-line with the echo area.
     (format "[%s]" (substring (format-time-string "%b %d %T") 0 -3))
     )
   ;; Note: any function that returns a string is acceptable to feebleline
+  (require 'font-lock)
   (setq feebleline-msg-functions
-	'((feebleline-line-number         :post "" :fmt "%5s")
-	  (feebleline-column-number       :pre ":" :fmt "%-2s")
-	  (feebleline-file-directory      :face feebleline-dir-face :post "")
-	  (feebleline-file-or-buffer-name :face font-lock-keyword-face :post "")
-	  (feebleline-file-modified-star  :face font-lock-warning-face :post "")
-	  (feebleline-git-branch          :face feebleline-git-face :pre " : ")
-	  (feebleline-project-name        :pre "[" :post "]" :align right)
-	  (my-feebleline-time             :align right)
-	  ))
-  (feebleline-mode 1)
-  )
-
+		'((feebleline-line-number         :post "" :fmt "%5s")
+		  (feebleline-column-number       :pre ":" :fmt "%-2s")
+		  (feebleline-file-directory      :face feebleline-dir-face :post "")
+		  (feebleline-file-or-buffer-name :face font-lock-keyword-face :post "")
+		  (feebleline-file-modified-star  :face font-lock-warning-face :post "")
+		  (feebleline-git-branch          :face feebleline-git-face :pre " : ")
+		  (feebleline-project-name        :pre "[" :post "]" :align right)
+		  (my-feebleline-time             :align right)
+		  ))
+  (feebleline-mode +1))
 #+END_SRC
 
 Setup normal graphics
 #+BEGIN_SRC emacs-lisp
-  (setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
-  (setq display-time-24hr-format t)
-  (setq display-time-day-and-date t)
-  (display-time-mode 1); does not change in real time, so all settings must be assigned before
+(setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
+(setq display-time-24hr-format t)
+(setq display-time-day-and-date t)
+(display-time-mode 1); does not change in real time, so all settings must be assigned before
 
-  (require 'battery)
-  (when (and battery-status-function
-	     (not (string-match-p "N/A"
-				  (battery-format "%B"
-						  (funcall battery-status-function)))))
-    (display-battery-mode 1))
-  ;; Frame manipulation bindings
-  (global-set-key (kbd "s-t") 'make-frame)
-  (global-set-key (kbd "s-w") 'delete-frame)
-  (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
+(require 'battery)
+(when (and battery-status-function
+	       (not (string-match-p "N/A"
+								(battery-format "%B"
+												(funcall battery-status-function)))))
+  (display-battery-mode 1))
+;; Frame manipulation bindings
+(global-set-key (kbd "s-t") 'make-frame)
+(global-set-key (kbd "s-w") 'delete-frame)
+(global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
 #+END_SRC
 
 ** Fira-Code (graphics only)
@@ -270,16 +262,13 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
 	    )
       (if prefix-p
 	  (evil-mode)
-	(evil-ex)
-	)))
-  )
+	(evil-ex)))))
 
 ;;; Evil expects undo-tree
 (use-package undo-tree
   :straight t
   :config
-  (global-undo-tree-mode 0)
-  )
+  (global-undo-tree-mode 0))
 #+END_SRC
 
 ** Yasnippet
@@ -303,14 +292,12 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
 		'(:with company-yasnippet))))
 
     (setq company-backends (mapcar #'company-mode/backend-with-yas
-				   company-backends))
-    )
+				   company-backends)))
   :config
   (setup-yas-company)
   (yas-global-mode 1)
   (define-key yas-minor-mode-map [(tab)] nil)
-  (define-key yas-minor-mode-map (kbd "TAB") nil)
-)
+  (define-key yas-minor-mode-map (kbd "TAB") nil))
 #+END_SRC
 
 ** Rename-Current-Buffer Function
@@ -348,16 +335,13 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
 (use-package flycheck
   :straight t
   :config
-  (global-flycheck-mode +1)
-  )
+  (global-flycheck-mode +1))
 #+END_SRC
 
 ** FlyMake
    Used for dependencies, eglot among others
 #+BEGIN_SRC emacs-lisp
-(use-package flymake
-  :straight t
-  )
+(use-package flymake :straight t)
 #+END_SRC
 
 ** Helm
@@ -369,8 +353,7 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
   (helm-mode 1)
   (setq helm-default-display-buffer-functions '(display-buffer-in-side-window))
   (global-set-key (kbd "C-x C-f") 'helm-find-files)
-  :bind (:map helm-occur-map ("C-h c" . #'describe-key-briefly))
-  )
+  :bind (:map helm-occur-map ("C-h c" . #'describe-key-briefly)))
 
 (use-package ag :straight t)
 
@@ -386,30 +369,24 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
       (if (equal do-ag 2) (helm-do-ag-buffers)
 	  (if do-ag (helm-do-ag-project-root)
 	    (isearch-forward)))))
-  (global-set-key (kbd "C-s") 'search-selector)
-  )
+  (global-set-key (kbd "C-s") 'search-selector))
 
 (use-package helm-company
   :straight t
   :after (company helm)
   :config
   (define-key company-mode-map (kbd "C-;") 'helm-company)
-  (define-key company-active-map (kbd "C-;") 'helm-company)
-  )
-
+  (define-key company-active-map (kbd "C-;") 'helm-company))
 #+END_SRC
 
 ** Ido (disabled)
    Ido provides a great navigation experience with the find-file command. TODO: remove
 #+BEGIN_SRC emacs-lisp
-
-;; Interactively Do Things
 (use-package ido
   :disabled
   :straight t
   :config
-  (ido-mode t)
-  )
+  (ido-mode t))
 (setq read-file-name-completion-ignore-case nil)
 #+END_SRC
 
@@ -471,8 +448,8 @@ There is a collection of minor modes that trigger after other major modes load.
 - helm and helm-company provide fuzzy completion on system searches
 - smartparens gives (semi) smart paired symbol insertion
 - VLF (Very Large Files)
+  
 #+BEGIN_SRC emacs-lisp
-
 ;; Save point position between sessions
 (require 'saveplace)
 (save-place-mode 1)
@@ -480,19 +457,16 @@ There is a collection of minor modes that trigger after other major modes load.
 
 (use-package expand-region
   :straight t
-  :bind (("C-=" . 'er/expand-region))
-  )
+  :bind (("C-=" . 'er/expand-region)))
 
 (use-package ace-window
   :straight t
   :config (setq aw-scope 'frame)
-  :bind (("M-o" . ace-window))
-  )
+  :bind (("M-o" . ace-window)))
 
 (use-package zoom
   :straight t
-  :config (zoom-mode 1)
-  )
+  :config (zoom-mode 1))
 
 ;; typing replaces the active region
 (pending-delete-mode +1)
@@ -502,22 +476,18 @@ There is a collection of minor modes that trigger after other major modes load.
   :straight t
   :hook ((LaTeX-mode ess-mode markdown-mode) . wc-mode)
   :config
-  (wc-mode 1)
-  )
+  (wc-mode 1))
 
 ;;electric-operator adds spaces before and after opperator symbols
 (use-package electric-operator
   :straight t
-  :hook ((ess-mode) . electric-operator-mode)
-  :config
-  )
+  :hook ((ess-mode) . electric-operator-mode))
 
 (use-package define-word
   :straight t
   :config
   (global-set-key (kbd "C-c d") 'define-word-at-point)
-  (global-set-key (kbd "C-c D") 'define-word)
-  )
+  (global-set-key (kbd "C-c D") 'define-word))
 
 (use-package smartparens
   :straight t
@@ -525,17 +495,14 @@ There is a collection of minor modes that trigger after other major modes load.
   (sp-pair "(" ")" :unless '(sp-point-before-word-p))
   (add-hook 'c-mode-hook (lambda () (sp-pair "'" nil :actions :rem)))
   (add-hook 'emacs-lisp-mode-hook (lambda () (sp-pair "'" nil :actions :rem)))
-  (smartparens-global-mode +1)
-  )
+  (smartparens-global-mode +1))
 
 ;;Very Large Files
 (use-package vlf
   :straight t
   :init
   (require 'vlf-setup) ;not a seperate package, just pre-loading
-  (custom-set-variables
-   '(vlf-application 'dont-ask))
-  )
+  (setq vlf-application 'dont-ask))
 
 ;; show-paren mode highlights matching parentheses
 (setq show-paren-style 'parenthesis)
@@ -549,14 +516,12 @@ There is a collection of minor modes that trigger after other major modes load.
 (use-package magit
   :straight t
   :defer (not (daemonp))
-  :bind (("C-x g" . magit-status))
-  )
+  :bind (("C-x g" . magit-status)))
 
 (use-package magit-todos
   :straight t
   :after magit
-  :config (magit-todos-mode +1)
-  )
+  :config (magit-todos-mode +1))
 
 (use-package forge
   :straight t
@@ -576,14 +541,15 @@ customizations are module specific. Here, we only call the main version.
     ;; (add-to-list 'company-backends `(,symbol-list . '(:with company-yasnippet)))
 	(add-to-list 'company-backends (append (if (consp backend) backend (list backend))
 					       '(:with company-yasnippet))
-		     add-to-back)
-    )
+				 add-to-back))
+  
   :config
   (setq company-minimum-prefix-length 1)
   (setq company-idle-delay 0.1) ; this makes company respond in real time (no delay)
   (setq company-dabbrev-downcase 1)
   (setq company-require-match 'never)
   (global-company-mode t)
+  
   :bind (:map company-active-map
   	      ("<return>" . nil)
 	      ("RET" . nil)
@@ -591,23 +557,20 @@ customizations are module specific. Here, we only call the main version.
 	      ("C-SPC" . #'company-complete-selection)
 	      ("C-<space>" . #'company-complete-selection)
 	      ("M-p" . #'company-select-previous-or-abort)
-	      ("M-n" . #'company-select-next-or-abort))
-  )
+	      ("M-n" . #'company-select-next-or-abort)))
 
 (use-package company-flx
   :straight t
   :after (company)
   :config
-  (company-flx-mode +1)
-  )
+  (company-flx-mode +1))
 
 ;;Company-math provides auto-complete for math symbols
 (use-package company-math
   :straight t
   :after (company (:any auctex markdown))
   :config
-  (add-company-backend 'company-math)
-  )
+  (add-company-backend 'company-math))
 #+END_SRC
 
 ** Multiple Cursors (GUI only)
@@ -615,14 +578,13 @@ Multiple cursors should be self-explanatory.
 #+BEGIN_SRC emacs-lisp
 (use-package multiple-cursors
   :straight t
-  :if window-system
+  :if (or window-system (daemonp))
   :bind
   (("C->" . mc/mark-next-like-this)
    ("C-<" . mc/mark-previous-like-this)
    ("C-c ," . mc/mark-all-like-this)
    (:map mc/keymap
-	 ("<return>" . nil))) ;allows entry of <return> with multiple cursors
-  )
+	 ("<return>" . nil))))
 #+END_SRC
 
 ** Backups (TODO: get backups working)
@@ -655,8 +617,7 @@ Sets all backups to path to .emacs.d instead of cluttering the folder their in
   (auto-insert-mode +1)
   :config  
   (define-auto-insert 'python-mode ["python-header.py" auto-insert-yas-expand])
-  (define-auto-insert 'cmake-mode ["cmake-basic.yas" auto-insert-yas-expand])
-)
+  (define-auto-insert 'cmake-mode ["cmake-basic.yas" auto-insert-yas-expand]))
 #+END_SRC
 
 ** Vterm
@@ -664,8 +625,7 @@ Vterm is a alternative terminal-emulator, to be used instead of ansii-term.
 It runs primarily in C instead of elisp, and is such so much faster. 
 #+BEGIN_SRC emacs-lisp
 (use-package vterm
-  :straight t
-  )
+  :straight t)
 #+END_SRC
 
 ** lsp-mode
@@ -687,8 +647,7 @@ working over tramp.
 				 python-mode typescript-mode)
 		 .
 		 lsp)
-  :commands (lsp)
-  )
+  :commands (lsp))
 
 (use-package company-lsp
   :straight t
@@ -697,8 +656,7 @@ working over tramp.
 		company-lsp-async t
 		company-lsp-enable-snippet t
 		company-lsp-enable-recompletion t)
-  (push 'company-lsp company-backends)
-  )
+  (push 'company-lsp company-backends))
 
 (use-package lsp-ui
   :straight t
@@ -715,8 +673,7 @@ working over tramp.
    lsp-ui-peek-list-width 60
    lsp-ui-peek-peek-height 25
    lsp-ui-sideline-enable t
-   lsp-ui-doc-alignment 'window)
-  )
+   lsp-ui-doc-alignment 'window))
 #+END_SRC
 
 ** Projectile
@@ -726,8 +683,7 @@ working over tramp.
   :bind (:map projectile-mode-map
 	      ("C-c p" . 'projectile-command-map))
   :config
-  (projectile-mode +1)
-  )
+  (projectile-mode +1))
 #+END_SRC
 
 
@@ -741,11 +697,8 @@ working over tramp.
 	:bind (("C-z" . ispell-word))
 	:init
 	(setenv "DICPATH" (expand-file-name (concat user-emacs-directory "dictionaries/en")))
-	(setq ispell-program-name exec)
-	))
+	(setq ispell-program-name exec)))
    #+END_SRC
-
-
 
 ** Compilation-Mode
    Stolen from [[https://emacs.stackexchange.com/questions/24698/ansi-escape-sequences-in-compilation-mode][Stack Exchange]].
@@ -771,8 +724,7 @@ For setting up lisp-interaction-mode: the scratch buffer
 #+BEGIN_SRC emacs-lisp
 (add-hook 'lisp-interaction-mode-hook (lambda ()
 					(local-set-key (kbd "C-j") 'backward-word)
-					(local-set-key (kbd "C-S-j") 'eval-print-last-sexp)
-					))
+					(local-set-key (kbd "C-S-j") 'eval-print-last-sexp)))
 #+END_SRC
 
 ** Programming-Mode
@@ -782,8 +734,7 @@ again. This is necessary because otherwise it gets called repeatedly.
 (use-package highlight-numbers
   :straight t
   :hook ((prog-mode . (lambda () (highlight-numbers-mode 1))))
-  :config (set-face-foreground 'highlight-numbers-number "DarkOrchid2")
-  )
+  :config (set-face-foreground 'highlight-numbers-number "DarkOrchid2"))
 
 (defun my-prog-mode ()
   "Run as part of global prog-mode setup"
@@ -825,8 +776,7 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
 
 (use-package htmlize
   :straight t
-  :after (org)
-  )
+  :after (org))
 
 (use-package org
   :straight t
@@ -868,8 +818,7 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
 				   "\\documentclass\[presentation\]\{beamer\}"
 				   ("\\section\{%s\}" . "\\section*\{%s\}")
 				   ("\\subsection\{%s\}" . "\\subsection*\{%s\}")
-				   ("\\subsubsection\{%s\}" . "\\subsubsection*\{%s\}"))))
-  )
+				   ("\\subsubsection\{%s\}" . "\\subsubsection*\{%s\}")))))
 
 #+END_SRC
 
@@ -891,8 +840,7 @@ ESS (Emacs Speaks Statistics) is a major mode that facilitates S type statistics
   (setq ess-directory nil) ; directory defaults to the directory of the opened file
   (add-hook 'inferior-ess-mode  'ess-execute-screen-options)
   :init
-  (load "ess-autoloads")
-  )
+  (load "ess-autoloads"))
 #+END_SRC
 
 ** Markdown-Mode
@@ -916,8 +864,7 @@ org-mode does most of what markdown does.
 	(if (or (equal "md" extension) (equal "markdown" extension))
 		(setq markdown-enable-math t)))
   :config
-  (add-to-path "/Library/TeX/texbin/" t)
-  )
+  (add-to-path "/Library/TeX/texbin/" t))
 #+END_SRC
 
 ** Lisp
@@ -939,8 +886,7 @@ I use sly as my lisp editor
 	  (clisp (,(executable-find "clisp")))
 	  ))
   (setq sly-default-lisp 'clisp)
-  (sly-mode)
-  )
+  (sly-mode))
 #+END_SRC
 
 ** Emacs-Lisp
@@ -959,15 +905,12 @@ Configure rust, enabling rustic-mode, cargo-mode, flycheck-rust, and company-rac
 #+BEGIN_SRC emacs-lisp
 (use-package rustic
   :straight t
-  :init
-  (add-to-path "~/.cargo/bin")
   :config
   (setq
    rustic-lsp-server 'rust-analyzer
    rustic-lsp-client 'lsp-mode
    rustic-format-trigger 'on-save
-   whitespace-line-column 98)
-  )
+   whitespace-line-column 98))
 #+END_SRC
 
 ** Python
@@ -993,8 +936,7 @@ Setup shell, highlights, and python-mode. Most work is handled by a lsp-server
   (setq highlight-indent-guides-auto-enabled t)
   (set-face-background 'highlight-indent-guides-odd-face "darkcyan")
   (set-face-background 'highlight-indent-guides-even-face "darkcyan")
-  (set-face-foreground 'highlight-indent-guides-character-face "dimgrey")
-  )
+  (set-face-foreground 'highlight-indent-guides-character-face "dimgrey"))
 
 ;; Setup Python3 shell
 (defun set-shell-python3 ()
@@ -1011,8 +953,7 @@ Setup shell, highlights, and python-mode. Most work is handled by a lsp-server
 	     python-shell-completion-native-try-output-timeout))
 	(python-shell-completion-native-get-completions
 	 (get-buffer-process (current-buffer))
-	 nil "_"))))
-  )
+	 nil "_")))))
 
 (use-package python
   :mode (("\\.py\\'" . python-mode))
@@ -1022,8 +963,7 @@ Setup shell, highlights, and python-mode. Most work is handled by a lsp-server
   (setq python-indent-guess-indent-offset-verbose nil)
   :config
   (when (executable-find "python3")
-	(set-shell-python3))
-  )
+	(set-shell-python3)))
 
 
 #+END_SRC
@@ -1081,7 +1021,7 @@ My autopep8 version
     (if (and autopep8 autopep8-enable-on-save)
 	(autopep8-buffer)))
   (add-hook 'before-save-hook #'autopep8-on-save nil t)
-  )
+  ) ;; end of autopep8 mode
 
 (add-hook 'python-mode-hook 'autopep8)
 #+END_SRC
@@ -1104,22 +1044,19 @@ Sets up latex support along with a collection of skeletons for latex. This is al
   (visual-line-mode +1)
   (load (expand-file-name (concat user-emacs-directory "LaTeX_skeletons.el")))
   (add-to-path "/Library/TeX/texbin/" t)
-  (set-fill-column 100)
-  )
+  (set-fill-column 100))
 #+END_SRC
 
 ** Javascript
 #+BEGIN_SRC emacs-lisp
 (use-package xref-js2
   :after (js2-mode)
-  :straight t
-  )
+  :straight t)
 
 (use-package js2-mode
   :straight t
   ;; uses lsp-mode
-  :mode (("\\.js\\'" . js2-mode))
-  )
+  :mode (("\\.js\\'" . js2-mode)))
 #+END_SRC
 
 ** Haskell
@@ -1130,14 +1067,13 @@ Instructions on installing the haskell-language server can be found [[https://gi
   :straight t
   :if (executable-find "haskell-language-server")
   :config
-  (setq lsp-haskell-process-path-hie (executable-find "haskell-language-server-wrapper"))
- )
+  (setq lsp-haskell-process-path-hie (executable-find "haskell-language-server-wrapper")))
+
 (use-package haskell-mode
   :straight t
   :defer t
   :config
-  (setq haskell-stylish-on-save t)
-  )
+  (setq haskell-stylish-on-save t))
 #+END_SRC
 
 ** C/C++
@@ -1156,8 +1092,7 @@ Instructions on installing the haskell-language server can be found [[https://gi
 		   (and (eql major-mode 'c-mode) (equal c-file-style nil))
 		   (eql major-mode 'c++-mode))
       (clang-format-buffer)))
-  (add-hook 'before-save-hook 'clang-format-safe-buffer)
-  )
+  (add-hook 'before-save-hook 'clang-format-safe-buffer))
 #+END_SRC
 
 *** C/Cpp custom code
@@ -1280,9 +1215,7 @@ Binds "M-p" to a function that switches .cc type files with .hh type files.
 	      nil
 	      )
 	  (progn (message "%s was not found" new-buffer) nil)))
-    t
-    )
-  )
+    t))
 
 
 (defun switch-cpp-file-type ()
@@ -1295,38 +1228,32 @@ Binds "M-p" to a function that switches .cc type files with .hh type files.
 	(if (cpp-file-switch prefix postfix ".hh" ".cc")
 	    (if (cpp-file-switch prefix postfix ".c" ".h")
 		(if (cpp-file-switch prefix postfix ".h" ".c")
-		    (message "file with extension \"%s\" not recognized" postfix)
-		  ))))))
+		    (message "file with extension \"%s\" not recognized" postfix)))))))
 
 (defun add-c-style-functions ()
   (local-set-key (kbd "C-c C-f") 'c-insert-func-description)
   (if (not (equal major-mode "c-mode"))
       (yas-activate-extra-mode 'c-mode))
-  (local-set-key (kbd "M-p") 'switch-cpp-file-type)  
-  )
+  (local-set-key (kbd "M-p") 'switch-cpp-file-type))
 
 (add-hook 'c-mode-hook 'add-c-style-functions)
 (add-hook 'c++-mode-hook 'add-c-style-functions)
 (add-hook 'objc-mode-hook 'add-c-style-functions)
-
 #+END_SRC
 
 ** CMake
-   CMake files suck, there should be a major mode for them:
+   CMake files kinda suck, there should be a major mode for them:
 #+BEGIN_SRC emacs-lisp
 (use-package cmake-mode
   :defer t
   :straight t
-  :mode "CMakeLists.txt"
-  )
+  :mode "CMakeLists.txt")
 #+END_SRC
 
 ** ASM (assembly)
    For writing assembly
 #+BEGIN_SRC emacs-lisp
-(defun my-asm-setup-mode ()
-  (define-key asm-mode-map (kbd "C-j") 'backward-word)
-  )
+(defun my-asm-setup-mode () (define-key asm-mode-map (kbd "C-j") 'backward-word))
 
 (add-hook 'asm-mode-hook 'my-asm-setup-mode)
 #+END_SRC
@@ -1338,8 +1265,7 @@ Binds "M-p" to a function that switches .cc type files with .hh type files.
   :bind (:map term-mode-map
 	      ("M-p" . term-send-up)
 	      ("M-n" . term-send-down)
-	      ("C-y" . term-paste))
-  )
+	      ("C-y" . term-paste)))
 #+END_SRC
 
 ** ion-shell
@@ -1348,8 +1274,7 @@ Binds "M-p" to a function that switches .cc type files with .hh type files.
   :straight (ion-mode
 	       :host github :repo "iwahbe/ion-mode")
   :mode (("\\.ion\\'" . ion-mode)
-		 ("/ion/initrc\\'" . ion-mode))
-  )
+		 ("/ion/initrc\\'" . ion-mode)))
 #+END_SRC
 
 ** Java
@@ -1360,9 +1285,7 @@ Binds "M-p" to a function that switches .cc type files with .hh type files.
   :after lsp-mode
   :config 
   (add-hook 'java-mode-hook 'lsp)
-  (add-hook 'before-save-hook 'lsp-format-buffer 0 t)
-  )
-
+  (add-hook 'before-save-hook 'lsp-format-buffer 0 t))
 #+END_SRC
 
 ** TypeScript
