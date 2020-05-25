@@ -19,6 +19,11 @@ This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
 - For other packages
   - some packages will be disabled until their relevant components are installed.
   - These packages are discoverable by searching for =:if (executable-find "dependencie")=
+- spell checking
+  - [[https://hunspell.github.io/][hunspell]] needs to be installed
+	- =brew install hunspell= on MacOS
+	- =pacman -S hunspell= on Arch
+  - it needs dictionaries -> run =make dict= to install all dictionaries
 
 	
 * Preliminary
@@ -195,7 +200,7 @@ emacs.
 
 The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instructions#using-composition-mode-in-emacs-mac-port][here]]
 #+BEGIN_SRC emacs-lisp
-(when (x-list-fonts "Fira Code")
+(when (and window-system (x-list-fonts "Fira Code"))
   (add-to-list 'default-frame-alist
 			   '(font . "Fira Code"))
   (let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
@@ -428,7 +433,6 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
 (global-set-key (kbd "C-j") 'backward-word)
 (global-set-key (kbd "M-f") 'forward-sentence)
 (global-set-key (kbd "M-b") 'backward-sentence)
-(global-set-key (kbd "C-z") 'ispell-word)
 (global-set-key (kbd "M--") 'undo)
 (global-set-key
  (kbd "C-M-n") (lambda (arg) (interactive "P")
@@ -726,6 +730,20 @@ working over tramp.
   )
 #+END_SRC
 
+
+** Ispell
+   #+BEGIN_SRC emacs-lisp
+(let ((exec
+	   (or (executable-find "hunspell") (executable-find "aspell") (executable-find "ispell"))))
+  (use-package ispell
+	:straight t
+	:if exec
+	:bind (("C-z" . ispell-word))
+	:init
+	(setenv "DICPATH" (expand-file-name (concat user-emacs-directory "dictionaries/en")))
+	(setq ispell-program-name exec)
+	))
+   #+END_SRC
 
 
 

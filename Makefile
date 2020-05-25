@@ -14,3 +14,8 @@ hooks:
 	@chmod +x .git/hooks/pre-commit
 	@chmod +x .git/hooks/post-commit
 	@echo "Hooks symlinked and enabled"
+
+dict:
+	git clone git://anongit.freedesktop.org/libreoffice/dictionaries
+
+init: tangle hooks dict
