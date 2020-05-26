@@ -83,6 +83,19 @@ This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
   (load bootstrap-file nil 'nomessage))
 ;;ensures both that use-package is installed and works with straight.el
 (straight-use-package 'use-package)
+(defun find-or-warn (exec warn &optional missed)
+  "Attempt to find a executable.  If not found then warn the user.
+`EXEC' is either the executable to find or a list of executables.
+`WARN' is the consequence of not finding the executable.
+`MISSED' is a list of already missed options"
+  (if (not (listp exec))
+	  (find-or-warn (list exec) warn missed)
+	(let ((f (executable-find (car exec))))
+	  (if f f
+		(let ((missed (cons (car exec) missed)))
+		  (if (cdr exec)
+			  (find-or-warn (cdr exec) warn missed)
+			(message "Could not find '%s' => %s" missed warn)))))))
 #+END_SRC
 
 ** Tangle init.org on save
@@ -346,50 +359,18 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
 (use-package flymake :straight t)
 #+END_SRC
 
-** Helm
+
+** Selectrum
    I use helm for fuzzy searching among known options
 #+BEGIN_SRC emacs-lisp
-(use-package helm
+(use-package company-prescient :straight t)
+(use-package selectrum-prescient :straight t)
+
+(use-package selectrum
   :straight t
   :config
-  (helm-mode 1)
-  (setq helm-default-display-buffer-functions '(display-buffer-in-side-window))
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)
-  :bind (:map helm-occur-map ("C-h c" . #'describe-key-briefly)))
-
-(use-package ag :straight t)
-
-;; for fast multi-file searches
-(use-package helm-ag
-  :straight t
-  :after (helm)
-  :bind (("C-M-s" . helm-do-ag-project-root))
-  :config
-  (defun search-selector (do-ag)
-    (interactive "P")
-    (if (equal do-ag 1) (helm-do-ag-this-file)
-      (if (equal do-ag 2) (helm-do-ag-buffers)
-	  (if do-ag (helm-do-ag-project-root)
-	    (isearch-forward)))))
-  (global-set-key (kbd "C-s") 'search-selector))
-
-(use-package helm-company
-  :straight t
-  :after (company helm)
-  :config
-  (define-key company-mode-map (kbd "C-;") 'helm-company)
-  (define-key company-active-map (kbd "C-;") 'helm-company))
-#+END_SRC
-
-** Ido (disabled)
-   Ido provides a great navigation experience with the find-file command. TODO: remove
-#+BEGIN_SRC emacs-lisp
-(use-package ido
-  :disabled
-  :straight t
-  :config
-  (ido-mode t))
-(setq read-file-name-completion-ignore-case nil)
+  (selectrum-mode +1)
+  (selectrum-prescient-mode +1))
 #+END_SRC
 
 ** Global Key Bindings
@@ -456,6 +437,8 @@ There is a collection of minor modes that trigger after other major modes load.
 (require 'saveplace)
 (save-place-mode 1)
 (setq save-place-file (expand-file-name ".places" user-emacs-directory))
+
+(use-package ag :straight t)
 
 (use-package expand-region
   :straight t
@@ -688,11 +671,9 @@ working over tramp.
   (projectile-mode +1))
 #+END_SRC
 
-
 ** Ispell
    #+BEGIN_SRC emacs-lisp
-(let ((exec
-	   (or (executable-find "hunspell") (executable-find "aspell") (executable-find "ispell"))))
+(let ((exec (find-or-warn '("hunspell" "aspell" "ispell") "Ispell mode disabled")))
   (use-package ispell
 	:straight t
 	:if exec
@@ -832,7 +813,7 @@ ESS (Emacs Speaks Statistics) is a major mode that facilitates S type statistics
   :mode (("\\.r\\'" . ess-r-mode)
 	 ("\\.Rmd\\'" . ess-r-mode)
 	 ("\\.R\\'" . ess-r-mode))
-  :if (executable-find "R")
+  :if (find-or-warn "R" "ESS mode disabled")
   :config
   (setq inferior-ess-r-program (executable-find "R"))
   ;; We assume the ability to generate graphs using a WindowsX(QuartsX) program.
@@ -874,7 +855,7 @@ I use sly as my lisp editor
 #+BEGIN_SRC emacs-lisp
 (use-package sly
   :straight t
-  :if (executable-find "clisp")
+  :if (find-or-warn "clisp" "Sly mode disabled")
   :mode (("\\.lisp\\'" . sly-mode))
   :hook ((sly-mode . (lambda () (prettify-symbols-mode +1))))
   :config
@@ -959,7 +940,7 @@ Setup shell, highlights, and python-mode. Most work is handled by a lsp-server
 
 (use-package python
   :mode (("\\.py\\'" . python-mode))
-  :if (or (executable-find "python") (executable-find "python3"))
+  :if (find-or-warn '("python3" "python") "Python mode disabled")
   :init
   (setq python-indent-guess-indent-offset t)
   (setq python-indent-guess-indent-offset-verbose nil)
@@ -1064,12 +1045,13 @@ Sets up latex support along with a collection of skeletons for latex. This is al
 ** Haskell
 Instructions on installing the haskell-language server can be found [[https://github.com/haskell/haskell-language-server#installation][here]].
 #+BEGIN_SRC emacs-lisp
-(add-to-path "~/.cabal/bin")
+(add-to-path "~/.cabal/bin") ;for the cabal package manager
+(add-to-path "~/.stack/bin") ;for the stack package manager
 (use-package lsp-haskell
   :straight t
-  :if (executable-find "haskell-language-server")
+  :if (find-or-warn "hie" "lsp-haskell disabled")
   :config
-  (setq lsp-haskell-process-path-hie (executable-find "haskell-language-server-wrapper")))
+  (setq lsp-haskell-process-path-hie (executable-find "hie")))
 
 (use-package haskell-mode
   :straight t
@@ -1082,7 +1064,7 @@ Instructions on installing the haskell-language server can be found [[https://gi
 #+BEGIN_SRC emacs-lisp
 (use-package clang-format
   :straight t
-  :if (executable-find "clang-format")
+  :if (find-or-warn "clang-format" "C/C++ formating disabled")
   :defer t
   :init
   (setq clang-format-style "file")

@@ -25,6 +25,14 @@ pyls:
 typescript:
 	npm i -g typescript-language-server; npm i -g typescript
 
+haskell:
+	# Deleting old haskell-ide-engine
+	@sudo rm -rf haskell-ide-engine
+	@git clone https://github.com/haskell/haskell-ide-engine
+	# Installing hie the haskell server
+	# This might take a long time
+	@cd haskell-ide-engine && ./install.hs hie
+
 init: tangle hooks dict
 
 servers: pyls typescript
