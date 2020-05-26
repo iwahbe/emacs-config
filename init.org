@@ -154,7 +154,7 @@ This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
   (load-theme 'humanoid-dark t))
 #+END_SRC
 
-
+** FeebleLine
 We setup preferences for the mode-line.
 I turn on battery and time displays, setup smart-mode-line (ssl) and disable the menu-bar.
 Feebleline is a package to replace the mode-line with the echo area. 
@@ -162,10 +162,6 @@ Feebleline is a package to replace the mode-line with the echo area.
 (use-package feebleline
   :straight t
   :config
-  (defun my-feebleline-time ()
-    "Displays time: [month day Time]"
-    (format "[%s]" (substring (format-time-string "%b %d %T") 0 -3))
-    )
   ;; Note: any function that returns a string is acceptable to feebleline
   (require 'font-lock)
   (setq feebleline-msg-functions
@@ -174,30 +170,19 @@ Feebleline is a package to replace the mode-line with the echo area.
 		  (feebleline-file-directory      :face feebleline-dir-face :post "")
 		  (feebleline-file-or-buffer-name :face font-lock-keyword-face :post "")
 		  (feebleline-file-modified-star  :face font-lock-warning-face :post "")
-		  (feebleline-git-branch          :face feebleline-git-face :pre " : ")
-		  (feebleline-project-name        :pre "[" :post "]" :align right)
-		  (my-feebleline-time             :align right)
+		  (feebleline-git-branch          :face font-lock-keyword-face :pre " : ")
+		  (feebleline-project-name        :pre "[" :post "] " :align right)
 		  ))
   (feebleline-mode +1))
 #+END_SRC
 
-Setup normal graphics
+** Frame manipulation bindings
+Frame bindings
 #+BEGIN_SRC emacs-lisp
-(setq display-time-default-load-average nil); must be assigned before (display-time-mode 1) is called
-(setq display-time-24hr-format t)
-(setq display-time-day-and-date t)
-(display-time-mode 1); does not change in real time, so all settings must be assigned before
-
-(require 'battery)
-(when (and battery-status-function
-	       (not (string-match-p "N/A"
-								(battery-format "%B"
-												(funcall battery-status-function)))))
-  (display-battery-mode 1))
-;; Frame manipulation bindings
-(global-set-key (kbd "s-t") 'make-frame)
-(global-set-key (kbd "s-w") 'delete-frame)
-(global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen)
+(when (or (daemonp) (window-system))
+  (global-set-key (kbd "s-t") 'make-frame)
+  (global-set-key (kbd "s-w") 'delete-frame)
+  (global-set-key (kbd "s-<return>") 'toggle-frame-fullscreen))
 #+END_SRC
 
 ** Fira-Code (graphics only)
