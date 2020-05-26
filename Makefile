@@ -22,6 +22,9 @@ pyls:
 	@read -p "Python command to install under: " pcommand; \
 	$$pcommand -m pip install python-language-server
 
+typescript:
+	npm i -g typescript-language-server; npm i -g typescript
+
 init: tangle hooks dict
 
-servers: pyls
+servers: pyls typescript
