@@ -123,11 +123,13 @@ This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
   (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
   (setq inhibit-startup-message t
 		initial-scratch-message "")
+  (when (featurep 'mac)
+	(setq mac-command-modifier 'super
+	  mac-option-modifier 'meta
+	  mac-pass-command-to-system t))
   (blink-cursor-mode -1)
-  ;; The error bell is really annoying
-  (setq ring-bell-function 'ignore)
-  ;;Fringes are not space efficiant
-  (set-fringe-mode 0))
+  (set-fringe-mode 0) ; sets width
+  (setq ring-bell-function 'ignore))
 #+END_SRC
 
 ** Theme and Windowing
