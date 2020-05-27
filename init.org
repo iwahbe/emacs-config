@@ -232,9 +232,11 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
 ** Universal Variables
    Sets up helpful universal variables.
 #+BEGIN_SRC emacs-lisp
-(setq-default fill-column 80)
-(setq-default sentence-end "[\\.\\?\\!] +")
-(setq-default tab-width 4)
+(setq-default
+ fill-column 80
+ sentence-end "[\\.\\?\\!] +"
+ tab-width 4)
+(setq enable-recursive-minibuffers t)
 #+END_SRC
 
 ** Evil: Extensible VI Layer
@@ -343,7 +345,6 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
 #+BEGIN_SRC emacs-lisp
 (use-package flymake :straight t)
 #+END_SRC
-
 
 ** Selectrum
    I use helm for fuzzy searching among known options
