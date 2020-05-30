@@ -95,7 +95,7 @@ This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
 		(let ((missed (cons (car exec) missed)))
 		  (if (cdr exec)
 			  (find-or-warn (cdr exec) warn missed)
-			(message "Could not find '%s' => %s" missed warn)))))))
+			(progn (message "Could not find '%s' => %s" missed warn) ())))))))
 #+END_SRC
 
 ** Tangle init.org on save
@@ -596,6 +596,7 @@ Vterm is a alternative terminal-emulator, to be used instead of ansii-term.
 It runs primarily in C instead of elisp, and is such so much faster. 
 #+BEGIN_SRC emacs-lisp
 (use-package vterm
+  :hook (vterm-mode-hook . (lambda () (local-set-key (kbd ("C-M-\\") #'evil-togle))))
   :straight t)
 #+END_SRC
 
@@ -1262,5 +1263,15 @@ Binds "M-p" to a function that switches .cc type files with .hh type files.
 #+BEGIN_SRC emacs-lisp
 (use-package typescript-mode
   :straight t)
+
 #+END_SRC
+
+** Agda
+   #+BEGIN_SRC emacs-lisp
+;; Reiles on agda-mode bieng in path.
+(let ((agda (find-or-warn "agda-mode" "Agda mode disabled")))
+  (when agda
+	(load-file (let ((coding-system-for-read 'utf-8))
+				 (shell-command-to-string (concat agda " locate"))))))
+   #+END_SRC
 
