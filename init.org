@@ -39,12 +39,12 @@ This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
   (let* ((new-path (expand-file-name path-string))
 		 (env-path (getenv "PATH")))
     (if (file-accessible-directory-p path-string)
+		(progn
 		(add-to-list 'exec-path new-path appendp)
-      
       (if (not (member new-path (split-string env-path ":")))
 		  (if appendp
 			  (setenv "PATH" (concat env-path ":" new-path))
-			(setenv "PATH" (concat new-path ":" env-path)))))))
+			(setenv "PATH" (concat new-path ":" env-path))))))))
 
 (add-to-path "~/.cargo/bin") ; rust programs
 (add-to-path "/usr/local/bin")
@@ -616,7 +616,7 @@ working over tramp.
 		lsp-server-install-dir (concat user-emacs-directory "lsp")
 		lsp-enable-completion-at t
 		lsp-auto-guess-root t)
-  :hook ((c-mode c++-mode objc-mode bash-mode js2-mode ;rustic relies on lsp
+  :hook ((c-mode c++-mode objc-mode bash-mode js-mode ;rustic relies on lsp
 				 python-mode typescript-mode)
 		 .
 		 lsp)
@@ -1016,14 +1016,11 @@ Sets up latex support along with a collection of skeletons for latex. This is al
 
 ** Javascript
 #+BEGIN_SRC emacs-lisp
-(use-package xref-js2
-  :after (js2-mode)
-  :straight t)
-
 (use-package js2-mode
   :straight t
   ;; uses lsp-mode
-  :mode (("\\.js\\'" . js2-mode)))
+  :mode (("\\.js[x]?$\\'" . js2-mode)
+		 ("\\.tsx$\\'" . js-mode)))
 #+END_SRC
 
 ** Haskell
