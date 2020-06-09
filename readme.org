@@ -151,7 +151,14 @@ This file is expected to reside in =~/.emacs.d= so start with =cp emacs-config
   :straight (humanoid-themes :host github :repo "humanoid-colors/emacs-humanoid-themes")
   :when (or window-system (daemonp))
   :config
-  (load-theme 'humanoid-dark t))
+  (if (boundp 'ns-system-appearance-change-functions)
+	  (add-hook 'ns-system-appearance-change-functions
+				#'(lambda (appearance)
+					(mapc #'disable-theme custom-enabled-themes)
+					(pcase appearance
+					  ('light (load-theme 'humanoid-light t))
+					  ('dark (load-theme 'humanoid-dark t)))))
+	(load-theme 'humanoid-dark t)))
 #+END_SRC
 
 ** FeebleLine
@@ -323,7 +330,6 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
                    name (file-name-nondirectory new-name)))))))
 
 (global-set-key (kbd "C-x C-r") 'rename-current-buffer-file)
-
 #+END_SRC
 
 ** FlyCheck
@@ -351,7 +357,6 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
 #+BEGIN_SRC emacs-lisp
 (use-package company-prescient :straight t)
 (use-package selectrum-prescient :straight t)
-
 (use-package selectrum
   :straight t
   :config
@@ -478,8 +483,6 @@ There is a collection of minor modes that trigger after other major modes load.
 ;; show-paren mode highlights matching parentheses
 (setq show-paren-style 'parenthesis)
 (show-paren-mode +1)
-
-
 #+END_SRC
 
 ** Git (Magit)
@@ -497,7 +500,6 @@ There is a collection of minor modes that trigger after other major modes load.
 (use-package forge
   :straight t
   :after magit)
-
 #+END_SRC
 
 ** Company
@@ -512,8 +514,7 @@ customizations are module specific. Here, we only call the main version.
     ;; (add-to-list 'company-backends `(,symbol-list . '(:with company-yasnippet)))
 	(add-to-list 'company-backends (append (if (consp backend) backend (list backend))
 					       '(:with company-yasnippet))
-				 add-to-back))
-  
+				 add-to-back))  
   :config
   (setq company-minimum-prefix-length 1)
   (setq company-idle-delay 0.1) ; this makes company respond in real time (no delay)
@@ -724,7 +725,6 @@ again. This is necessary because otherwise it gets called repeatedly.
   (setq my-prog-mode-called t))
 
 (add-hook 'prog-mode-hook 'my-prog-mode)
-
 #+END_SRC
 
 ** Text-Mode
@@ -789,7 +789,6 @@ Note: htmlize allows org-mode to publish to html more complex stuff like src blo
 				   ("\\section\{%s\}" . "\\section*\{%s\}")
 				   ("\\subsection\{%s\}" . "\\subsection*\{%s\}")
 				   ("\\subsubsection\{%s\}" . "\\subsubsection*\{%s\}")))))
-
 #+END_SRC
 
 ** R
@@ -934,8 +933,6 @@ Setup shell, highlights, and python-mode. Most work is handled by a lsp-server
   :config
   (when (executable-find "python3")
 	(set-shell-python3)))
-
-
 #+END_SRC
 
 *** autopep8 enable on save	
@@ -1225,7 +1222,6 @@ Binds "M-p" to a function that switches .cc type files with .hh type files.
    For writing assembly
 #+BEGIN_SRC emacs-lisp
 (defun my-asm-setup-mode () (define-key asm-mode-map (kbd "C-j") 'backward-word))
-
 (add-hook 'asm-mode-hook 'my-asm-setup-mode)
 #+END_SRC
 
@@ -1263,7 +1259,6 @@ Binds "M-p" to a function that switches .cc type files with .hh type files.
 #+BEGIN_SRC emacs-lisp
 (use-package typescript-mode
   :straight t)
-
 #+END_SRC
 
 ** Agda
@@ -1274,4 +1269,3 @@ Binds "M-p" to a function that switches .cc type files with .hh type files.
 	(load-file (let ((coding-system-for-read 'utf-8))
 				 (shell-command-to-string (concat agda " locate"))))))
    #+END_SRC
-
