@@ -379,7 +379,9 @@ The code below was from [[https://github.com/tonsky/FiraCode/wiki/Emacs-instruct
 
 (global-set-key (kbd "C-w") 'safe-kill-region)
 (global-set-key (kbd "C-r") 'scroll-down)
+(global-set-key (kbd "C-M-r") 'scroll-other-window-down)
 (global-set-key (kbd "C-v") 'scroll-up)
+(global-set-key (kbd "C-M-v") 'scroll-other-window)
 (global-set-key (kbd "C-l") 'forward-word)
 (global-set-key (kbd "C-j") 'backward-word)
 (global-set-key (kbd "M-f") 'forward-sentence)
@@ -686,6 +688,13 @@ working over tramp.
 (add-hook 'compilation-filter-hook
           #'endless/colorize-compilation)
    #+END_SRC
+
+
+** Avy
+#+BEGIN_SRC emacs-lisp
+(define-key flyspell-mode-map (kbd "C-;") nil)
+(global-set-key (kbd "C-;") 'avy-goto-char-timer)
+#+END_SRC
 
 
 
@@ -1021,7 +1030,11 @@ Sets up latex support along with a collection of skeletons for latex. This is al
   :straight t
   ;; uses lsp-mode
   :mode (("\\.js[x]?$\\'" . js2-mode)
-		 ("\\.tsx$\\'" . js-mode)))
+		 ("\\.tsx$\\'" . js-mode))
+  :bind (:map js-mode-map
+			  ("M-." . xref-find-definitions))
+  :config
+  (setq js-indent-level 2))
 #+END_SRC
 
 ** Haskell
