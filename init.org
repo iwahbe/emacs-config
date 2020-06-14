@@ -852,20 +852,22 @@ I use sly as my lisp editor
 (use-package sly
   :straight t
   :if (find-or-warn "clisp" "Sly mode disabled")
-  :mode (("\\.lisp\\'" . sly-mode))
-  :hook ((sly-mode . (lambda () (prettify-symbols-mode +1))))
+  :hook lisp-mode
   :config
   ;; The check prevents setting a new editor at compile time
   (prettify-symbols-mode +1)
-  (modify-syntax-entry ?- "w" lisp-mode-syntax-table)
-  (if (string-suffix-p ".lisp" buffer-file-name)
+  (if (string-suffix-p ".cl" buffer-file-name)
       (setq inferior-lisp-program (executable-find "clisp")))
   (define-key sly-prefix-map (kbd "M-h") 'sly-documentation-lookup)
   (setq sly-lisp-implementations `(
 	  (clisp (,(executable-find "clisp")))
 	  ))
   (setq sly-default-lisp 'clisp)
-  (sly-mode))
+  (sly-mode)
+  (sly)
+  )
+(add-to-list 'auto-mode-alist '("\\.cl\\'" . lisp-mode))
+(add-to-list 'auto-mode-alist '("\\.lisp\\'" . lisp-mode))
 #+END_SRC
 
 ** Emacs-Lisp
