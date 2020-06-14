@@ -635,7 +635,7 @@ working over tramp.
 
 (use-package lsp-ui
   :straight t
-  :bing ("C-c s" . 'lsp-ui-doc-show)
+  :bind ("C-c s" . 'lsp-ui-doc-show)
   :config
   (setq
    lsp-ui-doc-enable nil
