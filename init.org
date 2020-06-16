@@ -734,10 +734,11 @@ again. This is necessary because otherwise it gets called repeatedly.
 
 ** Text-Mode
 #+BEGIN_SRC emacs-lisp
+(use-package olivetti
+  :straight t)
 
 (defun my-text-mode ()
   "A hook to call on text-mode init"
-  (wc-mode +1)               ; provides a word count
   (flyspell-mode +1)         ; recognizes misspellings
   (visual-line-mode +1)      ; we want the words to wrap
   )
@@ -853,7 +854,8 @@ I use sly as my lisp editor
   (prettify-symbols-mode +1)
   (if (string-suffix-p ".cl" buffer-file-name)
       (setq inferior-lisp-program (executable-find "clisp")))
-  (define-key sly-prefix-map (kbd "M-h") 'sly-documentation-lookup)
+  (define-key sly-mode-map (kbd "M-h") 'sly-documentation-lookup)
+  (define-key sly-mode-map (kbd "C-x C-M-e") 'sly-eval-buffer)
   (setq sly-lisp-implementations `(
 	  (clisp (,(executable-find "clisp")))
 	  ))
